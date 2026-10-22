@@ -144,7 +144,7 @@ table.rep{width:100%;border-collapse:collapse;font-size:.92rem}table.rep th,tabl
     <button role="tab" data-tab="more" aria-selected="false">More</button>
   </nav>
   <main id="view"></main>
-  <footer class="muted" style="padding:16px 0 32px;font-size:.85rem;line-height:1.4"><b>all systems you</b>. Your health is complicated. Managing it shouldn't be.<br>all systems you helps you follow the plan you and your care team set. It is not medical advice and does not replace your doctor, dietitian or nurse. Check with them before changing your diet, medicines or supplements. Everything you enter stays on this device. Free and open source under the GNU AGPL 3.0. <a href="sources.html">Sources</a>. <span class="appver">Version 0.10.0.</span></footer>
+  <footer class="muted" style="padding:16px 0 32px;font-size:.85rem;line-height:1.4"><b>all systems you</b>. Your health is complicated. Managing it shouldn't be.<br>all systems you helps you follow the plan you and your care team set. It is not medical advice and does not replace your doctor, dietitian or nurse. Check with them before changing your diet, medicines or supplements. Everything you enter stays on this device. Free and open source under the GNU AGPL 3.0. <a href="sources.html">Sources</a>. <span class="appver">Version 0.10.1.</span></footer>
 </div>
 <div class="toast" id="toast" hidden></div>
 
@@ -929,10 +929,18 @@ function save(){
   try{ const cd = nextCookDate(parseYmd(ymd(new Date()))); if(cd) S.cookNext = {date:ymd(cd), items:cookPlanFor(cd).map(x=>({id:x.id, batches:x.batches}))}; }catch(e){}
   lsSet(S);
   clearTimeout(saveTimer);
-  saveTimer = setTimeout(async ()=>{
+  saveTimer = setTimeout(()=>pushState(false), 400);
+}
+/* Send to the computer app. When the window is closing, keepalive lets the send finish, but it only
+   carries a small body (64 KB), so it leaves out the reminder list; the computer keeps its list until the next open. */
+async function pushState(closing){
+    saveTimer = null;
     if(!SERVER) return;
     try{
-      const r = await fetch("/api/state",{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify({state:S, reminders:buildReminders(60), rev:SERVER_REV})});
+      let body = closing ? JSON.stringify({state:S, rev:SERVER_REV}) : "";
+      const keepalive = closing && body.length < 60000;
+      if(!keepalive) body = JSON.stringify({state:S, reminders:buildReminders(60), rev:SERVER_REV});
+      const r = await fetch("/api/state",{method:"PUT",keepalive,headers:{"Content-Type":"application/json"},body});
       const j = await r.json().catch(()=>({}));
       if(r.status===409 && j.state){
         // Another window or phone saved newer changes. Take theirs instead of writing over them.
@@ -943,8 +951,14 @@ function save(){
       if(j.rev!=null) SERVER_REV = j.rev;
       setSync();
     }catch(e){ setSync("Could not reach the reminder service. Changes are saved in this browser."); }
-  }, 400);
 }
+/* Before the window hides or closes: keep a half-typed field and send anything still waiting. */
+function flushNow(closing){
+  const a = document.activeElement;
+  if(a && view.contains(a) && a.matches("input,textarea,select")) a.dispatchEvent(new Event("change",{bubbles:true}));
+  if(saveTimer){ clearTimeout(saveTimer); pushState(closing); }
+}
+addEventListener("pagehide", ()=>flushNow(true));
 function pruneLog(){
   const keep = ymd(addDays(new Date(),-45));
   for(const k of Object.keys(S.log)) if(k<keep) delete S.log[k];
@@ -1970,7 +1984,7 @@ function mountHousehold(){
 
 /* The bottom bar links here with #today or #more, so a home-screen app (no back button) can always get around. */
 /* Filled in at build time from changelog.json. APP_BUILD tells two builds of the same version apart. */
-const APP_VERSION = "0.10.0", APP_BUILD = "0.10.0-2026-10-22-4afe63ab", CHANGES = [{"v": "0.10.0", "date": "2026-10-22", "items": ["Backups: new Combine with a backup file, to bring a phone and a computer copy together without losing either.", "With the computer app, an old open window can no longer save over newer changes from another window or phone.", "Clearer warning: on an iPhone, removing the home-screen icon erases its data, so save a backup first."]}, {"v": "0.9.0", "date": "2026-10-22", "items": ["Labs: paste a whole lab report (or copy it from a photo or PDF with Live Text) and save many results at once.", "Pantry: items you add go into the right section (or pick one), and any item can be removed from your list.", "Grocery mode opens reliably from More and the bottom bar.", "Fiber: set the ramp start date on My rules; with no ramp, Today shows your fiber goal."]}, {"v": "0.8.0", "date": "2026-10-22", "items": ["Fix a meal: type a meal's ingredients and the meal checker suggests swaps, trims and adds that follow your lists and limits."]}, {"v": "0.7.0", "date": "2026-10-22", "items": ["A gentle check-in when a supplement or routine step hasn't been ticked off in a while: keep it, change how often, or pause it.", "Version number and this What's new list."]}, {"v": "0.6.0", "date": "2026-10-21", "items": ["Bottom bar on every page, so a home-screen app can always get around.", "Quick view and phone tap shortcuts.", "Installed copies now pick up new versions."]}, {"v": "0.5.0", "date": "2026-10-21", "items": ["Tap to add water (sizes you choose) and a simpler home page.", "Evening check-in: how did I feel today?", "Look back over 7 to 30 days, and a For my visit summary; both print and download.", "Grocery mode for the store.", "Automatic daily backups."]}, {"v": "0.4.0", "date": "2026-10-21", "items": ["Food breaks: take a break from a food until a date, with a low-arginine list for cold sores and HSV, common food groups, or any food you type. Planned meals can be swapped and come back after."]}, {"v": "0.3.0", "date": "2026-10-21", "items": ["Daily rhythm settings: wake and bed times, fasting window, walks after meals, food order, water goal by weight."]}, {"v": "0.2.0", "date": "2026-10-21", "items": ["Sources page; every food rule shows where it comes from."]}, {"v": "0.1.0", "date": "2026-10-21", "items": ["Daily checklist, pantry planner and meal checker that work offline. Starter food lists (drafts)."]}];
+const APP_VERSION = "0.10.1", APP_BUILD = "0.10.1-2026-10-22-9f4643de", CHANGES = [{"v": "0.10.1", "date": "2026-10-22", "items": ["With the computer app, a change typed just before closing the window or switching away is no longer lost."]}, {"v": "0.10.0", "date": "2026-10-22", "items": ["Backups: new Combine with a backup file, to bring a phone and a computer copy together without losing either.", "With the computer app, an old open window can no longer save over newer changes from another window or phone.", "Clearer warning: on an iPhone, removing the home-screen icon erases its data, so save a backup first."]}, {"v": "0.9.0", "date": "2026-10-22", "items": ["Labs: paste a whole lab report (or copy it from a photo or PDF with Live Text) and save many results at once.", "Pantry: items you add go into the right section (or pick one), and any item can be removed from your list.", "Grocery mode opens reliably from More and the bottom bar.", "Fiber: set the ramp start date on My rules; with no ramp, Today shows your fiber goal."]}, {"v": "0.8.0", "date": "2026-10-22", "items": ["Fix a meal: type a meal's ingredients and the meal checker suggests swaps, trims and adds that follow your lists and limits."]}, {"v": "0.7.0", "date": "2026-10-22", "items": ["A gentle check-in when a supplement or routine step hasn't been ticked off in a while: keep it, change how often, or pause it.", "Version number and this What's new list."]}, {"v": "0.6.0", "date": "2026-10-21", "items": ["Bottom bar on every page, so a home-screen app can always get around.", "Quick view and phone tap shortcuts.", "Installed copies now pick up new versions."]}, {"v": "0.5.0", "date": "2026-10-21", "items": ["Tap to add water (sizes you choose) and a simpler home page.", "Evening check-in: how did I feel today?", "Look back over 7 to 30 days, and a For my visit summary; both print and download.", "Grocery mode for the store.", "Automatic daily backups."]}, {"v": "0.4.0", "date": "2026-10-21", "items": ["Food breaks: take a break from a food until a date, with a low-arginine list for cold sores and HSV, common food groups, or any food you type. Planned meals can be swapped and come back after."]}, {"v": "0.3.0", "date": "2026-10-21", "items": ["Daily rhythm settings: wake and bed times, fasting window, walks after meals, food order, water goal by weight."]}, {"v": "0.2.0", "date": "2026-10-21", "items": ["Sources page; every food rule shows where it comes from."]}, {"v": "0.1.0", "date": "2026-10-21", "items": ["Daily checklist, pantry planner and meal checker that work offline. Starter food lists (drafts)."]}];
 const TAB_IDS = ["today","quick","phone","tomorrow","more","supps","week","notes","labs","lookback","visit","rules","settings","household"];
 /* A food card link opened while the app is already open. */
 window.addEventListener("hashchange", ()=>{ if(HHUI.takeHash()){ TAB = "household"; render(); window.scrollTo(0,0); } });
@@ -2214,6 +2228,7 @@ setInterval(()=>{
 /* Keep the checklist current as the day moves on. */
 /* Phones and computer share one copy: pick up changes made on another device when this one comes back into view. */
 document.addEventListener("visibilitychange", async ()=>{
+  if(document.visibilityState==="hidden"){ flushNow(false); return; }
   if(document.visibilityState!=="visible" || !SERVER) return;
   if(view.contains(document.activeElement) && document.activeElement.matches("input[type=text],textarea")) return;
   try{ const j = await (await fetch("/api/state",{cache:"no-store"})).json(); if(j && j.state){ S = merge(j.state); SERVER_REV = j.rev ?? SERVER_REV; render(); } }catch(e){}

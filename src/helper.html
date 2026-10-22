@@ -438,10 +438,18 @@ function save(){
   try{ const cd = nextCookDate(parseYmd(ymd(new Date()))); if(cd) S.cookNext = {date:ymd(cd), items:cookPlanFor(cd).map(x=>({id:x.id, batches:x.batches}))}; }catch(e){}
   lsSet(S);
   clearTimeout(saveTimer);
-  saveTimer = setTimeout(async ()=>{
+  saveTimer = setTimeout(()=>pushState(false), 400);
+}
+/* Send to the computer app. When the window is closing, keepalive lets the send finish, but it only
+   carries a small body (64 KB), so it leaves out the reminder list; the computer keeps its list until the next open. */
+async function pushState(closing){
+    saveTimer = null;
     if(!SERVER) return;
     try{
-      const r = await fetch("/api/state",{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify({state:S, reminders:buildReminders(60), rev:SERVER_REV})});
+      let body = closing ? JSON.stringify({state:S, rev:SERVER_REV}) : "";
+      const keepalive = closing && body.length < 60000;
+      if(!keepalive) body = JSON.stringify({state:S, reminders:buildReminders(60), rev:SERVER_REV});
+      const r = await fetch("/api/state",{method:"PUT",keepalive,headers:{"Content-Type":"application/json"},body});
       const j = await r.json().catch(()=>({}));
       if(r.status===409 && j.state){
         // Another window or phone saved newer changes. Take theirs instead of writing over them.
@@ -452,8 +460,14 @@ function save(){
       if(j.rev!=null) SERVER_REV = j.rev;
       setSync();
     }catch(e){ setSync("Could not reach the reminder service. Changes are saved in this browser."); }
-  }, 400);
 }
+/* Before the window hides or closes: keep a half-typed field and send anything still waiting. */
+function flushNow(closing){
+  const a = document.activeElement;
+  if(a && view.contains(a) && a.matches("input,textarea,select")) a.dispatchEvent(new Event("change",{bubbles:true}));
+  if(saveTimer){ clearTimeout(saveTimer); pushState(closing); }
+}
+addEventListener("pagehide", ()=>flushNow(true));
 function pruneLog(){
   const keep = ymd(addDays(new Date(),-45));
   for(const k of Object.keys(S.log)) if(k<keep) delete S.log[k];
@@ -1721,6 +1735,7 @@ setInterval(()=>{
 /* Keep the checklist current as the day moves on. */
 /* Phones and computer share one copy: pick up changes made on another device when this one comes back into view. */
 document.addEventListener("visibilitychange", async ()=>{
+  if(document.visibilityState==="hidden"){ flushNow(false); return; }
   if(document.visibilityState!=="visible" || !SERVER) return;
   if(view.contains(document.activeElement) && document.activeElement.matches("input[type=text],textarea")) return;
   try{ const j = await (await fetch("/api/state",{cache:"no-store"})).json(); if(j && j.state){ S = merge(j.state); SERVER_REV = j.rev ?? SERVER_REV; render(); } }catch(e){}
