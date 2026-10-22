@@ -6,19 +6,26 @@ Open-source, whole-life health planning for real humans with real complexity.
 
 (Shared version, Phase 1. Formerly "all systems you".)
 
+## Two ways to use it
+
+**1. Phone only (no computer needed).** On any iPhone or Android, open
+**https://qweekat.github.io/all-systems-you** in the browser and add it to your home screen.
+It works offline after the first visit.
+
+**2. Desktop + phone (adds pop-up reminders on the computer).** Download the
+**[desktop kit](https://qweekat.github.io/all-systems-you/downloads/all-systems-you-beta-kit.zip)**,
+unzip it and open `START HERE.html`. It runs on **Mac, Windows or Linux** (Python 3.8+), and pairs with an
+**iPhone or Android** by scanning a code, so every combination works.
+
+Either way, everything you enter stays on your own devices. There are no accounts and no server.
+(For developers: [all-systems-you-web.zip](https://qweekat.github.io/all-systems-you/downloads/all-systems-you-web.zip) is the web app to host yourself.)
+
 A free, open source helper for people who manage complex diets and health routines at home:
 a daily checklist with supplement and routine reminders, a pantry-to-meals planner with a shopping
 list, and a meal checker that flags foods against each person's own rules.
 
 **This is not medical advice.** The app helps people follow the plan they and their care team set.
 It never invents targets or doses: every number starts blank until the person enters one.
-
-## Get it
-
-- **Phone only:** open https://qweekat.github.io/all-systems-you in your phone's browser and add it to your home screen. No download needed.
-- **Computer + phone, with desktop reminders (Mac, Windows, Linux):** download the
-  [beta kit](https://qweekat.github.io/all-systems-you/downloads/all-systems-you-beta-kit.zip), unzip it and open `START HERE.html`.
-- **Web files to host yourself:** [all-systems-you-web.zip](https://qweekat.github.io/all-systems-you/downloads/all-systems-you-web.zip).
 
 ## What's here
 
