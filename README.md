@@ -13,6 +13,13 @@ list, and a meal checker that flags foods against each person's own rules.
 **This is not medical advice.** The app helps people follow the plan they and their care team set.
 It never invents targets or doses: every number starts blank until the person enters one.
 
+## Get it
+
+- **Phone only:** open https://qweekat.github.io/all-systems-you in your phone's browser and add it to your home screen. No download needed.
+- **Computer + phone, with desktop reminders (Mac, Windows, Linux):** download the
+  [beta kit](https://qweekat.github.io/all-systems-you/downloads/all-systems-you-beta-kit.zip), unzip it and open `START HERE.html`.
+- **Web files to host yourself:** [all-systems-you-web.zip](https://qweekat.github.io/all-systems-you/downloads/all-systems-you-web.zip).
+
 ## What's here
 
 - `app/` is the ready-to-use web app (published from `docs/` on GitHub Pages). Put the folder on any static web host,
