@@ -1,6 +1,13 @@
 /* ---------- phone build: works anywhere with the data on this phone only ---------- */
 /* Adds the Quick view, one-tap links for iPhone Shortcuts (?do=...), first-run setup, backups to Files, and offline install. */
 const TOUCH = matchMedia("(pointer: coarse)").matches;
+/* iPhone keeps a home-screen web app's data apart from Safari's, and Shortcuts always open Safari. */
+const STANDALONE = matchMedia("(display-mode: standalone)").matches || navigator.standalone === true;
+function whereHtml(){
+  return STANDALONE
+    ? `<div class="warnbox"><b>You're in the home-screen app.</b> On iPhone it keeps its own copy of your data, separate from Safari, and the one-tap shortcuts write to Safari's copy. Pick one place to use: Safari is the one that works with shortcuts. Deleting this icon deletes this copy, so save a backup first.</div>`
+    : `<p class="muted" style="margin:0">You're in Safari. Shortcuts write here too. If you add a home-screen icon, turn off <b>Open as Web App</b> so it opens this same copy.</p>`;
+}
 let QUICK_FLASH = "";
 function pGet(k){ try{ return localStorage.getItem(k); }catch(_){ return null; } }
 function pSet(k,v){ try{ localStorage.setItem(k,v); }catch(_){} }
@@ -69,7 +76,7 @@ function welcomeHtml(){
 function backupNudge(){
   if(needsSetup()) return "";
   const n = daysSinceBackup();
-  if(n!==null && n<7) return "";
+  if(n!==null && n<2) return "";
   return `<section class="panel"><b>${n===null?"Save your first backup":"Last backup was "+n+" days ago"}</b>
     <small class="muted">Your data is only on this phone. A backup in Files or iCloud keeps it safe if the phone is lost or reset.</small>
     <div><button class="btn ghost" ${PHX.backupAttr}>Save a backup now</button></div></section>`;
@@ -86,6 +93,7 @@ function renderQuick(){
   view.innerHTML = `<div class="stack">
     ${QUICK_FLASH?`<div class="next" role="status"><b>${esc(QUICK_FLASH)}</b></div>`:""}
     ${welcomeHtml()}
+    ${STANDALONE?whereHtml():""}
     ${PHX.waterHtml(lg)}
     <section class="panel"><h2>Meals</h2>${meals.length?`<div class="qlist">${meals.map(i=>qRow(i,key,lg)).join("")}</div>`:`<p class="muted" style="margin:0">No meals planned for today.</p>`}</section>
     <section class="panel"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap"><h2>Supplements</h2>${dueNow?`<button class="btn" data-qsupps="1">Took all due now (${dueNow})</button>`:""}</div>
@@ -105,6 +113,7 @@ const SHORTCUTS = [
 function renderPhone(){
   const n = daysSinceBackup();
   view.innerHTML = `<div class="stack">
+  <section class="panel"><h2>Where your data lives</h2>${whereHtml()}</section>
   <section class="panel"><h2>One-tap buttons</h2>
     <p style="margin:0">Each link below does one thing, like adding 4 oz of water. Put them in the iPhone Shortcuts app and you get buttons on your home screen or lock screen. They work anywhere, with no computer.</p>
     <ol class="day">${SHORTCUTS.map(([n,q],i)=>`<li style="grid-template-columns:1fr auto"><span><b>${esc(n)}</b><br><code style="font-size:.8rem;word-break:break-all;color:var(--muted)">${esc(appUrl(q))}</code></span><button class="btn ghost" data-copylink="${i}">Copy</button></li>`).join("")}</ol>
@@ -124,7 +133,7 @@ function renderPhone(){
     <p style="margin:0">A web app can't pop up reminders on its own while it's closed. Add your schedule to the iPhone Calendar instead: More, then Times &amp; reminders, then the calendar file. Calendar alerts work offline.</p>
   </section>
   <section class="panel"><h2>Backups</h2>
-    <p style="margin:0">Your data is only on this phone. ${n===null?"You haven't saved a backup yet.":"Your last backup was "+(n===0?"today":n+" day"+(n===1?"":"s")+" ago")+"."} Save one to Files or iCloud once a week. To move your data to another device, open the same file there.</p>
+    <p style="margin:0">Your data is only on this phone. ${n===null?"You haven't saved a backup yet.":"Your last backup was "+(n===0?"today":n+" day"+(n===1?"":"s")+" ago")+"."} Save one to Files or iCloud every few days, and always before you delete the home-screen icon, clear Safari's website data or switch phones. Those wipe the copy on this phone. To move your data to another device, open the same file there.</p>
     <div class="chips" style="gap:8px"><button class="btn" ${PHX.backupAttr}>Save a backup now</button><label class="btn ghost">Open a backup file<input type="file" accept=".json,application/json" ${PHX.restoreAttr} hidden></label></div>
   </section></div>`;
 }
