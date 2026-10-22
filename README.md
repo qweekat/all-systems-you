@@ -4,7 +4,6 @@
 
 Open-source, whole-life health planning for real humans with real complexity.
 
-(Shared version, Phase 1. Formerly "all systems you".)
 
 ## Two ways to use it
 
