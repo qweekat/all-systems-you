@@ -116,9 +116,9 @@ function renderPhone(){
       <li>Search for <b>Open URLs</b>, add it, and paste the link into it.</li>
       <li>Tap the name at the top to call it something like "+4 oz water", then tap <b>Done</b>.</li>
       <li>For a button on the home screen: press and hold the shortcut, tap <b>Share</b>, then <b>Add to Home Screen</b>.</li>
-      <li>For a box of several buttons: press and hold the home screen, tap <b>Edit</b>, then <b>Add Widget</b>, pick <b>Shortcuts</b>, and choose a folder with your Daily Helper shortcuts.</li>
+      <li>For a box of several buttons: press and hold the home screen, tap <b>Edit</b>, then <b>Add Widget</b>, pick <b>Shortcuts</b>, and choose a folder with your all systems you shortcuts.</li>
     </ol>
-    <small class="muted">Shortcuts opens the app in Safari, so keep using Daily Helper in Safari too. When you add it to the home screen, turn off <b>Open as Web App</b> so the icon and the shortcuts share the same data.</small>
+    <small class="muted">Shortcuts opens the app in Safari, so keep using all systems you in Safari too. When you add it to the home screen, turn off <b>Open as Web App</b> so the icon and the shortcuts share the same data.</small>
   </section>
   <section class="panel"><h2>Reminders without the laptop</h2>
     <p style="margin:0">A web app can't pop up reminders on its own while it's closed. Add your schedule to the iPhone Calendar instead: More, then Times &amp; reminders, then the calendar file. Calendar alerts work offline.</p>

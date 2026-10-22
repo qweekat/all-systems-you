@@ -86,7 +86,7 @@ var HHUI = (function(){
     var res = '';
     if(made){
       res = '<div class="hh-made">'
-        +(made.qr ? '<div class="hh-qr">'+made.qr+'</div><small class="muted">Have them point their phone\'s camera at this. It opens Daily Helper with your card.</small>'
+        +(made.qr ? '<div class="hh-qr">'+made.qr+'</div><small class="muted">Have them point their phone\'s camera at this. It opens all systems you with your card.</small>'
                   : '<small class="muted">'+(made.url?"The QR code couldn't load here.":"This page has no web address phones can open, so there's no QR code.")+' Share the card file or copy the text instead.</small>')
         +'<div class="hh-pass"><small>Passcode</small><b>'+esc(made.pass)+'</b><small>Tell them in person or on a call. Don\'t send it with the card.</small></div>'
         +'<div class="chips"><button class="btn ghost" data-hh-share>Share card file</button><button class="btn ghost" data-hh-copy>Copy card text</button><button class="btn ghost" data-hh-done>Done</button></div>'
@@ -113,7 +113,7 @@ var HHUI = (function(){
       +'<section class="panel"><h2>Household</h2><p class="muted" style="margin:0">People you share meals with. Their food rules stay on this device and are never sent online.</p>'
       +(h.people.length ? h.people.map(personCard).join("") : '<small class="muted">No one added yet.</small>')
       +'<div class="chips"><button class="btn" data-hh-mode="open">Add from a food card</button><button class="btn ghost" data-hh-mode="type">Type someone in</button></div>'
-      +'<small class="muted">Best: each person makes their own card in their own Daily Helper, so they choose what\'s on it.</small></section>'
+      +'<small class="muted">Best: each person makes their own card in their own copy of all systems you, so they choose what\'s on it.</small></section>'
       +tablePanel(h) + cardPanel(h)
       +(h.given.length ? '<section class="panel"><h2>Cards you\'ve made</h2><ul class="hh-ul">'+h.given.slice().reverse().slice(0,10).map(function(g){ return '<li>'+esc(nice(g.date))+": "+g.n+" line"+(g.n===1?"":"s")+(g.until?", could be opened until "+esc(nice(g.until)):", no end date")+'</li>'; }).join("")+'</ul><small class="muted">A card can\'t be taken back once opened. To change what someone has, send them a new card. It replaces the old one.</small></section>' : '')
       +'<section class="panel"><details><summary><b>How sharing stays private</b></summary><ul class="hh-ul">'
@@ -135,7 +135,7 @@ var HHUI = (function(){
     render();
   }
   function cardFile(){
-    return "Daily Helper food card from "+(made.name||"someone")+".\nOpen Daily Helper, go to More, then Household, then Add from a food card.\n"
+    return "all systems you food card from "+(made.name||"someone")+".\nOpen all systems you, go to More, then Household, then Add from a food card.\n"
       +(made.until?"It can be opened until "+nice(made.until)+".\n":"")+"\n"+(made.url||made.text)+"\n";
   }
   async function open(text, pass){
