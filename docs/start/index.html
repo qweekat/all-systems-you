@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Start here · all systems you</title>
+<meta name="description" content="How to try all systems you on your phone or computer. No GitHub needed.">
+<link rel="icon" href="../icons/daily-helper.svg">
+<link rel="apple-touch-icon" href="../icons/icon-180.png">
+<style>
+/* One friendly column for beta testers: two big choices, plain steps, and where to send feedback. */
+:root{ --bg:#f3f5f2; --surface:#ffffff; --line:#d9dfd8; --ink:#1d2a24; --muted:#5b6b62; --accent:#2f6b57; --accent-soft:#e1eee8; --on-accent:#ffffff;
+  --body:"Atkinson Hyperlegible","Segoe UI",system-ui,-apple-system,sans-serif; }
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){ --bg:#141a17; --surface:#1c2420; --line:#2f3a34; --ink:#e4ebe6; --muted:#9fb0a6; --accent:#7cc4a7; --accent-soft:#203a30; --on-accent:#10201a; color-scheme:dark }}
+:root[data-theme="dark"]{ --bg:#141a17; --surface:#1c2420; --line:#2f3a34; --ink:#e4ebe6; --muted:#9fb0a6; --accent:#7cc4a7; --accent-soft:#203a30; --on-accent:#10201a; color-scheme:dark }
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:17px/1.55 var(--body)}
+.wrap{max-width:40rem;margin:0 auto;padding-block:28px 56px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:grid;gap:20px}
+h1{margin:0;font-size:2rem;line-height:1.15;text-wrap:balance}
+h2{margin:0;font-size:1.25rem;text-wrap:balance}
+p{margin:0}
+.lede{color:var(--muted)}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:18px;display:grid;gap:12px}
+.big{display:block;text-align:center;text-decoration:none;font-weight:700;font-size:1.15rem;padding:16px 18px;border-radius:12px;background:var(--accent);color:var(--on-accent)}
+.big.alt{background:var(--accent-soft);color:var(--accent);border:2px solid var(--accent)}
+.big:focus-visible{outline:3px solid var(--ink);outline-offset:3px}
+ol{margin:0;padding-left:1.4rem;display:grid;gap:6px}
+.note{font-size:.93rem;color:var(--muted)}
+.tag{font-size:.8rem;font-weight:700;color:var(--accent);letter-spacing:.04em;text-transform:uppercase}
+footer{font-size:.88rem;color:var(--muted);display:grid;gap:6px}
+footer a,.note a{color:var(--accent)}
+</style>
+</head>
+<body>
+<main class="wrap">
+  <header style="display:grid;gap:8px">
+    <span class="tag">Beta test</span>
+    <h1>all systems you</h1>
+    <p class="lede">Your health is complicated. Managing it shouldn't be. Thanks for trying it out. Pick one way to use it below.</p>
+  </header>
+
+  <section class="card" aria-labelledby="phone">
+    <h2 id="phone">On your phone</h2>
+    <p>iPhone or Android. Nothing to install from a store, and no computer needed.</p>
+    <a class="big" href="../">Open the app</a>
+    <ol>
+      <li>Tap the button above. The app opens in your browser.</li>
+      <li>To keep it on your home screen: on iPhone, tap <b>Share</b>, then <b>Add to Home Screen</b>. On Android, tap the <b>⋮</b> menu, then <b>Add to Home screen</b> or <b>Install app</b>.</li>
+      <li>After the first visit it works without internet.</li>
+    </ol>
+    <p class="note">On iPhone, use the app in one place only: in Safari, or from the home-screen icon. The two keep separate copies of your information.</p>
+  </section>
+
+  <section class="card" aria-labelledby="computer">
+    <h2 id="computer">On your computer, with your phone</h2>
+    <p>Adds pop-up reminders on a Mac, Windows or Linux computer. Your phone connects to it at home.</p>
+    <a class="big alt" href="../downloads/all-systems-you-beta-kit.zip">Download for my computer</a>
+    <ol>
+      <li>Open the downloaded file to unzip it.</li>
+      <li>Open <b>START HERE</b> inside the folder and follow the steps for your computer.</li>
+    </ol>
+  </section>
+
+  <section class="card" aria-labelledby="private">
+    <h2 id="private">Your information stays with you</h2>
+    <p>There are no accounts. What you type is saved only on your own phone or computer, not online. Save a backup now and then from <b>More</b>, then <b>Backups</b>.</p>
+  </section>
+
+  <section class="card" aria-labelledby="feedback">
+    <h2 id="feedback">Tell us what you think</h2>
+    <p>Something confusing or broken? Something you love? Just email it. A few words is plenty.</p>
+    <a class="big alt" href="mailto:qweekat@gmail.com?subject=all%20systems%20you%20beta%20feedback">Send feedback</a>
+  </section>
+
+  <footer>
+    <p>You don't need a GitHub account or anything on github.com. GitHub is only where the app's files are kept.</p>
+    <p>This app is not medical advice. It helps you follow the plan you and your care team set.</p>
+    <p>For developers: <a href="https://github.com/qweekat/all-systems-you">source code</a> · <a href="../sources.html">sources</a></p>
+  </footer>
+</main>
+</body>
+</html>

@@ -1,5 +1,7 @@
 # all systems you
 
+> **Beta testers: you don't need anything on this page.** Go to **[qweekat.github.io/all-systems-you/start](https://qweekat.github.io/all-systems-you/start/)** to open the app on your phone or download it for your computer.
+
 *Your health is complicated. Managing it shouldn't be.*
 
 Open-source, whole-life health planning for real humans with real complexity.

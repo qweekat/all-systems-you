@@ -157,6 +157,9 @@ ol{{ margin:0; padding-left:1.3rem; display:grid; gap:10px }} .meta,.lede{{ colo
 </html>
 """
 open(os.path.join(out, 'sources.html'), 'w').write(sources_page())
+# Friendly start page for beta testers, at .../start/ (so they never need github.com).
+os.makedirs(os.path.join(out, 'start'), exist_ok=True)
+open(os.path.join(out, 'start', 'index.html'), 'w').write(open(os.path.join(os.path.dirname(__file__), 'start.html')).read())
 for f in os.listdir(os.path.join(here, 'icons')):
     shutil.copy(os.path.join(here, 'icons', f), os.path.join(out, 'icons', f))
 open(os.path.join(out, 'manifest.webmanifest'), 'w').write('''{
