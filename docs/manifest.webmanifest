@@ -1,0 +1,14 @@
+{
+  "name": "all systems you",
+  "short_name": "all systems you",
+  "description": "Your health is complicated. Managing it shouldn't be. Open-source, whole-life health planning for real humans with real complexity. Your data stays on your device.",
+  "start_url": "index.html",
+  "display": "standalone",
+  "background_color": "#f3f5f2",
+  "theme_color": "#2f6b57",
+  "icons": [
+    {"src": "icons/icon-180.png", "sizes": "180x180", "type": "image/png"},
+    {"src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png"},
+    {"src": "icons/daily-helper.svg", "sizes": "any", "type": "image/svg+xml"}
+  ]
+}

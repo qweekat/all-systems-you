@@ -1,0 +1,1624 @@
+<title>all systems you</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Literata:opsz,wght@7..72,500;7..72,700&display=swap">
+<style>
+/* Layout: one narrow column, a sticky tab bar, and a time rail down the left of the day's checklist. */
+:root{
+  --bg:#f3f5f2; --surface:#ffffff; --line:#d9dfd8; --ink:#1d2a24; --muted:#5b6b62;
+  --juniper:#2f6b57; --juniper-soft:#e1eee8; --dusk:#3d4f8a; --dusk-soft:#e6e9f5;
+  --warn:#9a5b00; --warn-soft:#fbf0dc; --done:#8a978f;
+  --display:"Literata",Georgia,"DejaVu Serif",serif;
+  --body:"Atkinson Hyperlegible","Ubuntu","Segoe UI",system-ui,sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#141a17; --surface:#1c2420; --line:#2f3a34; --ink:#e4ebe6; --muted:#9fb0a6;
+  --juniper:#7cc4a7; --juniper-soft:#203a30; --dusk:#a6b4ee; --dusk-soft:#252c47;
+  --warn:#f0b75c; --warn-soft:#3a2d16; --done:#66746c; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#141a17; --surface:#1c2420; --line:#2f3a34; --ink:#e4ebe6; --muted:#9fb0a6;
+  --juniper:#7cc4a7; --juniper-soft:#203a30; --dusk:#a6b4ee; --dusk-soft:#252c47;
+  --warn:#f0b75c; --warn-soft:#3a2d16; --done:#66746c; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.5;margin:0}
+.wrap{max-width:760px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 60px}
+h1,h2,h3{font-family:var(--display);text-wrap:balance;margin:0;line-height:1.2}
+h1{font-size:1.7rem} h2{font-size:1.2rem} h3{font-size:1rem}
+.muted{color:var(--muted)} small{font-size:.85rem}
+header.top{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:8px 16px;margin-bottom:12px}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
+nav.tabs{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);display:flex;gap:4px;padding-block:8px;border-bottom:1px solid var(--line);margin-bottom:16px;overflow-x:auto}
+nav.tabs button{font:inherit;font-weight:700;background:none;border:0;padding:8px 12px;border-radius:8px;color:var(--muted);cursor:pointer;white-space:nowrap}
+nav.tabs button[aria-selected="true"]{background:var(--juniper-soft);color:var(--juniper)}
+button,.btn{font:inherit;cursor:pointer}
+a{color:var(--juniper);font-weight:700}
+.btn{background:var(--juniper);color:var(--surface);border:0;border-radius:8px;padding:8px 14px;font-weight:700}
+.btn.ghost{background:none;color:var(--juniper);border:1px solid var(--line)}
+:focus-visible{outline:3px solid var(--dusk);outline-offset:2px}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px;display:grid;gap:10px}
+.stack{display:grid;gap:16px}
+[hidden]{display:none !important}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{font-size:.85rem;padding:2px 10px;border-radius:999px;background:var(--juniper-soft);color:var(--juniper);font-weight:700}
+.chip.pending{background:var(--warn-soft);color:var(--warn)}
+.chip.dusk{background:var(--dusk-soft);color:var(--dusk)}
+.facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.fact{display:grid;gap:2px}
+.fact b{font-variant-numeric:tabular-nums}
+.water{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.water .glasses{display:flex;gap:4px;flex-wrap:wrap}
+.glass{width:22px;height:28px;border:2px solid var(--juniper);border-radius:3px 3px 6px 6px;background:none;padding:0}
+.glass.full{background:var(--juniper)}
+.next{border-left:4px solid var(--dusk);background:var(--dusk-soft);border-radius:8px;padding:10px 14px}
+ol.day{list-style:none;margin:0;padding:0;display:grid}
+ol.day>li{display:grid;grid-template-columns:76px 24px 1fr;gap:4px 10px;padding:10px 0;border-top:1px solid var(--line);align-items:start}
+ol.day>li:first-child{border-top:0}
+.t{font-variant-numeric:tabular-nums;font-weight:700;white-space:nowrap;color:var(--muted);padding-top:2px}
+li.freezer .t,li.cook .t{color:var(--dusk)}
+.item{min-width:0}
+.item .title{font-weight:700}
+.item .detail{color:var(--muted);font-size:.93rem}
+.item ul{margin:4px 0 0;padding-left:18px}
+li.is-done .title,li.is-done .detail{color:var(--done);text-decoration:line-through}
+input[type="checkbox"]{width:22px;height:22px;accent-color:var(--juniper);margin:2px 0 0}
+.warnbox{background:var(--warn-soft);color:var(--warn);border-radius:8px;padding:8px 12px;font-size:.93rem}
+label{display:grid;gap:4px;font-weight:700;font-size:.93rem}
+input[type="text"],input[type="time"],input[type="date"],input[type="number"],select,textarea{font:inherit;font-weight:400;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:7px 9px;width:100%;min-width:0}
+textarea{min-height:80px;resize:vertical}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}
+.supp{border:1px solid var(--line);border-radius:10px;padding:12px;display:grid;gap:10px}
+.supp .row{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center}
+.supp .row label.inline{display:flex;gap:6px;align-items:center;font-weight:400}
+.dayedit{border-top:1px solid var(--line);padding-top:12px;display:grid;gap:8px}
+.dayedit:first-of-type{border-top:0;padding-top:0}
+.qrgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px}
+.qrcard{border:1px solid var(--line);border-radius:10px;padding:12px;display:grid;gap:8px;min-width:0}
+.qrcard ol{margin:0;padding-left:20px;display:grid;gap:4px}
+.qrcard code{font-size:.8rem;word-break:break-all;color:var(--muted)}
+.qr{background:#ffffff;border-radius:8px;padding:8px;max-width:220px}
+.qr svg{display:block;width:100%;height:auto}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(16px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--bg);padding:8px 16px;border-radius:999px;font-weight:700}
+ol.day>li.is-missed .title{color:var(--warn)}
+.linkbtn{background:none;border:0;padding:4px 0 0;color:var(--juniper);font-weight:700;font-size:.9rem;cursor:pointer}
+.labs{display:grid;gap:0}
+.labrow{display:grid;gap:2px;padding:10px 0;border-top:1px solid var(--line);min-width:0}
+.labrow:first-child{border-top:0}
+.labval b{font-variant-numeric:tabular-nums;font-size:1.1rem}
+.visit{display:grid;gap:4px;padding-bottom:10px;border-bottom:1px solid var(--line)}
+ol.doc{margin:0;padding-left:22px;display:grid;gap:12px}
+ol.doc>li{display:grid;gap:6px}
+ol.doc select{width:auto}
+.wbtns{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.wbtns .btn{font-size:1.1rem;padding:10px 18px;min-height:48px}
+.wbar{height:10px;border-radius:999px;background:var(--line);overflow:hidden}.wbar>span{display:block;height:100%;background:var(--accent)}
+.feel{display:grid;gap:10px}.feel .scale{display:flex;gap:6px;flex-wrap:wrap}
+.feel .scale button{min-width:44px;min-height:44px;border-radius:10px;border:1px solid var(--line);background:var(--surface);color:var(--ink);font:inherit}
+.feel .scale button[aria-pressed="true"]{background:var(--accent);color:var(--surface);border-color:var(--accent)}
+table.rep{width:100%;border-collapse:collapse;font-size:.92rem}table.rep th,table.rep td{border-bottom:1px solid var(--line);padding:6px 4px;text-align:left;vertical-align:top}
+.tablewrap{overflow-x:auto}
+.tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+.tile{display:grid;gap:4px;text-align:left;padding:14px;border:1px solid var(--line);border-radius:12px;background:var(--surface);color:var(--ink);font:inherit;cursor:pointer;text-decoration:none;min-height:84px}
+.tile b{font-size:1.05rem}.tile small{color:var(--muted)}
+.faces{display:flex;gap:6px;flex-wrap:wrap}.faces button{font-size:1.6rem;min-width:52px;min-height:52px;border-radius:12px;border:1px solid var(--line);background:var(--surface)}
+.faces button[aria-pressed="true"]{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent)} .rep-sec h3{margin:10px 0 4px} .rep-sec ul{margin:0;padding-left:20px}
+@media print{
+  body.printing-report .wrap>header, body.printing-report nav.tabs, body.printing-report .noprint, body.printing-report .toast, body.printing-report footer{display:none!important}
+  body.printing-report .panel{border:0;padding:0}
+  body.printing-doc .wrap>header, body.printing-doc nav.tabs, body.printing-doc .noprint, body.printing-doc .toast{display:none!important}
+  body.printing-doc main .stack>section:not(#doctorList){display:none!important}
+  body.printing-doc .panel{border:0;padding:0}
+}
+@media (prefers-reduced-motion:no-preference){.glass{transition:background .15s}}
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <h1>all systems you</h1>
+    <span class="chips" id="appLinks"><a href="pantry.html">Pantry and shopping list</a><a href="checker.html">Meal checker</a></span>
+    <span class="muted" id="syncNote"></span>
+  </header>
+  <nav class="tabs" role="tablist">
+    <button role="tab" data-tab="today" aria-selected="true">Today</button>
+    <button role="tab" data-tab="tomorrow" aria-selected="false">Tomorrow</button>
+    <button role="tab" data-tab="more" aria-selected="false">More</button>
+  </nav>
+  <main id="view"></main>
+  <footer class="muted" style="padding:16px 0 32px;font-size:.85rem;line-height:1.4"><b>all systems you</b>. Your health is complicated. Managing it shouldn't be.<br>all systems you helps you follow the plan you and your care team set. It is not medical advice and does not replace your doctor, dietitian or nurse. Check with them before changing your diet, medicines or supplements. Everything you enter stays on this device. Free and open source under the GNU AGPL 3.0. <a href="sources.html">Sources</a>.</footer>
+</div>
+<div class="toast" id="toast" hidden></div>
+
+<script>
+"use strict";
+const LS_KEY = "dailyhelper.v1";
+const DAYS = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+const DAYS_LONG = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+const PENDING_NOTE = "Waiting on your care team";
+
+/* Sample meals, by the Pantry Meal Planner's ids. pull = what comes out of the freezer the night before.
+   These are made-up starters so the app isn't empty. Swap in your own meals on the Meals & freezer tab. */
+const RECIPES = {
+  b_eggs:{t:"b", n:"Eggs and greens (sample)", d:"2 eggs, sauteed greens, sliced tomato.", pull:[]},
+  b_yogurt:{t:"b", n:"Plain yogurt with berries (sample)", d:"Plain yogurt, a handful of berries, a few nuts.", pull:[]},
+  l_bowl:{t:"l", n:"Chicken and grain bowl (sample)", d:"Shredded chicken, a cooked grain, raw vegetables, olive oil and lemon.", pull:["Shredded chicken (lunch)","1/2 cup cooked grain (lunch)"]},
+  l_thermos:{t:"l", n:"Leftover soup in a thermos (sample)", d:"A bowl of last night's soup or chili, reheated.", pull:[], night:"Set aside one bowl of tonight's dinner for tomorrow's thermos lunch"},
+  l_salad:{t:"l", n:"Bean and vegetable jar salad (sample)", d:"Beans, chopped vegetables, olive oil, lemon, herbs.", pull:[]},
+  d_soup:{t:"d", n:"Chicken vegetable soup night (sample)", you:"", others:"", pull:["Chicken vegetable soup"]},
+  d_chili:{t:"d", n:"Turkey and bean chili night (sample)", you:"", others:"", pull:["Turkey and bean chili"]},
+  d_plate:{t:"d", n:"Shredded chicken plate (sample)", you:"Roasted vegetables", others:"", pull:["Shredded chicken (dinner)"]},
+  d_fish:{t:"d", n:"Sheet-pan fish and vegetables (sample)", you:"", others:"", pull:["Fish fillets, if frozen"]},
+  d_cookday:{t:"d", n:"Cook day: whatever comes off the stove", you:"", others:"", pull:[]},
+  s_apple:{t:"s", n:"Apple with nut butter (sample)", d:"Half an apple with a spoon of nut butter.", pull:[]},
+  s_veg:{t:"s", n:"Vegetables with hummus (sample)", d:"Raw vegetables with a few spoons of hummus.", pull:[]},
+  e_tea:{t:"e", n:"Herbal tea (sample)", d:"A warm cup to wind down.", pull:[]}
+};
+const SLOTS = [["b","Breakfast"],["l","Lunch"],["s","Snack"],["d","Dinner"],["e","Evening treat"]];
+/* Your own meals from the Pantry Meal Planner show up too, when both pages are opened from the same app. */
+function plannerMine(){
+  try{ const p = JSON.parse(localStorage.getItem("pantryplanner.v1")||"null"); return (p&&Array.isArray(p.mine))? p.mine : []; }catch(e){ return []; }
+}
+function recipe(id){
+  if(RECIPES[id]) return RECIPES[id];
+  const m = plannerMine().find(r=>r.id===id);
+  if(m) return {t:(m.t||"d")[0], n:m.n, d:(m.ings||[]).map(x=>typeof x==="string"?x:(x&&(x.name||x.n))||"").join(", "), you:"", others:"", pull:[]};
+  return null;
+}
+function recipeOptions(slot){
+  const all = Object.entries(RECIPES).filter(([,r])=>r.t===slot).map(([id,r])=>[id,r.n]);
+  for(const m of plannerMine()) if((m.t||"")[0]===slot && !RECIPES[m.id]) all.push([m.id, m.n+" (yours)"]);
+  return all;
+}
+
+/* Extra supplements added on a version upgrade. None in the shared app. */
+function extraSupps(){ return []; }
+/* Health routine beyond food. Starts with a few made-up examples, switched off. Days: empty means every day. */
+function defaultRoutine(){
+  const x = (id,name,how,days,notes,where)=>({id,name,how,times:"",days,active:false,pending:false,notes,where:where||"home"});
+  return [
+    x("walk","Walk","As your energy allows.",[],"Example. Tick \"Doing it now\" to use it, or remove it."),
+    x("stretch","Stretching","A few gentle minutes.",[],"Example. Tick \"Doing it now\" to use it, or remove it."),
+    x("gym","Gym or class","",[],"Example of an \"in town\" step, which gets earlier alerts.","town")
+  ];
+}
+
+/*HOUSEHOLD*/
+/* Missed items: when something counts as missed and how late a catch-up can go. All editable on My rules. */
+function defaultMiss(){ return {after:30, suppCutoff:"21:30", homeCutoff:"21:00", townCutoff:"16:00", skipWithin:180}; }
+const MISS_FIELDS = [["after","Counts as missed after","minutes past its time","number"],["suppCutoff","Supplements without food, latest","after this, next day","time"],["homeCutoff","Routine at home, latest","after this, next day","time"],["townCutoff","Routine in town, latest","after this, next town day","time"],["skipWithin","Skip a catch-up this close to the next dose","minutes","number"]];
+function defaultTodo(){ return [
+  {id:"td1", text:"Add my supplements and medicines, with times"},
+  {id:"td2", text:"Set my own numbers on My rules, once my care team gives them"},
+  {id:"td3", text:"Replace the sample meals with my own"},
+  {id:"td4", text:"Set my daily times and reminders"}]; }
+/* Small rules you can change yourself. The meal checker and pantry planner read these too.
+   Every number starts blank: the app never guesses a target. Blank means the rule is off. */
+function defaultRules(){
+  return {carbsPerDay:null, carbsPerMeal:null, glLow:10, glHigh:20, fiberGoal:null, ramp:[null,null,null,null],
+    beansPerDay:null, nutsSeedsTbsp:null, oilTspPerMeal:null, spacingMin:null,
+    extra:[], ok:[], packs:["medicines"], breaks:[]};
+}
+/* Starter food lists live in the meal checker (STARTER_PACKS). Drafts until a clinician reviews them. */
+const PACKS = [["blood_sugar","Blood sugar","Sweets, sweet drinks, fast starches"],["low_mold","Low-mold","Aged cheese, vinegar, fermented and mold-prone foods"],["gluten_free","Gluten-free","Wheat, barley, rye and hidden wheat"],["low_arginine","Low-arginine for cold sores / HSV","Nuts, seeds, beans, soy, chocolate"],["medicines","Medicine and food warnings","Grapefruit, vitamin K greens, licorice, tyramine"]];
+/* ---------- Food breaks ----------
+   A break is a short-term avoid list with an end date: a starter list, a food group, or any food you type.
+   The meal checker and pantry read rules.breaks too. Planned meals that clash can be swapped, and come back when the break ends. */
+const PACK_PATS = /*PACKPATS*/{};   // filled in at build time from the meal checker's starter lists: {id:{name, avoid:[...], ok:[...]}}
+/* Food groups for typed foods. The app has no AI, so a typed word is matched against these names first
+   ("eggs", "dairy", "nuts"...). Anything else is flagged as typed, plus its plural. [id, name, typed names, pattern, sources] */
+const FOOD_GROUPS = [
+  ["eggs","Eggs","egg|eggs","eggs?|omelets?|omelettes?|frittatas?|quiches?|mayonnaise|mayo|aioli|meringues?|custards?|eggnog|hollandaise|egg noodles?",["fda-allergens"]],
+  ["dairy","Milk and dairy","dairy|milk|lactose|cheese","(?<!coconut |almond |oat |soy |rice |cashew |hemp )milk|cheeses?|yogh?urts?|(?<!peanut |almond |nut |seed |sunflower |apple |cocoa )butter|cream|kefir|ghee|whey|casein|buttermilk|ricotta|mozzarella|cheddar|parmesan|feta|labneh",["fda-allergens"]],
+  ["wheat","Wheat and gluten","wheat|gluten","pack:gluten_free",["celiac-sources"]],
+  ["soy","Soy","soy|soya|soybean","soy|soya|soybeans?|tofu|tempeh|edamame|miso|soy sauce|tamari|natto",["fda-allergens"]],
+  ["peanuts","Peanuts","peanut|peanuts","peanuts?|peanut butter|groundnuts?",["fda-allergens"]],
+  ["treenuts","Tree nuts","nut|nuts|tree nut|tree nuts","almonds?|walnuts?|cashews?|pecans?|hazelnuts?|filberts?|pistachios?|brazil nuts?|macadamias?|pine nuts?|nut butters?|nuts|marzipan|pralines?|pesto",["fda-allergens"]],
+  ["fish","Fish","fish","fish|salmon|tuna|cod|halibut|trout|sardines?|anchov(?:y|ies)|mackerel|tilapia|haddock|snapper|catfish|fish sauce",["fda-allergens"]],
+  ["shellfish","Shellfish","shellfish|seafood","shellfish|shrimps?|prawns?|crabs?|lobsters?|crawfish|crayfish|scallops?|clams?|mussels?|oysters?",["fda-allergens"]],
+  ["sesame","Sesame","sesame","sesame|tahini|hummus|halva|za.?atar",["fda-allergens"]],
+];
+const escRe = w => w.replace(/[.*+?^${}()|[\]\\]/g,"\\$&").replace(/\s+/g,"\\s+");
+const wordPat = w => { const x = escRe(w.trim().toLowerCase()); return x.endsWith("s") ? x+"?" : x+"(?:s|es)?"; };
+function groupFor(word){ const w = String(word||"").trim().toLowerCase(); return w ? FOOD_GROUPS.find(g=>g[2].split("|").includes(w) || g[1].toLowerCase()===w) : null; }
+/* Turns the form into a break: {label, pack} or {label, pat, src}. preset is "pack:id" or "group:id". */
+function breakFromForm(preset, typed, also){
+  const extra = String(also||"").split(",").map(x=>x.trim()).filter(Boolean);
+  let g = null, pack = null, label = "", pat = "", src = [];
+  if(preset.startsWith("pack:")){ pack = preset.slice(5); label = (PACK_PATS[pack]||{}).name || (PACKS.find(x=>x[0]===pack)||[])[1] || pack; }
+  else if(preset.startsWith("group:")) g = FOOD_GROUPS.find(x=>x[0]===preset.slice(6));
+  else if(typed.trim()) g = groupFor(typed);
+  if(g){ label = g[1]; src = g[4]; if(g[3].startsWith("pack:")) pack = g[3].slice(5); else pat = g[3]; }
+  else if(!pack && typed.trim()){ label = typed.trim(); pat = wordPat(typed); }
+  if(extra.length){ pat = [pat, ...extra.map(wordPat)].filter(Boolean).join("|"); if(!label) label = extra.join(", "); else label += " (+ "+extra.join(", ")+")"; }
+  if(!label) return null;
+  return pack && !extra.length ? {label, pack, src} : {label, pack:pack||undefined, pat, src};
+}
+function breakTest(b){
+  const tests = [];
+  if(b.pack && PACK_PATS[b.pack]){ const P = PACK_PATS[b.pack];
+    const ok = P.ok.length ? new RegExp("\\b(?:"+P.ok.join("|")+")\\b","gi") : null, bad = new RegExp("\\b(?:"+P.avoid.join("|")+")\\b","i");
+    tests.push(t => bad.test(ok ? t.replace(ok," ") : t)); }
+  if(b.pat){ try{ const re = new RegExp("(?<![\\p{L}\\p{N}])(?:"+b.pat+")(?![\\p{L}\\p{N}])","iu"); tests.push(t => re.test(t)); }catch(e){} }
+  return t => tests.some(f => f(t));
+}
+const recipeText = r => r ? r.n+" "+(r.d||"")+" "+(r.you||"") : "";
+function breaksOn(){ const t = ymd(new Date()); return (S.rules.breaks||[]).filter(b=>b.until>=t); }
+function breakAffected(b){
+  const hit = breakTest(b), out = [];
+  for(const dow of [0,1,2,3,4,5,6]) for(const [k,lab] of SLOTS){ const id = ((S.week[dow]||{}).ids||{})[k], r = recipe(id); if(r && hit(recipeText(r))) out.push({dow, k, lab, id, n:r.n}); }
+  return out;
+}
+/* First meal of the same kind that none of the breaks on today would flag. */
+function breakSwap(slot){
+  const tests = breaksOn().map(breakTest);
+  const opt = recipeOptions(slot).find(([id]) => !tests.some(f => f(recipeText(recipe(id)))));
+  return opt ? opt[0] : null;
+}
+function endBreak(i, why){
+  const b = S.rules.breaks[i]; if(!b) return 0;
+  let back = 0;
+  for(const [key,v] of Object.entries(b.saved||{})){ const [dow,k] = key.split(":"), w = S.week[dow];
+    if(w && w.ids && w.ids[k]===v.to){ w.ids[k] = v.from; back++; } }
+  S.rules.breaks.splice(i,1); logRule("Food break "+b.label+" "+why);
+  return back;
+}
+function expireBreaks(){
+  const t = ymd(new Date()), names = []; let back = 0;
+  for(let i=(S.rules.breaks||[]).length-1; i>=0; i--) if(S.rules.breaks[i].until < t){ names.unshift(S.rules.breaks[i].label); back += endBreak(i,"ended"); }
+  const msg = names.length ? "Food break ended: "+names.join(", ")+(back?". "+back+" meal"+(back===1?"":"s")+" put back":"") : "";
+  if(msg){ save(); setTimeout(()=>toast(msg), 50); }
+}
+const BK_KEY = "dailyhelper.backups";
+function backups(){ try{ const b = JSON.parse(localStorage.getItem(BK_KEY)||"[]"); return Array.isArray(b)? b : []; }catch(e){ return []; } }
+/* Once a day, keep a copy of everything (the state as it was when the day's first open happened). */
+function dailyBackup(){
+  const t = ymd(new Date()); let b = backups(); if(b.some(x=>x.date===t)) return;
+  b.unshift({date:t, data:JSON.stringify(S)}); b = b.slice(0,7);
+  for(let n=b.length; n>0; n--){ try{ localStorage.setItem(BK_KEY, JSON.stringify(b.slice(0,n))); return; }catch(e){} }
+}
+function niceDate(s){ return new Date(s+"T12:00").toLocaleDateString(undefined,{weekday:"short", month:"short", day:"numeric"}); }
+function fbPreview(){
+  const el = document.getElementById("fb-preview"); if(!el) return;
+  const preset = document.getElementById("fb-preset").value, typed = document.getElementById("fb-word").value, also = document.getElementById("fb-also").value;
+  const b = breakFromForm(preset, typed, also);
+  if(!b){ el.textContent = "Pick a list or type a food."; return; }
+  const g = groupFor(typed);
+  const n = breakAffected(b).length;
+  el.innerHTML = `<b>${esc(b.label)}</b>. `+(b.pack&&!preset?"Uses the "+esc(b.label)+" list. ":"")+(typed.trim()&&!preset&&!g?"Not a food group the app knows, so it flags the word as typed. ":"")
+    +(g&&!preset?"Counts as the "+esc(g[1])+" group. ":"")+(n?`${n} planned meal${n===1?"":"s"} this week would be flagged.`:"No planned meals this week are affected.");
+}
+const ASK = "Leave blank until your care team gives you a number.";
+const RULE_FIELDS = [
+  ["carbsPerDay","Daily carb target","g a day",ASK],
+  ["carbsPerMeal","Carb cap per meal","g a meal",ASK],
+  ["fiberGoal","Fiber goal","g a day",ASK],
+  ["beansPerDay","Bean servings","1/2-cup servings a day","Only if you were told to limit them."],
+  ["nutsSeedsTbsp","Nuts and seeds","tbsp a day","Only if you were told to limit them."],
+  ["oilTspPerMeal","Added oil","tsp a meal, at most","Only if you were told to limit it."],
+  ["spacingMin","Binder spacing","minutes from meds and supplements","For fiber or binder supplements. "+ASK],
+  ["glLow","Low glycemic load","per meal, at or under","10 is the common cutoff."],
+  ["glHigh","High glycemic load","per meal, at or over","20 is the common cutoff."]
+];
+
+function defaultLabs(){ return []; }
+function defaultVisits(){ return []; }
+function defaultDoctor(){ return []; }
+
+/* Starting data: a blank profile with sample meals. Everything is editable in the app. */
+function defaults(){
+  return {
+    version: 9,
+    stock: {}, stockAsOf: "", lastGrain: "",
+    miss: defaultMiss(),
+    moved: [],
+    todo: defaultTodo(),
+    missFrom: "",
+    rules: defaultRules(),
+    rulesLog: [],
+    labs: defaultLabs(),
+    visits: defaultVisits(),
+    notes: [],
+    doctor: defaultDoctor(),
+    leads: {home:"10, 5", town:"40, 30"},
+    routine: defaultRoutine(),
+    supplements: [],
+    times: {breakfast:"08:00", lunch:"12:30", snack:"15:30", dinner:"18:00", walkAfter:30, treat:"19:30", pull:"20:00", cook:"10:00", water:"10:00, 13:00, 16:00"},
+    on: {supps:true, meals:true, snack:true, walk:true, treat:true, pull:true, cook:true, water:true, routine:true},
+    fiberStart: "",
+    waterGoal: null, glassOz: 8, waterMode: "fixed", weightLb: null, waterSizes: [4, 8], simpleHome: true, checkin: true, lbDays: 7,
+    /* Daily rhythm. Everything is off or blank until the person sets it; starting values come from the cited sources. */
+    rhythm: {wake:"", bed:"", fastOn:false, fastHours:13, rampStart:"", lastMealGap:3, walkMin:10, walkAfter:{b:false, l:false, d:false}, foodOrder:false, bmCheck:false},
+    eaters: 1, burners: 2, oven: true,
+    cookDay: 0,
+    nextCook: {date:"", session:"A"},
+    /* The shared week. ids use the Pantry Meal Planner's recipe ids, so its shopping list can follow this schedule. */
+    week: {
+      1:{ids:{b:"b_eggs", l:"l_bowl", s:"s_apple", d:"d_soup", e:"e_tea"}, note:""},
+      2:{ids:{b:"b_yogurt", l:"l_thermos", s:"s_veg", d:"d_plate", e:"e_tea"}, note:""},
+      3:{ids:{b:"b_eggs", l:"l_salad", s:"s_apple", d:"d_chili", e:"e_tea"}, note:""},
+      4:{ids:{b:"b_yogurt", l:"l_thermos", s:"s_veg", d:"d_fish", e:"e_tea"}, note:""},
+      5:{ids:{b:"b_eggs", l:"l_bowl", s:"s_apple", d:"d_soup", e:"e_tea"}, note:""},
+      6:{ids:{b:"b_yogurt", l:"l_thermos", s:"s_veg", d:"d_plate", e:"e_tea"}, note:""},
+      0:{ids:{b:"b_eggs", l:"l_salad", s:"s_apple", d:"d_cookday", e:"e_tea"}, note:""}
+    },
+    /* Extra things to move down, typed by hand. Keyed by the day they're eaten; they come up the night before. */
+    pull: {0:[],1:[],2:[],3:[],4:[],5:[],6:[]},
+    log: {}
+  };
+}
+
+/* ---------- storage: local server on the computer, browser storage elsewhere ---------- */
+let S = defaults();
+let SERVER = false;
+let LAPTOP = false; /* true on the computer itself, false on a paired phone */
+function lsGet(){ try{ return JSON.parse(localStorage.getItem(LS_KEY)||"null"); }catch(e){ return null; } }
+function lsSet(v){ try{ localStorage.setItem(LS_KEY, JSON.stringify(v)); }catch(e){} }
+function merge(saved){
+  const d = defaults(), d0 = defaults();
+  if(!saved || typeof saved!=="object") return d;
+  if(!saved.version) saved.version = d.version;
+  const out = Object.assign(d, saved);
+  out.times = Object.assign(defaults().times, saved.times||{});
+  out.on = Object.assign(defaults().on, saved.on||{});
+  out.log = saved.log||{};
+  if(!saved.version || saved.version<2){ out.week = d0.week; out.pull = d0.pull; out.version = 2; }
+  if(out.version<3){
+    const have = new Set((out.supplements||[]).map(x=>x.id));
+    out.supplements = (out.supplements||[]).concat(extraSupps().filter(x=>!have.has(x.id)));
+    out.routine = out.routine || defaultRoutine();
+    out.version = 3;
+  }
+  if(out.version<4){
+    out.leads = out.leads || {home:"10, 5", town:"40, 30"};
+    const dr = defaultRoutine(), ids = new Set(out.routine.map(r=>r.id));
+    out.routine = out.routine.map(r=>r.id==="sweat" ? Object.assign({}, r, {name:dr.find(x=>x.id==="sweat").name, how:dr.find(x=>x.id==="sweat").how, where:"town"}) : r);
+    for(const id of ["epsom","gym"]) if(!ids.has(id)) out.routine.push(dr.find(x=>x.id===id));
+    out.version = 4;
+  }
+  if(out.version<5){
+    out.notes = out.notes || [];
+    out.doctor = out.doctor || defaultDoctor();
+    out.version = 5;
+  }
+  if(out.version<6){
+    out.labs = out.labs || defaultLabs();
+    out.visits = out.visits || defaultVisits();
+    out.version = 6;
+  }
+  if(out.version<7){ out.rules = out.rules || defaultRules(); out.rulesLog = out.rulesLog || []; out.version = 7; }
+  if(out.version<8){ out.moved = out.moved||[]; out.todo = out.todo||defaultTodo(); const g = (out.routine||[]).find(r=>r.id==="gym"); if(g) g.where = "town"; out.version = 8; }
+  if(out.version<9){ out.stock = out.stock||{}; out.version = 9; }
+  out.stock = out.stock||{};
+  out.miss = Object.assign(defaultMiss(), out.miss||{});
+  out.moved = out.moved||[];
+  out.rules = Object.assign(defaultRules(), out.rules||{});
+  out.leads = Object.assign({home:"10, 5", town:"40, 30"}, out.leads||{});
+  out.rhythm = Object.assign(defaults().rhythm, out.rhythm||{}); out.rhythm.walkAfter = Object.assign({b:false,l:false,d:false}, (saved.rhythm||{}).walkAfter||{});
+  return out;
+}
+async function load(){
+  const local = lsGet();
+  if(location.protocol==="http:"){
+    try{
+      const r = await fetch("/api/state",{cache:"no-store"});
+      const j = await r.json();
+      if(j && j.server){ SERVER = true; LAPTOP = !!j.laptop; S = merge(j.state || local); return; }
+    }catch(e){}
+  }
+  S = merge(local);
+}
+/* Keep nextCook on the coming cook day, so the pantry planner always sees the right session. */
+function rollCook(){
+  let d = parseYmd(S.nextCook.date); if(!d) return;
+  const today = parseYmd(ymd(new Date()));
+  let moved = false;
+  while(d < today){ d = addDays(d,7); S.nextCook.session = S.nextCook.session==="A"?"B":"A"; moved = true; }
+  if(moved){ S.nextCook.date = ymd(d); }
+  return moved;
+}
+let saveTimer = null;
+function save(){
+  pruneLog();
+  try{ const cd = nextCookDate(parseYmd(ymd(new Date()))); if(cd) S.cookNext = {date:ymd(cd), items:cookPlanFor(cd).map(x=>({id:x.id, batches:x.batches}))}; }catch(e){}
+  lsSet(S);
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(async ()=>{
+    if(!SERVER) return;
+    try{
+      await fetch("/api/state",{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify({state:S, reminders:buildReminders(60)})});
+      setSync();
+    }catch(e){ setSync("Could not reach the reminder service. Changes are saved in this browser."); }
+  }, 400);
+}
+function pruneLog(){
+  const keep = ymd(addDays(new Date(),-45));
+  for(const k of Object.keys(S.log)) if(k<keep) delete S.log[k];
+  S.moved = (S.moved||[]).filter(m=>m.day>=keep);
+}
+
+/* ---------- dates and times ---------- */
+const pad = n=>String(n).padStart(2,"0");
+function ymd(d){ return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate()); }
+function parseYmd(s){ const [y,m,d]=(s||"").split("-").map(Number); return y? new Date(y,m-1,d): null; }
+function addDays(d,n){ const x=new Date(d); x.setDate(x.getDate()+n); return x; }
+function parseTime(t){
+  const m = String(t).toLowerCase().replace(/[\s.]/g,"").match(/^(\d{1,2})(?::?(\d{2}))?(am|pm|a|p)?$/);
+  if(!m) return null;
+  let h=+m[1], mi=+(m[2]||0); const ap=m[3];
+  if(ap){ if(h===12) h=0; if(ap[0]==="p") h+=12; }
+  if(h>23||mi>59) return null;
+  return pad(h)+":"+pad(mi);
+}
+function parseTimes(s){ return [...new Set(String(s||"").split(/[,;]|\band\b/).map(x=>x.trim()).filter(Boolean).map(parseTime).filter(Boolean))].sort(); }
+function badTimes(s){ return String(s||"").split(/[,;]|\band\b/).map(x=>x.trim()).filter(x=>x && !parseTime(x)); }
+const mins = t=>{ const [h,m]=t.split(":").map(Number); return h*60+m; };
+const fromMins = m=>{ m=((m%1440)+1440)%1440; return pad(Math.floor(m/60))+":"+pad(m%60); };
+function niceTime(t){ if(!t) return ""; let [h,m]=t.split(":").map(Number); const ap=h>=12?"pm":"am"; h=h%12||12; return h+":"+pad(m)+" "+ap; }
+const esc = s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+
+/* ---------- plan logic ---------- */
+function fiberWeek(d){
+  const st = parseYmd(S.fiberStart); if(!st) return 1;
+  return Math.max(1, Math.floor((d - st)/86400000/7)+1);
+}
+function fiberInfo(d){
+  const w = fiberWeek(d);
+  const R = S.rules||defaultRules(), ramp = R.ramp||[];
+  const g = w>=4 ? (R.fiberGoal ?? ramp[3]) : ramp[w-1];
+  const target = (g==null || g==="") ? "" : g+" g";
+  return {w, target, on: !!(S.fiberStart && target)};
+}
+function cookSession(d){
+  if(d.getDay()!==Number(S.cookDay)) return null;
+  const anchor = parseYmd(S.nextCook.date); if(!anchor) return S.nextCook.session;
+  const weeks = Math.round((d - anchor)/86400000/7);
+  const flip = Math.abs(weeks)%2===1;
+  return flip ? (S.nextCook.session==="A"?"B":"A") : S.nextCook.session;
+}
+/* ---------- cook day from your week ----------
+   Each batch base, what one batch makes, and how long it cooks. Ids match the Pantry Meal Planner's recipes. Samples. */
+const BASES = {
+  r_soup:{n:"Chicken vegetable soup", unit:"bowls", yield:8, min:45, where:"stove"},
+  r_chili:{n:"Turkey and bean chili", unit:"bowls", yield:8, min:60, where:"stove"},
+  r_shredded:{n:"Poached shredded chicken", unit:"4 oz portions", yield:10, min:25, where:"stove", note:"Strain and freeze the poaching liquid as broth."},
+  r_grain:{n:"Grain pot", unit:"half-cup portions", yield:11, min:25, where:"stove"},
+  r_roastveg:{n:"Roasted vegetables", unit:"sides", yield:5, min:40, where:"oven", fridge:true}
+};
+/* What one person's meal takes from the batch bases. Dinner counts once for each person eating (S.eaters). */
+const USES = {
+  l_bowl:{r_shredded:1, r_grain:1},
+  d_soup:{r_soup:1}, d_chili:{r_chili:1}, d_plate:{r_shredded:1, r_roastveg:1}, d_cookday:{r_grain:1}
+};
+function usageOn(d){
+  const ids = (S.week[d.getDay()]||{}).ids||{}, out = {}, eaters = Math.max(1, Number(S.eaters)||1);
+  const addU = (m,x)=>{ for(const [k,v] of Object.entries(m||{})) out[k]=(out[k]||0)+v*x; };
+  for(const [k] of SLOTS) if(ids[k]!=="l_thermos") addU(USES[ids[k]], k==="d"?eaters:1);
+  if(ids.l==="l_thermos"){ /* a bowl of last night's dinner */
+    const prev = USES[((S.week[addDays(d,-1).getDay()]||{}).ids||{}).d]||{};
+    const stew = Object.keys(prev).find(k=>k==="r_soup"||k==="r_chili");
+    if(stew) out[stew]=(out[stew]||0)+1;
+  }
+  return out;
+}
+function usageBetween(from, days){ const t={}; for(let i=0;i<days;i++){ for(const [k,v] of Object.entries(usageOn(addDays(from,i)))) t[k]=(t[k]||0)+v; } return t; }
+function nextCookDate(from){ for(let i=0;i<8;i++){ const d=addDays(from,i); if(d.getDay()===Number(S.cookDay) && !(S.log[ymd(d)]||{}).cooked) return parseYmd(ymd(d)); } return null; }
+/* What to cook on a cook day: anything the freezer won't cover for the 7 days that start that day. */
+function cookPlanFor(cd){
+  const today = parseYmd(ymd(new Date()));
+  if(cd < today) cd = today;
+  const before = usageBetween(today, Math.round((cd-today)/86400000));
+  const need = usageBetween(cd, 7), items = [];
+  for(const [id,b] of Object.entries(BASES)){
+    const have = Math.max(0, (Number((S.stock||{})[id])||0) - (before[id]||0));
+    const n = need[id]||0;
+    if(n > have){ const batches = Math.ceil((n-have)/b.yield); items.push({id, batches, need:n, have}); }
+  }
+  return items;
+}
+function baseName(it){ return BASES[it.id].n; }
+function baseMin(it){ return BASES[it.id].min; }
+/* Your burners and oven (Times & reminders): longest pot first on a burner, the rest fill whichever frees up first. */
+function cookTimeline(items){
+  const burners=Array.from({length:Math.max(1, Number(S.burners)||1)},()=>0), steps=[]; let oven=0;
+  const stove = items.filter(x=>BASES[x.id].where==="stove" || (BASES[x.id].where==="oven" && !S.oven)).sort((a,b)=>baseMin(b)-baseMin(a));
+  for(const it of stove) for(let k=0;k<it.batches;k++){ const i = burners.indexOf(Math.min(...burners)); steps.push({at:burners[i], where:"Burner "+(i+1)+(BASES[it.id].where==="oven"?" (no oven: cook it in a pan)":""), it}); burners[i]+=baseMin(it); }
+  if(S.oven) for(const it of items.filter(x=>BASES[x.id].where==="oven")) for(let k=0;k<it.batches;k++){ steps.push({at:oven, where:"Oven", it}); oven+=baseMin(it)+5; }
+  const end = Math.max(...burners, oven);
+  for(const it of items.filter(x=>BASES[x.id].where==="none")) steps.push({at:Math.max(0,end-15), where:"No heat", it});
+  return {steps: steps.sort((a,b)=>a.at-b.at||a.where.localeCompare(b.where)), end};
+}
+const hm = m=> Math.floor(m/60)+":"+pad(m%60);
+function cookSummary(items){
+  if(!items.length) return "Your freezer covers next week. Nothing to cook.";
+  const {end} = cookTimeline(items);
+  return "About "+(Math.round(end/15)/4)+" hours: "+items.map(it=>baseName(it)+(it.batches>1?" x"+it.batches:"")).join(", ")+".";
+}
+/* Freezer stock: counts go down as the days' meals pass and up when you tick a cook day done. */
+function useUpStock(){
+  const today = ymd(new Date()); let d = parseYmd(S.stockAsOf||today), changed=false;
+  while(ymd(d) < today){ for(const [k,v] of Object.entries(usageOn(d))) S.stock[k]=Math.max(0,(Number(S.stock[k])||0)-v); d=addDays(d,1); changed=true; }
+  S.stockAsOf = today; return changed;
+}
+
+function suppDose(s,d){ return s.dose||""; }
+
+/* Which days a supplement or routine step is due: picked weekdays (none = every day), or every other day. */
+function dueOn(x, d){
+  if(x.alt){ const st = parseYmd(x.altFrom) || d; const n = Math.round((parseYmd(ymd(d)) - parseYmd(ymd(st)))/86400000); return ((n%2)+2)%2===0; }
+  return !(x.days && x.days.length) || x.days.includes(d.getDay());
+}
+function freqHtml(x, i, attr){
+  return `<div class="row">${DAYS.map((n,dw)=>`<label class="inline"><input type="checkbox" data-${attr}day="${i}" value="${dw}" ${!x.alt&&(x.days||[]).includes(dw)?"checked":""} ${x.alt?"disabled":""}> ${n}</label>`).join("")}
+    <label class="inline"><input type="checkbox" data-${attr}alt="${i}" ${x.alt?"checked":""}> Every other day</label></div>
+    <small class="muted">${x.alt?"Every other day, starting "+esc(x.altFrom||"today")+".":(x.days||[]).length?x.days.length+" days a week.":"Every day."}</small>`;
+}
+
+/* Every task for one date, timed or not. */
+function itemsFor(d, plain){
+  const dow = d.getDay(), T = S.times, items = [];
+  const add = o=>items.push(o);
+  if(S.on.supps) for(const s of S.supplements){
+    if(!s.active || !dueOn(s,d)) continue;
+    const ts = parseTimes(s.times);
+    const dose = suppDose(s,d);
+    const detail = [dose, s.how].filter(Boolean).join(". ");
+    if(!ts.length){ add({id:"supp:"+s.id, time:null, kind:"supp", title:s.name, detail, pending:s.pending}); continue; }
+    ts.forEach(t=>add({id:"supp:"+s.id+":"+t, time:t, kind:"supp", title:s.name, detail, pending:s.pending, suppId:s.id, binder:!!s.binder, where:s.where||"home"}));
+  }
+  const wk = S.week[dow]||{ids:{}}, ids = wk.ids||{};
+  const r = k=>recipe(ids[k]);
+  if(S.on.meals){
+    const b=r("b"), l=r("l"), dn=r("d");
+    if(b) add({id:"meal:b", time:parseTime(T.breakfast), kind:"meal", title:"Breakfast: "+b.n, detail:b.d});
+    if(l) add({id:"meal:l", time:parseTime(T.lunch), kind:"meal", title:"Lunch: "+l.n, detail:l.d});
+    if(dn) add({id:"meal:d", time:parseTime(T.dinner), kind:"meal", title:"Dinner: "+dn.n, detail:[dn.you?"You add: "+dn.you+".":"", dn.others?"Others add: "+dn.others+".":"", householdNote(dn.n+" "+(dn.d||"")), wk.note||""].filter(Boolean).join(" ")});
+  }
+  if(S.on.snack && r("s")) add({id:"snack", time:parseTime(T.snack), kind:"habit", title:"Snack: "+r("s").n, detail:r("s").d});
+  const RH = S.rhythm||{};
+  if(RH.foodOrder) for(const it of items) if(it.kind==="meal") it.detail = [it.detail, "Start with a few bites of vegetables, then protein, starch last. In a mixed bowl, eat some vegetables off the top first; if that's not practical, a mixed bowl is fine."].filter(Boolean).join(" ");
+  if(S.on.walk) for(const [k,tk,nm] of [["b","breakfast","breakfast"],["l","lunch","lunch"],["d","dinner","dinner"]]) if((RH.walkAfter||{})[k] && parseTime(T[tk]) && r(k))
+    add({id:"walk:"+k, time:fromMins(mins(parseTime(T[tk]))+Number(T.walkAfter||30)), kind:"habit", title:"Walk "+(Number(RH.walkMin)||10)+" minutes", detail:"After "+nm+", as your energy allows."});
+  const ew = eatingWindow(d);
+  if(ew) add({id:"fastclose", time:ew.last, kind:"habit", title:"Kitchen closes", detail:"Start of your "+ew.hours+"-hour overnight fast. First meal tomorrow about "+niceTime(ew.first)+"."});
+  if(RH.bmCheck) add({id:"bm", time:null, kind:"habit", title:"Bowel movement today?", detail:"Tick it if yes. Tell your care team if you go a day or more without one."});
+  if(S.on.treat && r("e")) add({id:"treat", time:parseTime(T.treat), kind:"habit", title:"Evening treat: "+r("e").n, detail:r("e").d});
+  if(S.checkin && !plain){ const bt = S.rhythm && S.rhythm.bed ? fromMins(Math.max(0, mins(S.rhythm.bed)-30)) : "21:00"; add({id:"checkin", time:bt, kind:"checkin", title:"Evening check-in", detail:"How did today go? Fill in the check-in at the bottom of Today."}); }
+  if(S.on.water) parseTimes(T.water).forEach(t=>add({id:"water:"+t, time:t, kind:"water", title:"Glass of water", detail: waterGoalNow() ? "Goal "+waterGoalNow()+" oz today." : ""}));
+  if(S.on.routine!==false) for(const r of (S.routine||[])){
+    if(!r.active || !dueOn(r,d)) continue;
+    const ts = parseTimes(r.times);
+    if(!ts.length){ add({id:"rt:"+r.id, time:null, kind:"routine", title:r.name, detail:r.how}); continue; }
+    ts.forEach(t=>add({id:"rt:"+r.id+":"+t, time:t, kind:"routine", title:r.name, detail:r.how, pending:r.pending, weekly:!!(r.days&&r.days.length), where:r.where||"home", routineId:r.id}));
+  }
+  const sess = cookSession(d);
+  if(S.on.cook && sess){ const done = (S.log[ymd(d)]||{}).cooked, cp = plain||done ? null : cookPlanFor(parseYmd(ymd(d)));
+    if(done) add({id:"cook", time:parseTime(T.cook), kind:"cook", title:"Cook day", detail:"Cooked: "+done.map(x=>(BASES[x.id]||{n:x.id}).n).join(", ")+"."}); else
+    add({id:"cook", time:parseTime(T.cook), kind:"cook", title:"Cook day", detail: cp ? cookSummary(cp)+" Full plan on the Meals & freezer tab." : "Your cook list is on the Meals & freezer tab."}); }
+  if(S.on.pull){
+    const tmr = addDays(d,1), tdow = tmr.getDay();
+    const tids = (S.week[tdow]||{}).ids||{};
+    const list = [];
+    for(const [k] of SLOTS){ const rc = recipe(tids[k]); if(rc){ for(const x of rc.pull||[]) if(!list.includes(x)) list.push(x); if(rc.night) list.push(rc.night); } }
+    list.push(...(S.pull[tdow]||[]));
+    const tsess = cookSession(tmr);
+    if(tsess) list.unshift("Tomorrow is cook day: skip anything you'll cook fresh");
+    if(list.length) add({id:"pull", time:parseTime(T.pull), kind:"freezer", title:"Move to the fridge for "+DAYS_LONG[tdow], list});
+  }
+  if(!plain) for(const m of (S.moved||[])) if(m.day===ymd(d)) add(Object.assign({}, m, {moved:true}));
+  const timed = items.filter(i=>i.time).sort((a,b)=>a.time.localeCompare(b.time));
+  return {timed, untimed: items.filter(i=>!i.time)};
+}
+
+/* Supplement spacing check: things marked as a fiber or binder stay apart from everything else (My rules, default 2 h). */
+function spacingWarnings(){
+  const out = [];
+  const act = S.supplements.filter(s=>s.active && parseTimes(s.times).length);
+  for(const b of act.filter(s=>s.binder)) for(const o of act.filter(s=>!s.binder))
+    for(const tb of parseTimes(b.times)) for(const to of parseTimes(o.times)){
+      const gap = Math.abs(mins(tb)-mins(to));
+      if(gap<(Number((S.rules||{}).spacingMin)||120)) out.push(b.name+" at "+niceTime(tb)+" is "+(gap? gap+" min" : "at the same time as")+(gap?" from ":" ")+o.name+" at "+niceTime(to)+".");
+    }
+  return out;
+}
+
+/* Reminders grouped by minute, for the next n days. The computer service reads these. */
+/* Minutes-before alerts: "at home" and "in town" each have their own (town leaves time to drive in). */
+function leadsFor(where){
+  const v = String((S.leads||{})[where==="town"?"town":"home"]||"").split(/[,;\s]+/).map(Number).filter(x=>Number.isFinite(x)&&x>=0&&x<=600);
+  return v.length ? [...new Set(v)].sort((a,b)=>b-a) : [0];
+}
+/* Reminders grouped by the minute they fire, for the next n days. The computer service reads these. */
+function buildReminders(n){
+  const groups = new Map(), now = new Date();
+  for(let i=0;i<n;i++){
+    const d = addDays(now,i);
+    for(const it of itemsFor(d).timed){
+      const [h,m] = it.time.split(":").map(Number);
+      for(const lead of leadsFor(it.where)){
+        const at = new Date(d.getFullYear(), d.getMonth(), d.getDate(), h, m - lead);
+        const k = ymd(at)+"T"+pad(at.getHours())+":"+pad(at.getMinutes());
+        const g = groups.get(k+"|"+lead) || {at:k, lead, time:it.time, items:[]};
+        g.items.push(it); groups.set(k+"|"+lead, g);
+      }
+    }
+  }
+  const out = [];
+  for(const [key,g] of groups){
+    const when = g.lead ? "In "+g.lead+" min ("+niceTime(g.time)+")" : niceTime(g.time);
+    const title = when+": "+g.items.map(x=>x.title).join(", ");
+    const body = g.items.map(x=> x.list ? x.list.join("\n") : (x.kind==="supp"? [x.title,x.detail].filter(Boolean).join(": ") : x.detail)).filter(Boolean).join("\n");
+    out.push({key, at:g.at, title, body});
+  }
+  return out.sort((a,b)=>a.at.localeCompare(b.at));
+}
+
+/* ---------- missed items ---------- */
+/* Missed = not ticked a set time after it was due (My rules). Supplements with food go to the next meal the same day
+   (after the last meal, next day); without food, any time before the cutoff. Keep binder spacing. Skip a catch-up that
+   lands too close to the next regular dose. Routine: later today if before the cutoff (separate cutoffs for home and
+   town); otherwise daily steps drop, few-times-a-week steps go to the next free day with a day between, and town steps
+   go to your next town day. */
+const missable = it=> (it.kind==="supp" || it.kind==="routine") && it.time && it.routineId!=="bm";
+function withFood(s){ return /meal|food/i.test(s.how||""); }
+const abs = (dayStr, m)=> parseYmd(dayStr).getTime()/60000 + m;
+function whenText(day, time){
+  const t = ymd(new Date()), tm = ymd(addDays(new Date(),1));
+  return niceTime(time)+" "+(day===t?"today":day===tm?"tomorrow":DAYS_LONG[parseYmd(day).getDay()]);
+}
+function planMiss(it, srcDay, now){
+  const M = S.miss, today = ymd(now), nowM = now.getHours()*60+now.getMinutes();
+  const later = where=> Math.ceil((nowM + Math.max(...leadsFor(where)) + 5)/5)*5;
+  const cut = t=> mins(parseTime(t)||"23:59");
+  if(it.moved) return {why:"This was already a catch-up, so it isn't moved again."};
+  if(it.kind==="supp"){
+    const s = S.supplements.find(x=>x.id===it.suppId); if(!s) return {why:"Not on your list any more."};
+    const gap = Number(S.rules.spacingMin)||120, food = withFood(s);
+    const meals = ["breakfast","lunch","dinner"].map(k=>parseTime(S.times[k])).filter(Boolean).map(mins).sort((a,b)=>a-b);
+    const clash = (day,m)=> itemsFor(parseYmd(day)).timed.find(o=>o.kind==="supp" && o.suppId!==s.id && (o.binder!==!!s.binder) && Math.abs(mins(o.time)-m)<gap);
+    let day = today, m = null;
+    for(let tries=0; tries<12 && m===null; tries++){
+      const from = day===today ? (food? nowM : later(it.where)) : 0;
+      if(food){ m = meals.find(x=>x>=from) ?? null; }
+      else { m = Math.max(from, meals[0]||480); if(m>cut(M.suppCutoff)) m = null; }
+      while(m!==null){
+        const c = clash(day,m); if(!c) break;
+        const next = food ? meals.find(x=>x>m) : mins(c.time)+gap;
+        m = (next===undefined || (!food && next>cut(M.suppCutoff))) ? null : Math.ceil(next/5)*5;
+      }
+      if(m===null){ day = ymd(addDays(parseYmd(day),1)); }
+    }
+    if(m===null) return {why:"No safe time in the next few days."};
+    const at = abs(day,m);
+    for(let k=0;k<3;k++){ const dd = addDays(parseYmd(today),k);
+      if(!s.active || !dueOn(s,dd)) continue;
+      for(const t of parseTimes(s.times)){ const x = abs(ymd(dd),mins(t));
+        if(x>abs(srcDay,mins(it.time)) && Math.abs(x-at) < (Number(M.skipWithin)||0)) return {why:"Your next regular dose is "+whenText(ymd(dd),t)+", so skip this one."}; } }
+    return {day, time:fromMins(m), why: food ? "Next meal" + (day===today?"":" (none left today)") : "Keeps "+Math.round(gap/6)/10+" h from "+(s.binder?"your other supplements":"your fiber or binder")};
+  }
+  const r = (S.routine||[]).find(x=>x.id===it.routineId); if(!r) return {why:"Not on your list any more."};
+  const town = (r.where||"home")==="town", cutoff = cut(town? M.townCutoff : M.homeCutoff);
+  const daily = !r.alt && !(r.days&&r.days.length);
+  if(srcDay===today && later(it.where)<=cutoff) return {day:today, time:fromMins(later(it.where)), why:"Later today"};
+  if(daily) return {why: srcDay===today ? "Too late today. It's back on your list tomorrow." : "It's back on your list today."};
+  const start = srcDay===today ? 1 : 0;
+  for(let k=start;k<15;k++){
+    const d = addDays(parseYmd(today),k), dn = DAYS_LONG[d.getDay()];
+    if(k===0 && nowM>=cutoff) continue;
+    if(dueOn(r,d)) return {why:"Your next regular one is "+(k===1?"tomorrow":k===0?"today":dn)+", so skip this one."};
+    if(town){
+      const others = (S.routine||[]).filter(o=>o.id!==r.id && o.active && o.where==="town");
+      if(!others.length) return {day:ymd(d), time:it.time, why:"Next day (no other town days set)"};
+      if(others.some(o=>dueOn(o,d))) return {day:ymd(d), time:it.time, why:"Your next town day"};
+      continue;
+    }
+    if(dueOn(r,addDays(d,1))) return {why:"Your next regular one is "+DAYS_LONG[addDays(d,1).getDay()]+", and you want a day between."};
+    return {day:ymd(d), time:it.time, why:"Next free day"};
+  }
+  return {why:"No free day found."};
+}
+function markMissed(it, srcDay, auto){
+  const lg = dayLog(srcDay); lg.missed = lg.missed||{};
+  if((lg.missed[it.id] && !lg.missed[it.id].undone) || lg.done[it.id]) return false;
+  const p = planMiss(it, srcDay, new Date());
+  const rec = {auto:!!auto, why:p.why};
+  if(p.day){
+    const id = "mv:"+srcDay+":"+it.id;
+    S.moved = (S.moved||[]).filter(m=>m.id!==id);
+    S.moved.push({id, day:p.day, time:p.time, kind:it.kind, title:"Catch-up: "+it.title, detail:it.detail, where:it.where||"home",
+      suppId:it.suppId, routineId:it.routineId, binder:it.binder, from:srcDay+" "+it.time});
+    rec.to = id; rec.day = p.day; rec.time = p.time;
+  }
+  const n = {id:"n"+Date.now()+Math.random().toString(36).slice(2,6), about:it.title.replace(/^Catch-up: /,""), feel:"", date:srcDay, time:it.time,
+    text:"Missed"+(auto?" (not ticked off)":"")+". "+(p.day? "Moved to "+whenText(p.day,p.time)+". "+p.why+"." : p.why), missed:true};
+  (S.notes=S.notes||[]).push(n); rec.note = n.id;
+  lg.missed[it.id] = rec;
+  return true;
+}
+function undoMissed(srcDay, itemId){
+  const lg = dayLog(srcDay), rec = (lg.missed||{})[itemId]; if(!rec) return;
+  if(rec.to) S.moved = (S.moved||[]).filter(m=>m.id!==rec.to);
+  if(rec.note) S.notes = (S.notes||[]).filter(n=>n.id!==rec.note);
+  lg.missed[itemId] = {undone:true}; /* so the automatic check leaves it alone */
+}
+/* Anything not ticked 30 min after its time counts as missed. Looks back 2 days, never before this feature started. */
+function sweepMissed(){
+  const now = new Date(), after = Number(S.miss.after)||30; let changed = false;
+  if(!S.missFrom){ S.missFrom = ymd(now); changed = true; }
+  for(let k=2;k>=0;k--){
+    const d = addDays(now,-k), key = ymd(d);
+    if(key < (S.missFrom||key)) continue;
+    for(const it of itemsFor(d).timed){
+      if(!missable(it)) continue;
+      const due = new Date(d.getFullYear(), d.getMonth(), d.getDate(), ...it.time.split(":").map(Number));
+      if(now - due < after*60000) continue;
+      const lg = S.log[key]; if(lg && (lg.done[it.id] || (lg.missed||{})[it.id])) continue;
+      if(!(lg && (lg.missed||{})[it.id]) && markMissed(it, key, true)) changed = true;
+    }
+  }
+  return changed;
+}
+
+/* ---------- views ---------- */
+let TAB = "today";
+const view = document.getElementById("view");
+function setSync(msg){
+  /* links work both as plain files and from a server */
+  document.getElementById("syncNote").textContent = msg || (SERVER ? (LAPTOP ? "Desktop reminders on" : "Connected to the computer") : "Saved in this browser");
+}
+function toast(msg){ const t=document.getElementById("toast"); t.textContent=msg; t.hidden=false; clearTimeout(toast.h); toast.h=setTimeout(()=>t.hidden=true,2200); }
+
+function dayLog(key){ return S.log[key] = S.log[key] || {done:{}, water:0}; }
+
+function limitsText(){
+  const R = S.rules||{}, out = [];
+  if(R.carbsPerMeal) out.push(R.carbsPerMeal+" g carbs a meal");
+  if(R.carbsPerDay) out.push(R.carbsPerDay+" g carbs a day");
+  if(R.beansPerDay!=null && R.beansPerDay!=="") out.push(R.beansPerDay+" bean serving"+(R.beansPerDay==1?"":"s"));
+  if(R.nutsSeedsTbsp!=null && R.nutsSeedsTbsp!=="") out.push(R.nutsSeedsTbsp+" tbsp nuts or seeds");
+  return out.join(", ");
+}
+/* Water: a fixed goal, or half your body weight in ounces (IFM Detox Food Plan guide). 0 = no goal yet. */
+function waterGoalNow(){
+  if(S.waterMode==="weight" && Number(S.weightLb)>0) return Math.round(Number(S.weightLb)/2);
+  return Number(S.waterGoal)||0;
+}
+/* Fasting: today's overnight fast. Starts at the chosen length; with a ramp start date it begins 2 h shorter and adds 1 h a week. */
+function fastToday(d){
+  const R = S.rhythm||{}; if(!R.fastOn) return null;
+  const goal = Number(R.fastHours)||13, st = parseYmd(R.rampStart);
+  if(!st) return goal;
+  const wk = Math.max(0, Math.floor((d - st)/86400000/7));
+  return Math.min(goal, Math.max(12, goal-2) + wk);
+}
+/* Suggested eating window from wake, bed and the fast: last meal a set gap before bed, first meal fast-hours later. */
+function eatingWindow(d){
+  const R = S.rhythm||{}, bed = parseTime(R.bed), wake = parseTime(R.wake), fh = fastToday(d||new Date());
+  if(!bed || fh==null) return null;
+  const last = (mins(bed) - Math.round((Number(R.lastMealGap)||0)*60) + 1440) % 1440;
+  const first = (last + Math.round(fh*60)) % 1440;
+  const warn = wake && ((first - mins(wake) + 1440) % 1440) > 12*60 ? "Your first meal would come long after you wake. Shorten the fast or move bedtime." : "";
+  return {first:fromMins(first), last:fromMins(last), lunch:fromMins(Math.round(first + ((last - first + 1440) % 1440)/2) % 1440), hours:fh, warn};
+}
+function renderDay(offset){
+  const d = addDays(new Date(), offset), key = ymd(d), lg = S.log[key]||{done:{},water:0};
+  const {timed, untimed} = itemsFor(d);
+  const f = fiberInfo(d), sess = cookSession(d), wg = waterGoalNow(), glasses = wg ? Math.ceil(wg/S.glassOz) : 0;
+  const nowM = new Date().getHours()*60+new Date().getMinutes();
+  const next = offset===0 ? timed.find(i=>!lg.done[i.id] && !((lg.missed||{})[i.id]||{}).why && mins(i.time)>=nowM-30) : null;
+  const warns = spacingWarnings();
+  const pendingCount = S.supplements.filter(s=>s.active && s.pending).length;
+  const brk = breaksOn().filter(b=>b.until>=key), brkHit = brk.map(b=>[b, breakAffected(b).filter(a=>a.dow===d.getDay())]);
+  const simple = S.simpleHome && offset===0;
+  const brkHtml = `  ${brk.length?`<section class="panel warnbox"><b>Food break${brk.length>1?"s":""}: ${brk.map(b=>esc(b.label)+" until "+esc(niceDate(b.until))).join("; ")}.</b>
+    ${brkHit.some(x=>x[1].length)?" Planned today and flagged: "+brkHit.flatMap(x=>x[1]).map(a=>esc(a.lab+": "+a.n)).join("; ")+". Swap them on My rules.":" Nothing planned today contains it."}
+    ${brk.some(b=>b.pack==="low_arginine")?`<div class="muted">Foods leaning toward lysine: fish, chicken, turkey, beef, cheese, yogurt, milk.</div>`:""}</section>`:""}
+`;
+  const head = `  <section class="panel">
+    <h2>${DAYS_LONG[d.getDay()]}, ${d.toLocaleDateString(undefined,{month:"long",day:"numeric"})}</h2>
+    <div class="chips">
+      ${f.on?`<span class="chip">Fiber week ${f.w}: ${esc(f.target)}</span>`:""}
+      ${sess?`<span class="chip dusk">Cook day</span>`:""}
+      ${pendingCount?`<span class="chip pending">${pendingCount} supplement times not confirmed</span>`:""}
+    </div>
+    ${limitsText()?`<div class="facts"><div class="fact"><small class="muted">Your limits</small><b>${esc(limitsText())}</b></div></div>`:""}
+    ${f.on?`<small class="muted">Raise fiber slowly and drink extra water. Stop raising it if bloating or cramping gets worse.</small>`:""}
+  </section>`;
+  let h = `<div class="stack">${offset===0?waterPanel(lg, wg):""}${brkHtml}${simple?"":head}`;
+  if(next) h += `<div class="next"><b>Next: ${niceTime(next.time)}</b> · ${esc(next.title)}</div>`;
+  if(warns.length) h += `<div class="warnbox"><b>Spacing check.</b> Your rule keeps fiber and binder supplements at least ${Math.round((Number(S.rules.spacingMin)||120)/6)/10} hours from medicines and other supplements. ${warns.map(esc).join(" ")}</div>`;
+  h += `<section class="panel"><h2>${offset===0?"Today's checklist":"Tomorrow"}</h2><ol class="day">`;
+  for(const it of timed){
+    const done = !!lg.done[it.id], ms0 = (lg.missed||{})[it.id], ms = ms0 && !ms0.undone ? ms0 : null;
+    h += `<li class="${it.kind} ${done?"is-done":""} ${ms&&!done?"is-missed":""}"><span class="t">${niceTime(it.time)}</span>
+      <input type="checkbox" id="c-${esc(it.id)}" data-done="${esc(it.id)}" data-day="${key}" ${done?"checked":""} aria-label="Done: ${esc(it.title)}">
+      <div class="item"><div class="title">${esc(it.title)} ${it.pending?`<span class="chip pending">${it.kind==="routine"?"how often: confirm":"time not confirmed"}</span>`:""}${it.moved?` <span class="chip dusk">from ${esc(whenText(it.from.slice(0,10), it.from.slice(11)))}</span>`:""}${ms&&!done?` <span class="chip pending">Missed</span>`:""}</div>
+      ${ms&&!done?`<div class="detail"><b>${ms.day?"Moved to "+esc(whenText(ms.day,ms.time))+".":"Skipped."}</b> ${esc(ms.day?ms.why+".":ms.why)} <button class="linkbtn" data-unmiss="${esc(it.id)}" data-day="${key}">Undo</button></div>`:""}
+      ${it.detail?`<div class="detail">${esc(it.detail)}</div>`:""}
+      ${it.list?`<ul class="detail">${it.list.map(x=>`<li>${esc(x)}</li>`).join("")}</ul>`:""}
+      ${offset===0&&!done&&!ms&&missable(it)?`<button class="linkbtn" data-miss="${esc(it.id)}" data-day="${key}" style="margin-right:14px">Missed it</button>`:""}${it.kind==="supp"||it.kind==="routine"||it.kind==="meal"?`<button class="linkbtn" data-noteabout="${esc(it.kind==="meal"?it.title.replace(/^[^:]+: /,""):it.title)}">Add a note</button>`:""}</div></li>`;
+  }
+  h += `</ol></section>`;
+  if(untimed.length){
+    h += `<section class="panel"><h2>No time set yet</h2><small class="muted">These won't remind you until they have a time. Add times on the Supplements &amp; routine tab.</small><ol class="day">`;
+    for(const it of untimed){
+      const done = !!lg.done[it.id];
+      h += `<li class="${done?"is-done":""}"><span class="t">—</span><input type="checkbox" data-done="${esc(it.id)}" data-day="${key}" ${done?"checked":""} aria-label="Done: ${esc(it.title)}"><div class="item"><div class="title">${esc(it.title)}</div>${it.detail?`<div class="detail">${esc(it.detail)}</div>`:""}</div></li>`;
+    }
+    h += `</ol></section>`;
+  }
+  if(offset===0 && S.checkin) h += checkinPanel(key, lg);
+  if(simple) h += head;
+  h += `</div>`;
+  view.innerHTML = h;
+}
+
+/* ---------- More: everything that isn't today, as big tiles ---------- */
+const MORE_TILES = [["supps","Supplements & routine","What you take and when"],["week","Meals & freezer","The week's meals"],["notes","Notes","Notes and questions"],["labs","Labs & visits","Results and visits"],
+  ["lookback","Look back","Last 7 to 30 days, printable"],["visit","For my visit","Summary to print or send"],["household","Household","People you share meals with, food cards"],["rules","My rules","Limits, food lists, food breaks"],["settings","Times & reminders","Times, water, rhythm, backups"]];
+function renderMore(){
+  view.innerHTML = `<div class="stack"><section class="panel"><h2>More</h2><div class="tiles">
+    ${MORE_TILES.map(([id,n,d])=>`<button class="tile" data-goto="${id}"><b>${esc(n)}</b><small>${esc(d)}</small></button>`).join("")}
+    <a class="tile" href="pantry.html"><b>Pantry &amp; shopping</b><small>Plan meals and make the list</small></a>
+    <a class="tile" href="pantry.html?grocery"><b>Grocery mode</b><small>Big tap list for the store</small></a>
+    <a class="tile" href="checker.html"><b>Meal checker</b><small>Check a meal or recipe</small></a>
+  </div></section></div>`;
+}
+
+/* ---------- water taps ---------- */
+/* The day's water is kept in ounces. Older days stored a glass count, read at the glass size. */
+function waterOz(lg){ return lg ? (lg.waterOz!=null ? lg.waterOz : (lg.water||0)*(Number(S.glassOz)||8)) : 0; }
+function waterSizes(){ const xs = (Array.isArray(S.waterSizes)?S.waterSizes:[4,8]).map(Number).filter(x=>x>0); return xs.length? xs : [4,8]; }
+function waterPanel(lg, wg){
+  const oz = waterOz(lg), pct = wg ? Math.min(100, Math.round(oz/wg*100)) : 0;
+  return `<section class="panel"><h2>Water</h2>
+    <div class="wbtns">${waterSizes().map(z=>`<button class="btn" data-wadd="${z}">+${z} oz</button>`).join("")}${(lg.waterTaps||[]).length?`<button class="linkbtn" id="wUndo">Undo last</button>`:""}</div>
+    <div><b>${oz} oz</b>${wg?` of ${wg} oz`:" today"}</div>
+    ${wg?`<div class="wbar" role="progressbar" aria-label="Water today" aria-valuenow="${pct}" aria-valuemin="0" aria-valuemax="100"><span style="width:${pct}%"></span></div>`:`<small class="muted">Set a water goal on Times &amp; reminders if you have one.</small>`}</section>`;
+}
+
+/* ---------- evening check-in ---------- */
+const FEEL = [["overall","Overall"],["energy","Energy"],["mood","Mood"],["gut","Digestion"],["sleep","Sleep last night"],["symptoms","Symptoms (5 = none)"]];
+const FACES = ["😣","🙁","😐","🙂","😄"];
+function checkinPanel(key, lg){
+  const f = lg.feel||{};
+  return `<section class="panel feel" id="checkin"><h2>How did I feel today?</h2><small class="muted">1 = rough, 5 = great. Your look-back and visit summary use these.</small>
+    <div><b>Overall</b><div class="faces" role="group" aria-label="Overall">${FACES.map((x,i)=>`<button data-feel="overall" data-v="${i+1}" data-day="${key}" aria-pressed="${f.overall===i+1}" aria-label="${i+1} of 5">${x}</button>`).join("")}</div></div>
+    <details ${FEEL.slice(1).some(([k])=>f[k])?"open":""}><summary>Add more</summary><div class="feel" style="margin-top:8px">
+    ${FEEL.slice(1).map(([k,l])=>`<div><b>${l}</b><div class="scale" role="group" aria-label="${l}">${[1,2,3,4,5].map(n=>`<button data-feel="${k}" data-v="${n}" data-day="${key}" aria-pressed="${f[k]===n}">${n}</button>`).join("")}</div></div>`).join("")}</div></details>
+    <label>Anything to remember?<textarea id="feel-note" data-feelnote="${key}" placeholder="e.g. headache after lunch, slept badly">${esc(f.note||"")}</textarea></label></section>`;
+}
+
+/* ---------- look back and visit summary (printable, downloadable) ---------- */
+function dl(name, text, type){ const a=document.createElement("a"); a.href=URL.createObjectURL(new Blob([text],{type:type||"text/plain"})); a.download=name; document.body.appendChild(a); a.click(); a.remove(); }
+function printReport(){ document.body.classList.add("printing-report"); window.print(); setTimeout(()=>document.body.classList.remove("printing-report"),500); }
+async function copyText(txt){ try{ await navigator.clipboard.writeText(txt); toast("Copied"); }catch(_){ toast("Copy didn't work here. Use Download instead."); } }
+function dayRow(d){
+  const key = ymd(d), lg = S.log[key]||{done:{}}, {timed, untimed} = itemsFor(d), all = [...timed, ...untimed].filter(i=>i.kind!=="checkin");
+  const done = all.filter(i=>(lg.done||{})[i.id]).length;
+  const missed = Object.entries(lg.missed||{}).filter(([,m])=>m && !m.undone).map(([id,m])=>{ const it = all.find(i=>i.id===id); return (it?it.title:id)+(m.why?" ("+m.why+")":""); });
+  const notes = (S.notes||[]).filter(n=>n.date===key).map(n=>(n.about?n.about+": ":"")+n.text);
+  if(lg.feel && lg.feel.note) notes.unshift("Check-in: "+lg.feel.note);
+  return {key, d, logged:!!S.log[key], total:all.length, done, water:waterOz(S.log[key]), feel:lg.feel||{}, missed, notes};
+}
+function reportRows(days){ return Array.from({length:days},(_,i)=>dayRow(addDays(new Date(), i-days+1))); }
+function summarize(rows){
+  const wg = waterGoalNow(), logged = rows.filter(r=>r.logged);
+  const avg = k=>{ const xs = rows.map(r=>r.feel[k]).filter(Number.isFinite); return xs.length? (xs.reduce((a,b)=>a+b,0)/xs.length).toFixed(1) : "—"; };
+  return {days:rows.length, logged:logged.length, pct: logged.length? Math.round(logged.reduce((a,r)=>a+(r.total? r.done/r.total : 0),0)/logged.length*100) : null,
+    wg, waterDays: wg? rows.filter(r=>r.water>=wg).length : null, waterAvg: logged.length? Math.round(logged.reduce((a,r)=>a+r.water,0)/logged.length) : 0,
+    avg: FEEL.map(([k,l])=>[l, avg(k)])};
+}
+const shortDay = d=>DAYS[d.getDay()]+" "+(d.getMonth()+1)+"/"+d.getDate();
+function summaryLines(sm){
+  return [`Days with app use: ${sm.logged} of ${sm.days}`+(sm.days-sm.logged?` (${sm.days-sm.logged} days with no app use are left out of the averages)`:""),
+    `Checklist done: ${sm.pct==null?"—":sm.pct+"%"} on average`,
+    `Water: ${sm.waterAvg} oz a day on average`+(sm.wg?`, goal (${sm.wg} oz) met on ${sm.waterDays} of ${sm.days} days`:""),
+    `How I felt (average, 1 = rough, 5 = great): `+sm.avg.map(([l,v])=>l+" "+v).join(", ")];
+}
+function lookbackSections(days){
+  const rows = reportRows(days), sm = summarize(rows), secs = [];
+  secs.push(["Summary", summaryLines(sm)]);
+  const brk = breaksOn(); if(brk.length) secs.push(["Food breaks on now", brk.map(b=>b.label+" until "+niceDate(b.until))]);
+  secs.push(["Day by day", rows.map(r=>`${shortDay(r.d)}: `+(r.logged? `${r.done}/${r.total} done, ${r.water} oz water`+(FEEL.some(([k])=>r.feel[k])?", felt "+FEEL.filter(([k])=>r.feel[k]).map(([k,l])=>l.split(" ")[0].toLowerCase()+" "+r.feel[k]).join(" "):"")
+      +(r.missed.length?". Missed: "+r.missed.join("; "):"")+(r.notes.length?". Notes: "+r.notes.join("; "):"") : "nothing logged"))]);
+  return {rows, sm, secs};
+}
+function secsText(title, secs){ return [title, "Made with all systems you on "+new Date().toLocaleDateString()+". Not medical advice.", "", ...secs.flatMap(([h,ls])=>[h.toUpperCase(), ...(ls.length?ls:["(none)"]).map(l=>"- "+l), ""])].join("\n").trim(); }
+function secsHtml(secs){ return secs.map(([h,ls])=>`<div class="rep-sec"><h3>${esc(h)}</h3>${ls.length?`<ul>${ls.map(l=>`<li>${esc(l)}</li>`).join("")}</ul>`:`<small class="muted">None</small>`}</div>`).join(""); }
+function lookbackCsv(rows){
+  const q = v=>'"'+String(v==null?"":v).replace(/"/g,'""')+'"';
+  const wg = waterGoalNow();
+  return [["date","done","total","done_pct","water_oz","water_goal_oz",...FEEL.map(f=>f[0]),"bowel_movement","food_breaks","fiber_week","feeling_note","missed","notes"].join(","),
+    ...rows.map(r=>{ const lg = S.log[r.key]||{}, fi = fiberInfo(r.d);
+      return [r.key, r.logged?r.done:"", r.logged?r.total:"", r.logged&&r.total?Math.round(r.done/r.total*100):"", r.logged?r.water:"", wg||"", ...FEEL.map(([k])=>r.feel[k]||""),
+        S.rhythm&&S.rhythm.bmCheck ? ((lg.done||{}).bm?"yes":(r.logged?"no":"")) : "", (S.rules.breaks||[]).filter(b=>b.until>=r.key).map(b=>b.label).join("; "), fi&&fi.on?fi.w:"",
+        r.feel.note||"", r.missed.join("; "), r.notes.filter(n=>!n.startsWith("Check-in: ")).join("; ")].map(q).join(","); })].join("\n");
+}
+function renderLookback(){
+  const days = [7,14,30].includes(+S.lbDays)? +S.lbDays : 7, {rows, secs} = lookbackSections(days);
+  view.innerHTML = `<div class="stack"><section class="panel" id="report"><h2>Look back: last ${days} days</h2>
+    <div class="row noprint"><label class="inline">Show <select id="lb-days">${[7,14,30].map(n=>`<option value="${n}" ${n===days?"selected":""}>${n} days</option>`).join("")}</select></label>
+      <button class="btn" id="repPrint">Print</button><button class="btn ghost" id="lbTxt">Download text</button><button class="btn ghost" id="lbCsv">Download spreadsheet (CSV)</button><button class="btn ghost" id="lbCopy">Copy</button></div>
+    ${secsHtml(secs.slice(0,-1))}
+    <h3>Day by day</h3><div class="tablewrap"><table class="rep"><thead><tr><th>Day</th><th>Done</th><th>Water</th>${FEEL.map(([,l])=>`<th>${esc(l.split(" ")[0])}</th>`).join("")}<th>Missed and notes</th></tr></thead><tbody>
+    ${rows.map(r=>`<tr><td>${esc(shortDay(r.d))}</td><td>${r.logged?r.done+"/"+r.total:"—"}</td><td>${r.logged?r.water+" oz":"—"}</td>${FEEL.map(([k])=>`<td>${r.feel[k]||"—"}</td>`).join("")}<td>${esc([...r.missed.map(x=>"Missed: "+x), ...r.notes].join("; "))}</td></tr>`).join("")}
+    </tbody></table></div>
+    <small class="muted">Made from what you ticked off and logged on this device. Share it with your care team if it helps.</small></section></div>`;
+}
+function visitSections(){
+  const secs = [], lb = lookbackSections(14);
+  secs.push(["Medicines and supplements I take", S.supplements.filter(x=>x.active).map(x=>[x.name, x.dose, x.times&&("at "+x.times), x.how, x.pending&&"(time not confirmed)"].filter(Boolean).join(", "))]);
+  const PN = Object.fromEntries(PACKS.map(x=>[x[0],x[1]]));
+  secs.push(["My food rules", [limitsText()||"No number limits set", "Starter lists on: "+((S.rules.packs||[]).map(id=>PN[id]||id).join(", ")||"none"),
+    ...(S.rules.extra||[]).map(x=>"Flag ("+x.level+"): "+(x.label||x.word)+(x.why?" - "+x.why:"")), ...breaksOn().map(b=>"Food break: "+b.label+" until "+niceDate(b.until))]]);
+  const since = ymd(addDays(new Date(),-30));
+  secs.push(["Changes I made in the last 30 days", (S.rulesLog||[]).filter(x=>x.date>=since).map(x=>x.date+": "+x.what)]);
+  secs.push(["Last 14 days", summaryLines(lb.sm)]);
+  const rough = lb.rows.filter(r=>FEEL.some(([k])=>r.feel[k] && r.feel[k]<=2));
+  secs.push(["Rough days (any rating 1 or 2)", rough.map(r=>shortDay(r.d)+": "+FEEL.filter(([k])=>r.feel[k]&&r.feel[k]<=2).map(([,l])=>l+" "+r.feel[FEEL.find(f=>f[1]===l)[0]]).join(", ")+(r.notes.length?". "+r.notes.join("; "):""))]);
+  const cnt = {}; lb.rows.forEach(r=>r.missed.forEach(m=>{ const t = m.replace(/ \(.*$/,""); cnt[t]=(cnt[t]||0)+1; }));
+  secs.push(["Most often missed (last 14 days)", Object.entries(cnt).sort((a,b)=>b[1]-a[1]).slice(0,6).map(([t,n])=>t+": "+n+" time"+(n===1?"":"s"))]);
+  const latest = new Map(); [...(S.labs||[])].sort((a,b)=>b.date.localeCompare(a.date)).forEach(x=>{ if(!latest.has(x.name)) latest.set(x.name,x); });
+  const flagged = x=>{ const f = labFlag(x); return (f && f!=="In range") || x.check ? 0 : 1; };
+  secs.push(["Latest lab results (out of range or to check listed first)", [...latest.values()].sort((a,b)=>flagged(a)-flagged(b)).map(x=>`${x.name}: ${x.value} ${x.unit||""} (${x.date})`+(labFlag(x)&&labFlag(x)!=="In range"?" - "+labFlag(x):"")+(x.check?" - check digits against the paper report":""))]);
+  secs.push(["My notes (last 14 days)", (S.notes||[]).filter(n=>n.date>=ymd(addDays(new Date(),-13))).sort((a,b)=>(a.date+(a.time||"")).localeCompare(b.date+(b.time||""))).map(n=>n.date+": "+(n.about?n.about+": ":"")+n.text)]);
+  const v = [...(S.visits||[])].sort((a,b)=>b.date.localeCompare(a.date))[0];
+  if(v) secs.push(["Last visit", [v.date+" with "+(v.who||"care team")+": "+v.summary, ...(v.changes?["What changed: "+v.changes]:[])]]);
+  secs.push(["My questions", (S.doctor||[]).filter(x=>x.status!=="answered").map(x=>x.text)]);
+  return secs;
+}
+function renderVisit(){
+  const secs = visitSections();
+  view.innerHTML = `<div class="stack"><section class="panel" id="report"><h2>For my visit</h2>
+    <p class="muted noprint" style="margin:0">A one-page summary to print, bring, or send to your clinic. It uses what's on this device: supplements, rules, the last 14 days, labs, and your questions.</p>
+    <div class="row noprint"><button class="btn" id="repPrint">Print or save as PDF</button><button class="btn ghost" id="vsTxt">Download text</button><button class="btn ghost" id="vsCopy">Copy</button></div>
+    <small class="muted">Prepared ${esc(new Date().toLocaleDateString())} with all systems you. Not medical advice.</small>
+    ${secsHtml(secs)}
+    <div class="grid2 noprint"><label>Add a question<input type="text" id="vq-text" placeholder="e.g. Can I raise my fiber goal?"></label></div>
+    <div class="noprint"><button class="btn ghost" id="vqAdd">Add question</button></div></section></div>`;
+}
+
+function renderSupps(){
+  let h = `<div class="stack"><section class="panel"><h2>Supplements and medicine</h2>
+  <p class="muted" style="margin:0">Add what you take. Type times like <b>8:00, 6:30pm</b>. Tick "Not confirmed yet" if you're still waiting on your care team for the time.</p>
+  ${spacingWarnings().map(w=>`<div class="warnbox">${esc(w)}</div>`).join("")}`;
+  S.supplements.forEach((s,i)=>{
+    const bad = badTimes(s.times);
+    h += `<div class="supp">
+      <div class="grid2">
+        <label>Name<input type="text" id="s-name-${i}" data-s="${i}" data-f="name" value="${esc(s.name)}"></label>
+        <label>Dose<input type="text" id="s-dose-${i}" data-s="${i}" data-f="dose" value="${esc(s.dose)}" placeholder="e.g. 500 mg"></label>
+        <label>Times<input type="text" id="s-times-${i}" data-s="${i}" data-f="times" value="${esc(s.times)}" placeholder="Not set"></label>
+        <label>How to take it<input type="text" id="s-how-${i}" data-s="${i}" data-f="how" value="${esc(s.how)}" placeholder="e.g. with breakfast"></label>
+        <label>Where<select id="s-where-${i}" data-s="${i}" data-f="where"><option value="home" ${(s.where||"home")==="home"?"selected":""}>At home</option><option value="town" ${s.where==="town"?"selected":""}>In town</option></select></label>
+      </div>
+      ${bad.length?`<div class="warnbox">Couldn't read: ${esc(bad.join(", "))}. Use a form like 8:00 or 6:30pm.</div>`:""}
+      <label>Notes<input type="text" id="s-notes-${i}" data-s="${i}" data-f="notes" value="${esc(s.notes)}"></label>
+      ${freqHtml(s,i,"s")}
+      <div class="row">
+        <label class="inline"><input type="checkbox" data-s="${i}" data-f="pending" ${s.pending?"checked":""}> Not confirmed yet</label>
+        <label class="inline"><input type="checkbox" data-s="${i}" data-f="binder" ${s.binder?"checked":""}> Fiber or binder (keep apart from others)</label>
+        <label class="inline"><input type="checkbox" data-s="${i}" data-f="active" ${s.active?"checked":""}> Taking it now</label>
+        <button class="btn ghost" data-del="${i}">Remove</button>
+      </div></div>`;
+  });
+  h += `<div><button class="btn" id="addSupp">Add a supplement</button></div></section>`;
+  h += `<section class="panel"><h2>Health routine</h2>
+  <p class="muted" style="margin:0">Things you do for your health besides food, like walks, stretching or a sauna. Set how often (tick days, or leave all unticked for every day) and a time if you want a reminder.</p>`;
+  (S.routine||[]).forEach((r,i)=>{
+    const bad = badTimes(r.times);
+    h += `<div class="supp">
+      <div class="grid2">
+        <label>Name<input type="text" id="r-name-${i}" data-r="${i}" data-f="name" value="${esc(r.name)}"></label>
+        <label>Times<input type="text" id="r-times-${i}" data-r="${i}" data-f="times" value="${esc(r.times)}" placeholder="Not set"></label>
+        <label>Where<select id="r-where-${i}" data-r="${i}" data-f="where"><option value="home" ${(r.where||"home")==="home"?"selected":""}>At home</option><option value="town" ${r.where==="town"?"selected":""}>In town</option></select></label>
+      </div>
+      <label>How<input type="text" id="r-how-${i}" data-r="${i}" data-f="how" value="${esc(r.how)}"></label>
+      ${bad.length?`<div class="warnbox">Couldn't read: ${esc(bad.join(", "))}. Use a form like 8:00 or 6:30pm.</div>`:""}
+      ${freqHtml(r,i,"r")}
+      <small class="muted">${esc(r.notes)}</small>
+      <div class="row">
+        <label class="inline"><input type="checkbox" data-r="${i}" data-f="active" ${r.active?"checked":""}> Doing it now</label>
+        <button class="btn ghost" data-rdel="${i}">Remove</button>
+      </div></div>`;
+  });
+  h += `<div><button class="btn" id="addRoutine">Add a routine step</button></div></section></div>`;
+  view.innerHTML = h;
+}
+
+function renderCook(){
+  const cd = nextCookDate(parseYmd(ymd(new Date())));
+  if(!cd) return "";
+  const items = cookPlanFor(cd), tl = cookTimeline(items);
+  const when = ymd(cd)===ymd(new Date()) ? "today" : DAYS_LONG[cd.getDay()]+", "+cd.toLocaleDateString(undefined,{month:"short",day:"numeric"});
+  let h = `<section class="panel" id="cookPlan"><h2>Next cook day: ${esc(when)}</h2>
+    <p class="muted" style="margin:0">Worked out from your week below and what's in the freezer. It cooks whatever the freezer won't cover for the 7 days starting that day. Dinners count one bowl for each person eating (set on Times &amp; reminders).</p>`;
+  if(!items.length) h += `<p style="margin:0"><b>Nothing to cook.</b> Your freezer covers the week.</p>`;
+  else {
+    h += `<ol class="doc">${items.map(it=>{ const b=BASES[it.id]; return `<li><div><b>${esc(baseName(it))}${it.batches>1?" x"+it.batches:""}</b> makes ${b.yield*it.batches} ${esc(b.unit)}.<br><small class="muted">Week needs ${it.need}, freezer will have ${it.have}.${b.soak?" Soak the beans the night before.":""}${b.note?" "+esc(b.note):""}</small></div></li>`; }).join("")}</ol>
+    <h3>Timeline, about ${Math.round(tl.end/15)/4} hours</h3>
+    <ol class="day">${tl.steps.map(st=>`<li><span class="t">${hm(st.at)}</span><span></span><div class="item"><div class="title">${esc(baseName(st.it))}</div><div class="detail">${esc(st.where)} · ${baseMin(st.it)>=60?Math.round(baseMin(st.it)/15)/4+" h":baseMin(st.it)+" min"}</div></div></li>`).join("")}</ol>
+    <small class="muted">Sides for others in your household fit wherever a burner or the oven frees up. Cool each pot fast, bag it flat, and freeze it the same day.</small>
+    <div><a class="btn ghost" href="pantry.html">Shopping list for this</a></div>`;
+  }
+  h += `</section>
+  <section class="panel"><h2>In the freezer</h2>
+    <p class="muted" style="margin:0">Counts go down as each day's meals pass, and go up when you tick off a cook day. Fix any count that's off.</p>
+    <div class="grid2">${Object.entries(BASES).map(([id,b])=>`<label>${esc(b.n)} <small class="muted" style="font-weight:400">(${esc(b.unit)}${b.fridge?", fridge":""})</small><input type="number" min="0" id="stock-${id}" data-stock="${id}" value="${Number((S.stock||{})[id])||0}"></label>`).join("")}</div>
+  </section>`;
+  return h;
+}
+function renderWeek(){
+  let h = `<div class="stack">${renderCook()}<section class="panel"><h2>Your week</h2>
+  <p class="muted" style="margin:0">One schedule for everything. Today's checklist, the nightly freezer list, the cook day, your phone calendar, and the shopping list all come from these choices. Freezer items come up automatically the night before.</p></section>`;
+  for(const dow of [1,2,3,4,5,6,0]){
+    const w = S.week[dow] = S.week[dow]||{ids:{}}, ids = w.ids = w.ids||{}, prev = DAYS_LONG[(dow+6)%7];
+    const sel = (k,label)=>`<label>${label}<select id="w-${k}-${dow}" data-wid="${dow}" data-slot="${k}"><option value="">None</option>${recipeOptions(k).map(([id,n])=>`<option value="${esc(id)}" ${ids[k]===id?"selected":""}>${esc(n)}</option>`).join("")}</select></label>`;
+    const dn = recipe(ids.d);
+    h += `<section class="panel dayedit"><h3>${DAYS_LONG[dow]}${Number(S.cookDay)===dow?" · cook day":""}</h3>
+      <div class="grid2">${SLOTS.map(([k,l])=>sel(k,l)).join("")}</div>
+      ${dn&&(dn.you||dn.others)?`<small class="muted">${dn.you?"You add: "+esc(dn.you)+". ":""}${dn.others?"Others add: "+esc(dn.others)+".":""}</small>`:""}
+      <label>Dinner note (optional)<input type="text" id="w-n-${dow}" data-wnote="${dow}" value="${esc(w.note||"")}"></label>
+      <label>Also move to the fridge on ${prev} night<textarea id="w-p-${dow}" data-pull="${dow}" placeholder="One item per line">${esc((S.pull[dow]||[]).join("\n"))}</textarea></label>
+    </section>`;
+  }
+  h += `</div>`;
+  view.innerHTML = h;
+}
+
+/* "From: ..." with a link to that source on the Sources page. */
+const SRC_NAMES = {"ifm-detox-guide":"IFM Detox Food Plan guide","fast-like-a-girl":"Fast Like a Girl","glucose-goddess-hacks":"Glucose Goddess hacks","glucose-revolution":"Glucose Revolution","ifm-cardiometabolic":"IFM Cardiometabolic Food Plan","usda-fdc":"USDA FoodData Central","mailoo-2017":"Mailoo and Rampes 2017","griffith-1987":"Griffith and others 1987","fda-allergens":"FDA: Food Allergies","celiac-sources":"Celiac disease guidance"};
+function srcNote(...ids){ return "From: "+ids.map(id=>`<a href="sources.html#${id}" target="_blank" rel="noopener">${esc(SRC_NAMES[id]||id)}</a>`).join(", ")+"."; }
+function rhythmPanel(){
+  const R = S.rhythm, ew = eatingWindow(new Date()), w = R.walkAfter||{};
+  const ckb = (k,label)=>`<label class="inline" style="display:flex;gap:6px;align-items:center;font-weight:400"><input type="checkbox" data-rhb="${k}" ${R[k]?"checked":""}> ${label}</label>`;
+  const ckw = (k,label)=>`<label class="inline" style="display:flex;gap:6px;align-items:center;font-weight:400"><input type="checkbox" data-rhw="${k}" ${w[k]?"checked":""}> ${label}</label>`;
+  return `<section class="panel"><h2>Daily rhythm</h2>
+    <small class="muted">All optional, and all yours to set. Check fasting and water with your care team first, especially with diabetes medicines, pregnancy, or kidney or heart conditions.</small>
+    <div class="grid2">
+      <label>Usually wake up<input type="time" id="rh-wake" data-rh="wake" value="${esc(R.wake)}"></label>
+      <label>Usually go to bed<input type="time" id="rh-bed" data-rh="bed" value="${esc(R.bed)}"></label>
+    </div>
+    ${ckb("fastOn","Use an overnight fast")}
+    ${R.fastOn?`<div class="grid2">
+      <label>Fast length (hours)<input type="number" id="rh-fast" data-rhn="fastHours" min="10" max="20" step="0.5" value="${esc(R.fastHours)}"><small class="muted" style="font-weight:400">Starts at 13, a common first step. ${srcNote("fast-like-a-girl")}</small></label>
+      <label>Last meal, hours before bed<input type="number" id="rh-gap" data-rhn="lastMealGap" min="0" max="6" step="0.5" value="${esc(R.lastMealGap)}"></label>
+      <label>Build up from (optional)<input type="date" id="rh-ramp" data-rh="rampStart" value="${esc(R.rampStart)}"><small class="muted" style="font-weight:400">Starts 2 hours shorter and adds 1 hour a week.</small></label>
+    </div>
+    ${ew?`<div class="warnbox"><b>Today: eat between ${niceTime(ew.first)} and ${niceTime(ew.last)}</b> (${ew.hours}-hour fast). ${ew.warn?esc(ew.warn)+" ":""}<button class="linkbtn" id="rhApply">Set my meal times to fit</button></div>`:`<small class="muted">Set your bedtime to see your eating window.</small>`}
+    <small class="muted">Stop and eat if you feel shaky, faint or sweaty, and tell your care team. ${srcNote("ifm-detox-guide")}</small>`:""}
+    <h3>After meals</h3>
+    <div class="chips" style="gap:8px 18px">${ckw("b","Walk after breakfast")}${ckw("l","Walk after lunch")}${ckw("d","Walk after dinner")}</div>
+    <label>Walk length (minutes)<input type="number" id="rh-walk" data-rhn="walkMin" min="2" max="60" value="${esc(R.walkMin)}"><small class="muted" style="font-weight:400">${srcNote("glucose-goddess-hacks")}</small></label>
+    ${ckb("foodOrder","Remind me: vegetables first, then protein, starch last")}<small class="muted">${srcNote("glucose-goddess-hacks","glucose-revolution")}</small>
+    ${ckb("bmCheck","Daily bowel movement check")}<small class="muted">${srcNote("ifm-detox-guide")}</small>
+  </section>`;
+}
+function renderSettings(){
+  const T=S.times, on=S.on;
+  const tf = (k,label)=>`<label>${label}<input type="time" id="t-${k}" data-t="${k}" value="${esc(parseTime(T[k])||"")}"></label>`;
+  const ck = (k,label)=>`<label class="inline" style="display:flex;gap:6px;align-items:center;font-weight:400"><input type="checkbox" data-on="${k}" ${on[k]?"checked":""}> ${label}</label>`;
+  view.innerHTML = `<div class="stack">
+  <section class="panel"><h2>Daily times</h2><small class="muted">Starting guesses. Change them to fit your day.</small>
+    <div class="grid2">${tf("breakfast","Breakfast")}${tf("lunch","Lunch")}${tf("snack","Snack")}${tf("dinner","Dinner")}${tf("treat","Evening treat")}${tf("pull","Freezer to fridge")}${tf("cook","Cook session starts")}
+    <label>Walk starts, minutes after a meal<input type="number" id="t-walkAfter" min="0" max="180" data-t="walkAfter" value="${esc(T.walkAfter)}"></label></div>
+    <label>Water reminders<input type="text" id="t-water" data-t="water" value="${esc(T.water)}" placeholder="10:00, 13:00, 16:00"></label>
+    <div class="grid2">
+      <label>Alerts for things at home (minutes before)<input type="text" id="l-home" data-lead="home" value="${esc(S.leads.home)}" placeholder="10, 5"></label>
+      <label>Alerts for things in town (minutes before)<input type="text" id="l-town" data-lead="town" value="${esc(S.leads.town)}" placeholder="40, 30"></label>
+    </div><small class="muted">Meals, water and the freezer list count as at home. Pick "In town" on a supplement or routine step to use the town alerts.</small>
+  </section>
+  ${rhythmPanel()}
+  <section class="panel"><h2>Which reminders to show</h2><div class="chips" style="gap:8px 18px">
+    ${ck("supps","Supplements")}${ck("meals","Meals")}${ck("snack","Snack")}${ck("walk","Walk")}${ck("treat","Evening treat")}${ck("water","Water")}${ck("routine","Health routine")}${ck("pull","Freezer to fridge")}${ck("cook","Cook day")}</div></section>
+  <section class="panel"><h2>Plan settings</h2><div class="grid2">
+    <label>Fiber ramp started<input type="date" id="p-fiber" data-p="fiberStart" value="${esc(S.fiberStart)}"></label>
+    <label>Water goal<select id="p-watermode" data-pstr="waterMode"><option value="fixed" ${S.waterMode!=="weight"?"selected":""}>A set number of ounces</option><option value="weight" ${S.waterMode==="weight"?"selected":""}>Half my body weight in ounces</option></select></label>
+    ${S.waterMode==="weight"?`<label>Body weight (lb)<input type="number" id="p-weight" data-p="weightLb" min="50" value="${S.weightLb==null?"":esc(S.weightLb)}" placeholder="Not set"><small class="muted" style="font-weight:400">Goal: ${waterGoalNow()?waterGoalNow()+" oz":"enter your weight"}. ${srcNote("ifm-detox-guide")}</small></label>`
+      :`<label>Water goal (oz)<input type="number" id="p-water" data-p="waterGoal" min="8" value="${S.waterGoal==null?"":esc(S.waterGoal)}" placeholder="Not set"><small class="muted" style="font-weight:400">Ask your care team, especially with kidney or heart conditions.</small></label>`}
+    <label>Water buttons (oz)<input type="text" id="p-wsizes" data-wsizes="1" value="${esc(waterSizes().join(", "))}" placeholder="4, 8"><small class="muted" style="font-weight:400">One button per size, e.g. 4, 8, 12.</small></label>
+    <label class="inline"><input type="checkbox" data-pbool="simpleHome" ${S.simpleHome?"checked":""}> Simple home page (water and checklist first)</label>
+    <label class="inline"><input type="checkbox" data-pbool="checkin" ${S.checkin?"checked":""}> Evening check-in</label>
+    <label>Glass size (oz)<input type="number" id="p-glass" data-p="glassOz" min="4" value="${esc(S.glassOz)}"></label>
+    <label>People eating dinner<input type="number" id="p-eaters" data-p="eaters" min="1" max="12" value="${esc(S.eaters)}"></label>
+    <label>Stove burners<input type="number" id="p-burners" data-p="burners" min="1" max="8" value="${esc(S.burners)}"></label>
+    <label class="inline" style="display:flex;gap:6px;align-items:center;font-weight:400"><input type="checkbox" id="p-oven" data-pbool="oven" ${S.oven?"checked":""}> I have an oven</label>
+    <label>Cook day<select id="p-cookday" data-p="cookDay">${DAYS_LONG.map((n,i)=>`<option value="${i}" ${Number(S.cookDay)===i?"selected":""}>${n}</option>`).join("")}</select></label>
+  </div><small class="muted">What to cook is worked out from your week and freezer on the Meals &amp; freezer tab.</small></section>
+  <section class="panel"><h2>Reminders on this device</h2>
+    ${SERVER&&!LAPTOP?`<p style="margin:0">On your phone, alerts come from Google Calendar (see below). Everything you tick or change here is saved on the computer, so it shows up there and on the other phone too.</p>`
+      :SERVER?`<p style="margin:0">Desktop reminders are on. They pop up even when this window is closed, as long as the computer is on. Opening this app once a month keeps the next 60 days scheduled.</p>`
+      :`<p style="margin:0">Reminders here only appear while this page is open. For pop-ups with the window closed, use the desktop app on your computer, or the phone calendar file below.</p>
+        <div><button class="btn ghost" id="notifyBtn">Turn on reminders in this browser</button></div>`}
+  </section>
+  ${LAPTOP?`<section class="panel"><h2>Phones</h2><div id="phonesBody" class="stack"><p class="muted" style="margin:0">Checking…</p></div></section>`:""}
+  <section class="panel"><h2>Google Calendar and phone</h2>
+    <p style="margin:0">Save one calendar file with every timed reminder as a repeating event. Items with no time yet, like pending supplements, are left out.</p>
+    <div class="chips" style="gap:8px">${SERVER?`<button class="btn" id="icsBtn">Save calendar file</button>`:""}<button class="btn ghost" id="icsCopy">Show calendar text</button></div>
+    <textarea id="icsText" hidden readonly></textarea>
+    <ol style="margin:0;padding-left:20px;display:grid;gap:4px">
+      <li>On the computer, open <b>calendar.google.com</b>. Next to "Other calendars", press <b>+</b> and choose <b>Create new calendar</b>. Name it <b>all systems you</b>.</li>
+      <li>Press the gear, then <b>Import &amp; export</b>. Pick <b>all-systems-you.ics</b> from Downloads, choose the app calendar, and press <b>Import</b>.</li>
+      <li>Open one imported event and check for a notification. Google doesn't reliably keep the file's alerts or add your default reminders to imported events. If there's none, open the app calendar's settings and set its default notification to 0 minutes.</li>
+      <li>When your times or week change, delete the app calendar, create it again, and import a new file. That way you don't get double events.</li>
+    </ol>
+  </section>
+  <section class="panel"><h2>Move settings between devices</h2>
+    <p style="margin:0">Copy this text on one device and paste it on another to bring over your supplements, times, and meals. It's also your backup: everything you enter is saved only on this device.</p>
+    <div class="chips" style="gap:8px"><button class="btn ghost" id="exportBtn">Copy settings</button></div>
+    <textarea id="importText" placeholder="Paste settings here"></textarea>
+    <div><button class="btn ghost" id="importBtn">Load pasted settings</button></div>
+    <h3>Backups</h3>
+    <p class="muted" style="margin:0">The app saves a copy of everything once a day and keeps the last 7 on this device. A backup file keeps your data safe if this device is lost or its browser data is cleared, so download one now and then.</p>
+    ${backups().length?`<ol class="day">${backups().map(b=>`<li><span class="t">${esc(b.date.slice(5).replace("-","/"))}</span><span></span><div class="item"><div class="title">Copy from ${esc(niceDate(b.date))}</div><button class="linkbtn" data-bkrestore="${esc(b.date)}">Go back to this copy</button></div></li>`).join("")}</ol>`:""}
+    <div class="chips" style="gap:8px"><button class="btn ghost" id="bkDownload">Download a backup file</button><label class="btn ghost" style="cursor:pointer">Load a backup file (replaces this device's data)<input type="file" id="bkFile" accept=".json,application/json" hidden></label></div>
+  </section>
+  <section class="panel"><h2>Start fresh</h2>
+    <p style="margin:0">Clears everything on this device, including notes, labs and supplements, and goes back to the blank starting setup with sample meals. Copy your settings first if you might want them back.</p>
+    <div><button class="btn ghost" id="resetBtn">Clear everything on this device</button></div>
+  </section></div>`;
+}
+
+/* ---------- phones (computer only) ---------- */
+let PH = null;
+function loadQr(){
+  return new Promise(res=>{ if(window.qrcode) return res(); const sc=document.createElement("script"); sc.src="/qr.js"; sc.onload=()=>res(); sc.onerror=()=>res(); document.head.appendChild(sc); });
+}
+function qrSvg(url){
+  if(!window.qrcode) return "";
+  const q = qrcode(0,"M"); q.addData(url); q.make();
+  return q.createSvgTag({cellSize:5, margin:3, scalable:true});
+}
+async function loadPhones(){
+  const box = document.getElementById("phonesBody"); if(!box) return;
+  try{ PH = await (await fetch("/api/phones",{cache:"no-store"})).json(); }catch(e){ box.innerHTML = `<p style="margin:0">Couldn't check phone access. Close and reopen all systems you.</p>`; return; }
+  await loadQr();
+  const iphoneUrl = `http://${PH.local}:${PH.port}/?k=${encodeURIComponent(PH.key)}`;
+  const ip = PH.ips[0];
+  const androidUrl = ip ? `http://${ip}:${PH.port}/?k=${encodeURIComponent(PH.key)}` : null;
+  const card = (who, url, steps)=>`<div class="qrcard"><h3>${who}</h3><div class="qr">${qrSvg(url)}</div><code>${esc(url)}</code><ol>${steps.map(x=>`<li>${x}</li>`).join("")}</ol></div>`;
+  box.innerHTML = `<p style="margin:0">Your phones can open this app while they're on the same Wi-Fi as the computer. Everything stays on the computer, so both phones always see the same week, pantry and shopping list.</p>
+    <label class="inline" style="display:flex;gap:8px;align-items:center"><input type="checkbox" id="phonesToggle" ${PH.enabled?"checked":""}> Let our phones in</label>
+    ${PH.enabled?`<div class="qrgrid">
+      ${card("iPhone", iphoneUrl, ["Open the Camera and point it at this code. Tap the yellow link.","In Safari, tap the Share button (square with an arrow), then <b>Add to Home Screen</b>, then <b>Add</b>.","Open all systems you from the new icon from now on.","If the link won't open, scan the Android code instead. It works on iPhone too."])}
+      ${androidUrl?card("Android", androidUrl, ["Open the Camera (or Google Lens) and point it at this code. Tap the link.","In Chrome, tap the three dots, then <b>Add to Home screen</b>.","If it stops opening someday, scan this code again. The Wi-Fi can give the computer a new address."]):`<p class="warnbox">The computer isn't on a Wi-Fi network right now, so there's no Android code. Connect to Wi-Fi and reopen this tab.</p>`}
+    </div>
+    <small class="muted">The code has a private key in it, so only phones that scan it can get in. Someone else on the same Wi-Fi can't. If a phone is lost, press the button below. The old code stops working, and you scan the new one on the phones you keep.</small>
+    <div><button class="btn ghost" id="phonesNewKey">Make a new code</button></div>`:""}`;
+}
+
+/* ---------- notes ---------- */
+const DOC_STATUS = {ask:"To ask", sent:"Sent, waiting", answered:"Answered"};
+let NOTE_ABOUT = "";
+function noteSubjects(){
+  const out = [];
+  for(const x of S.supplements) out.push(x.name);
+  for(const x of (S.routine||[])) out.push(x.name);
+  const seen = new Set();
+  for(const dow of [0,1,2,3,4,5,6]) for(const k of ["b","l","s","d","e"]){ const r = recipe(((S.week[dow]||{}).ids||{})[k]); if(r && !seen.has(r.n)){ seen.add(r.n); out.push(r.n); } }
+  return out;
+}
+function renderNotes(){
+  const subj = noteSubjects();
+  const notes = [...(S.notes||[])].sort((a,b)=>(b.date+b.time).localeCompare(a.date+a.time));
+  const now = new Date();
+  let h = `<div class="stack">
+  <section class="panel"><h2>How did it go?</h2>
+    <p class="muted" style="margin:0">Jot down how you felt after a supplement, a routine step, or a meal. These help you spot patterns and give your care team real details.</p>
+    <div class="grid2">
+      <label>About<select id="n-about"><option value="">Something else</option>${subj.map(n=>`<option ${n===NOTE_ABOUT?"selected":""}>${esc(n)}</option>`).join("")}</select></label>
+      <label>How you felt<select id="n-feel"><option value="">No rating</option><option>Better</option><option>Same</option><option>Worse</option></select></label>
+      <label>Date<input type="date" id="n-date" value="${ymd(now)}"></label>
+      <label>Time<input type="time" id="n-time" value="${pad(now.getHours())}:${pad(now.getMinutes())}"></label>
+    </div>
+    <label>Note<textarea id="n-text" placeholder="e.g. 15 min sauna, foggy for an hour after, slept well"></textarea></label>
+    <div class="chips" style="gap:8px"><button class="btn" id="noteAdd">Save note</button><button class="btn ghost" id="noteAddDoc">Save and add to doctor list</button></div>
+  </section>
+  <section class="panel"><h2>Your notes</h2>
+    ${notes.length? `<ol class="day">${notes.map(n=>`<li><span class="t">${esc(n.date.slice(5).replace("-","/"))}<br><small>${n.time?niceTime(n.time):""}</small></span><span></span>
+      <div class="item"><div class="title">${esc(n.about||"Note")} ${n.feel?`<span class="chip ${n.feel==="Worse"?"pending":n.feel==="Better"?"":"dusk"}">${esc(n.feel)}</span>`:""}</div>
+      <div class="detail">${esc(n.text)}</div>
+      <div class="chips" style="gap:6px;margin-top:4px"><button class="btn ghost" data-note2doc="${esc(n.id)}">Ask my doctor about this</button><button class="btn ghost" data-notedel="${esc(n.id)}">Delete</button></div></div></li>`).join("")}</ol>`
+      : `<p class="muted" style="margin:0">No notes yet. Your first one shows up here.</p>`}
+  </section>
+  <section class="panel" id="doctorList"><h2>For my doctor</h2>
+    <p class="muted noprint" style="margin:0">Questions and things to tell your doctor. Mark each one as you go, and copy the list before an appointment.</p>
+    <div class="noprint"><label>New question or note<textarea id="d-text" placeholder="e.g. Can I take my vitamin D with dinner?"></textarea></label></div>
+    <div class="chips noprint" style="gap:8px"><button class="btn" id="docAdd">Add to list</button><button class="btn ghost" id="docCopy">Copy the open questions</button>${SERVER&&LAPTOP?`<button class="btn ghost" id="docPrint">Print</button>`:""}</div>
+    <textarea id="docCopyText" hidden readonly></textarea>
+    ${["ask","sent","answered"].map(st=>{
+      const items = (S.doctor||[]).filter(x=>x.status===st);
+      if(!items.length) return "";
+      return `<h3 ${st==="answered"?'class="noprint"':""}>${DOC_STATUS[st]} (${items.length})</h3><ol class="doc">${items.map(x=>`<li ${st==="answered"?'class="noprint"':""}>
+        <div>${esc(x.text)}</div>
+        ${st==="answered"?`<label class="noprint">Answer<textarea id="d-ans-${esc(x.id)}" data-docans="${esc(x.id)}">${esc(x.answer||"")}</textarea></label>`:""}
+        <div class="chips noprint" style="gap:6px"><select data-docst="${esc(x.id)}" aria-label="Status">${Object.entries(DOC_STATUS).map(([k,v])=>`<option value="${k}" ${k===x.status?"selected":""}>${v}</option>`).join("")}</select><button class="btn ghost" data-docdel="${esc(x.id)}">Delete</button></div>
+      </li>`).join("")}</ol>`;
+    }).join("")}
+  </section></div>`;
+  view.innerHTML = h;
+}
+function labFlag(x){
+  if(x.value==null || x.value==="") return "";
+  if(x.high!=null && x.high!=="" && +x.value>+x.high) return x.low==null||x.low===""? "Present" : "High";
+  if(x.low!=null && x.low!=="" && +x.value<+x.low) return "Low";
+  return "In range";
+}
+function breaksPanel(){
+  const on = S.rules.breaks||[], until = ymd(addDays(new Date(),7));
+  const opts = `<option value="">Pick a list or food group…</option><optgroup label="Starter lists">${PACKS.filter(x=>x[0]!=="medicines").map(([id,n])=>`<option value="pack:${id}">${esc(n)}</option>`).join("")}</optgroup><optgroup label="Food groups">${FOOD_GROUPS.map(g=>`<option value="group:${g[0]}">${esc(g[1])}</option>`).join("")}</optgroup>`;
+  const lysine = on.some(b=>b.pack==="low_arginine") ? `<p class="muted" style="margin:0">Foods with more lysine than arginine include fish, chicken, turkey, beef, cheese, yogurt and milk. ${srcNote("usda-fdc","mailoo-2017")} If you take a lysine supplement, ask your care team about the amount.</p>` : "";
+  return `<section class="panel"><h2>Food breaks</h2>
+    <p class="muted" style="margin:0">Take a break from a food for a while, for example during a flare-up or while testing a food. Until the end date, the meal checker and pantry flag it, and you can swap planned meals that contain it. Swapped meals come back when the break ends.</p>
+    ${on.length?`<ol class="day">${on.map((b,i)=>{ const aff = breakAffected(b), sw = Object.keys(b.saved||{}).length;
+      return `<li><span class="t"><span class="chip pending">Until ${esc(niceDate(b.until))}</span></span><span></span><div class="item"><div class="title">${esc(b.label)}</div>
+      <div class="detail">${aff.length?`Still planned: ${aff.map(a=>esc(DAYS[a.dow]+" "+a.lab.toLowerCase()+": "+a.n)).join("; ")}.`:"No planned meals contain it."}${sw?` ${sw} meal${sw===1?"":"s"} swapped for now.`:""}${(b.src||[]).length?" "+srcNote(...b.src):""}</div>
+      ${aff.length?`<button class="linkbtn" data-fbswap="${i}">Swap these meals</button> `:""}<button class="linkbtn" data-fbend="${i}">End break now</button></div></li>`; }).join("")}</ol>${lysine}`:""}
+    <div class="grid2"><label>Starter list or food group<select id="fb-preset">${opts}</select></label>
+      <label>Or type any food<input type="text" id="fb-word" placeholder="e.g. eggs, dairy, tomatoes"></label>
+      <label>Also flag (optional, commas between)<input type="text" id="fb-also" placeholder="e.g. mung bean noodles"></label>
+      <label>Until<input type="date" id="fb-until" value="${until}" min="${ymd(new Date())}"></label></div>
+    <small class="muted" id="fb-preview">Pick a list or type a food.</small>
+    <div><button class="btn" id="fbStart">Start break</button></div>
+  </section>`;
+}
+function renderRules(){
+  const R = S.rules;
+  const lv = {avoid:"Avoid", limit:"Limit", ask:"Check first"};
+  view.innerHTML = `<div class="stack">
+  <section class="panel"><h2>My rules</h2>
+    <p class="muted" style="margin:0">Small changes you can make yourself. The checklist, the pantry and shopping list, and the meal checker all use these. Only enter numbers your doctor, dietitian or nurse gave you. Blank means the rule is off.</p>
+    <div class="grid2">${RULE_FIELDS.map(([k,l,u,hint])=>`<label>${l} <small class="muted" style="font-weight:400">(${u})</small><input type="number" step="any" min="0" id="rule-${k}" data-rule="${k}" value="${R[k]==null?"":esc(R[k])}" placeholder="${R[k]==null?"Pending":""}">${hint?`<small class="muted" style="font-weight:400">${hint}</small>`:""}</label>`).join("")}</div>
+    <h3>Fiber ramp (g a day)</h3>
+    <div class="grid2">${[0,1,2,3].map(i=>`<label>Week ${i+1}${i===3?" and on":""}<input type="number" min="0" id="ramp-${i}" data-ramp="${i}" value="${R.ramp[i]==null?"":esc(R.ramp[i])}"></label>`).join("")}</div>
+  </section>
+  ${breaksPanel()}
+  <section class="panel"><h2>Starter food lists</h2>
+    <p class="muted" style="margin:0">Ready-made lists the meal checker and pantry use. They're drafts until a clinician has reviewed them, so treat them as reminders, not rules. Your own lists below always come first. Each list's sources are on the <a href="sources.html">Sources page</a>.</p>
+    <div class="chips" style="gap:8px 18px">${PACKS.map(([id,n,d])=>`<label class="inline" style="display:flex;gap:6px;align-items:flex-start;font-weight:400"><input type="checkbox" data-pack="${id}" ${(R.packs||[]).includes(id)?"checked":""}> <span><b>${n}</b> <small class="muted">(draft) ${d}</small></span></label>`).join("")}</div>
+  </section>
+  <section class="panel"><h2>Foods to flag</h2>
+    <p class="muted" style="margin:0">Add something new that bothers you, or something to keep small. These are checked along with any starter lists you turned on.</p>
+    ${(R.extra||[]).length?`<ol class="day">${R.extra.map((x,i)=>`<li><span class="t"><span class="chip ${x.level==="avoid"?"pending":x.level==="ask"?"dusk":""}">${lv[x.level]||x.level}</span></span><span></span><div class="item"><div class="title">${esc(x.label||x.word)}</div>${x.why?`<div class="detail">${esc(x.why)}</div>`:""}<button class="linkbtn" data-ruledel="extra:${i}">Remove</button></div></li>`).join("")}</ol>`:""}
+    <div class="grid2"><label>Food or ingredient<input type="text" id="rx-word" placeholder="e.g. paprika"></label>
+      <label>What to do<select id="rx-level"><option value="avoid">Avoid</option><option value="limit">Limit</option><option value="ask">Check first</option></select></label></div>
+    <label>Why (optional)<input type="text" id="rx-why" placeholder="e.g. flared my gut on 10/30"></label>
+    <div><button class="btn" id="ruleAddExtra">Add to my list</button></div>
+  </section>
+  <section class="panel"><h2>Foods that are fine</h2>
+    <p class="muted" style="margin:0">Things you know you tolerate. These are never flagged, even if a built-in rule would catch them.</p>
+    ${(R.ok||[]).length?`<div class="chips">${R.ok.map((x,i)=>`<span class="chip">${esc(x.label||x.word)} <button class="linkbtn" style="padding:0 0 0 6px" data-ruledel="ok:${i}" aria-label="Remove ${esc(x.label||x.word)}">✕</button></span>`).join("")}</div>`:""}
+    <div class="grid2"><label>Food<input type="text" id="rk-word" placeholder="e.g. lion's mane"></label></div>
+    <div><button class="btn ghost" id="ruleAddOk">Add as fine</button></div>
+  </section>
+  <section class="panel"><h2>Missed something?</h2>
+    <p class="muted" style="margin:0">Anything not ticked off by these times counts as missed, and the app moves it. Supplements with food go to your next meal that day, or the next day after your last meal. Supplements without food can be taken any time before the cutoff, keeping binder spacing. A catch-up too close to the next regular dose is skipped. Routine steps move to later today before the cutoff. After it, daily steps wait for tomorrow, steps you do a few times a week move to the next free day with a day between, and town trips move to your next town day. Each miss is logged on the Notes tab.</p>
+    <div class="grid2">${MISS_FIELDS.map(([k,l,u,ty])=>`<label>${l} <small class="muted" style="font-weight:400">(${u})</small><input type="${ty}" ${ty==="number"?'min="0"':""} id="miss-${k}" data-miss-set="${k}" value="${esc(S.miss[k])}"></label>`).join("")}</div>
+  </section>
+  <section class="panel"><h2>Still to decide</h2>
+    <p class="muted" style="margin:0">Things you want to think over. Remove one once it's settled.</p>
+    ${(S.todo||[]).length?`<ol class="doc">${S.todo.map(x=>`<li>${esc(x.text)} <button class="linkbtn" data-tododel="${esc(x.id)}">Done</button></li>`).join("")}</ol>`:""}
+    <div class="grid2"><label>Add one<input type="text" id="todo-text" placeholder="e.g. Is the gym OK on cook day?"></label></div>
+    <div><button class="btn ghost" id="todoAdd">Add</button></div>
+  </section>
+  ${(S.rulesLog||[]).length?`<section class="panel"><h2>Changes you've made</h2><ol class="doc">${S.rulesLog.slice().reverse().slice(0,30).map(x=>`<li><small class="muted">${esc(x.date.slice(5).replace("-","/"))}</small> ${esc(x.what)}</li>`).join("")}</ol></section>`:""}
+  </div>`;
+}
+function logRule(what){ (S.rulesLog=S.rulesLog||[]).push({date:ymd(new Date()), what}); }
+
+function renderLabs(){
+  const labs = S.labs||[], byName = new Map();
+  for(const x of [...labs].sort((a,b)=>b.date.localeCompare(a.date))){ if(!byName.has(x.name)) byName.set(x.name,[]); byName.get(x.name).push(x); }
+  const fmtD = d=>d? d.slice(5).replace("-","/")+"/"+d.slice(2,4) : "";
+  const range = x=> (x.low!=null&&x.low!==""?x.low:"")+((x.low!=null&&x.low!=="")?" to ":"under ")+(x.high??"");
+  let h = `<div class="stack">
+  <section class="panel"><h2>Add a new result</h2>
+    <p class="muted" style="margin:0">Type in a new lab result when you get it. Earlier results for the same test stay, so you can see the trend.</p>
+    <div class="grid2">
+      <label>Test<input type="text" id="lb-name" list="lb-names" placeholder="e.g. Vitamin D"></label>
+      <datalist id="lb-names">${[...byName.keys()].map(n=>`<option value="${esc(n)}">`).join("")}</datalist>
+      <label>Date<input type="date" id="lb-date" value="${ymd(new Date())}"></label>
+      <label>Result<input type="number" step="any" id="lb-value"></label>
+      <label>Unit<input type="text" id="lb-unit" placeholder="filled in for known tests"></label>
+      <label>Range low<input type="number" step="any" id="lb-low"></label>
+      <label>Range high<input type="number" step="any" id="lb-high"></label>
+    </div>
+    <label>Note (optional)<input type="text" id="lb-note"></label>
+    <div><button class="btn" id="labAdd">Save result</button></div>
+  </section>
+  <section class="panel"><h2>Your results</h2>
+    <small class="muted">A "check" tag means a number is marked to double-check against your paper report.</small>
+    <div class="labs">${[...byName].map(([name,xs])=>{ const x=xs[0], f=labFlag(x);
+      return `<div class="labrow"><div class="labname"><b>${esc(name)}</b> ${f&&f!=="In range"?`<span class="chip pending">${f}</span>`:`<span class="chip">${f||"—"}</span>`} ${x.check?`<span class="chip dusk">check</span>`:""}</div>
+        <div class="labval"><b>${esc(x.value)}</b> ${esc(x.unit)} <small class="muted">range ${esc(range(x))} · ${fmtD(x.date)}</small></div>
+        ${xs.length>1?`<small class="muted">Before: ${xs.slice(1).map(y=>`${esc(y.value)} (${fmtD(y.date)})`).join(", ")}</small>`:""}
+        ${x.note?`<small class="muted">${esc(x.note)}</small>`:""}
+        <div class="chips" style="gap:6px"><button class="linkbtn" data-labfix="${esc(x.id)}">Fix this number</button><button class="linkbtn" data-labdel="${esc(x.id)}">Delete</button></div>
+      </div>`;}).join("")}</div>
+  </section>
+  <section class="panel"><h2>Visits</h2>
+    ${(S.visits||[]).slice().sort((a,b)=>b.date.localeCompare(a.date)).map(v=>`<div class="visit"><b>${fmtD(v.date)} · ${esc(v.who)}</b><div>${esc(v.summary)}</div>${v.changes?`<div class="muted"><b>What changed:</b> ${esc(v.changes)}</div>`:""}<div><button class="linkbtn" data-visitdel="${esc(v.id)}">Delete</button></div></div>`).join("")}
+    <div class="grid2"><label>Date<input type="date" id="vs-date" value="${ymd(new Date())}"></label><label>Who<input type="text" id="vs-who" value="" placeholder="e.g. Dr. Lee"></label></div>
+    <label>What you talked about<textarea id="vs-summary"></textarea></label>
+    <label>What changed (new meds, doses, limits, things to do)<textarea id="vs-changes"></textarea></label>
+    <div><button class="btn" id="visitAdd">Save visit</button></div>
+    <div class="warnbox">If a visit changes a carb target, a limit or a medicine, update My rules and your supplement list to match. Answers to your questions go on the Notes tab under "For my doctor".</div>
+  </section></div>`;
+  view.innerHTML = h;
+}
+
+function docText(){
+  const open = (S.doctor||[]).filter(x=>x.status!=="answered");
+  const lines = ["Questions for my doctor ("+new Date().toLocaleDateString()+")",""];
+  for(const st of ["ask","sent"]){ const xs = open.filter(x=>x.status===st); if(!xs.length) continue; lines.push(st==="ask"?"New:":"Sent earlier, still waiting:"); xs.forEach((x,i)=>lines.push((i+1)+". "+x.text)); lines.push(""); }
+  return lines.join("\n").trim();
+}
+
+/* ---------- Household: people you share meals with, and food cards (household.js) ---------- */
+// Your own food lists, offered line by line for your card. Lists that could hint at a health condition start unticked.
+function householdMine(){
+  const out = [], R = S.rules||{}, SENS = ["medicines","low_arginine"];
+  for(const x of R.extra||[]) if(["avoid","limit","ask"].includes(x.level) && x.word) out.push({key:"x:"+x.word, label:x.label||x.word, detail:x.level==="avoid"?"":HH.LEVELS[x.level],
+    item:{label:x.label||x.word, pat:HH.wordsPat(String(x.word).replace(/\|/g,",")), level:x.level}, on:true});
+  for(const id of R.packs||[]) if(PACK_PATS[id]) out.push({key:"p:"+id, label:PACK_PATS[id].name, detail:SENS.includes(id)?"Could hint at a health condition":"", item:{label:PACK_PATS[id].name, pack:id, level:"avoid"}, on:!SENS.includes(id)});
+  for(const b of breaksOn()) out.push({key:"b:"+b.label+":"+b.until, label:"Food break: "+b.label, detail:"Until "+niceDate(b.until)+". Could hint at a health condition",
+    item:b.pack&&!b.pat ? {label:b.label, pack:b.pack, level:"avoid", until:b.until, src:b.src||[]} : {label:b.label, pat:b.pat, level:"avoid", until:b.until, src:b.src||[]}, on:false});
+  return out;
+}
+// Dinners are the shared meals: the base everyone eats, before each person's add-ons.
+function householdMeals(){
+  const out = [], d0 = new Date();
+  for(let k=0;k<7;k++){ const d = addDays(d0,k), r = recipe(((S.week[d.getDay()]||{}).ids||{}).d); if(r) out.push({when:k===0?"Today":DAYS_LONG[d.getDay()], name:r.n, text:r.n+" "+(r.d||"")}); }
+  return out;
+}
+function householdNote(text){
+  return HH.tableLines(text, S.household).map(x=>x.hits.length ? x.name+": leave out "+x.hits.map(h=>h.words.join(", ")).join(", ")+" (take their share first)." : "").concat(
+    HH.atTable(S.household).filter(p=>p.adds).map(p=>p.name+" adds "+p.adds+".")).filter(Boolean).join(" ");
+}
+function mountHousehold(){
+  HHUI.mount({get:()=>S, save, myItems:householdMine, meals:householdMeals, toast, saveFile:(n,t)=>dl(n,t), sources:"sources.html",
+    qrSrc: SERVER ? "/qr.js" : "qrcode.js",
+    appUrl:()=> location.protocol.startsWith("http") && !/^(localhost|127\.|\[::1\])/.test(location.hostname) ? location.origin+location.pathname : null});
+}
+
+/* The bottom bar links here with #today or #more, so a home-screen app (no back button) can always get around. */
+const TAB_IDS = ["today","tomorrow","more","supps","week","notes","labs","lookback","visit","rules","settings","household"];
+/* A food card link opened while the app is already open. */
+window.addEventListener("hashchange", ()=>{ if(HHUI.takeHash()){ TAB = "household"; render(); window.scrollTo(0,0); } });
+window.addEventListener("hashchange", ()=>{ const h = location.hash.slice(1); if(TAB_IDS.includes(h) && h!==TAB){ TAB = h; try{ sessionStorage.setItem("dh-tab",TAB); }catch(_){} render(); window.scrollTo(0,0); } });
+function render(){
+  expireBreaks();
+  if(location.hash.slice(1)!==TAB) try{ history.replaceState(null, "", "#"+TAB); window.dispatchEvent(new Event("dh-nav")); }catch(_){}
+  const navTab = TAB==="today"||TAB==="tomorrow" ? TAB : "more";
+  document.querySelectorAll("nav.tabs button").forEach(b=>b.setAttribute("aria-selected", b.dataset.tab===navTab));
+  if(TAB==="today") renderDay(0);
+  else if(TAB==="tomorrow") renderDay(1);
+  else if(TAB==="supps") renderSupps();
+  else if(TAB==="week") renderWeek();
+  else if(TAB==="notes") renderNotes();
+  else if(TAB==="more") renderMore();
+  else if(TAB==="labs") renderLabs();
+  else if(TAB==="lookback") renderLookback();
+  else if(TAB==="visit") renderVisit();
+  else if(TAB==="rules") renderRules();
+  else if(TAB==="household") HHUI.render(view);
+  else { renderSettings(); if(LAPTOP) loadPhones(); }
+}
+
+/* ---------- phone calendar (.ics) ---------- */
+function icsText(){
+  const lines = ["BEGIN:VCALENDAR","VERSION:2.0","PRODID:-//all systems you//EN","CALSCALE:GREGORIAN","X-WR-CALNAME:all systems you"];
+  const today = new Date(), stamp = ymd(today).replace(/-/g,"")+"T000000Z";
+  const escI = s=>String(s).replace(/\\/g,"\\\\").replace(/\n/g,"\\n").replace(/[,;]/g,m=>"\\"+m);
+  const ev = (uid, date, time, title, body, rrule, where)=>{
+    lines.push("BEGIN:VEVENT","UID:"+uid+"@all-systems-you","DTSTAMP:"+stamp,
+      "DTSTART:"+ymd(date).replace(/-/g,"")+"T"+time.replace(":","")+"00","DURATION:PT10M",
+      "SUMMARY:"+escI(title), "DESCRIPTION:"+escI(body||""), "RRULE:"+rrule);
+    for(const lead of leadsFor(where)) lines.push("BEGIN:VALARM","ACTION:DISPLAY","DESCRIPTION:"+escI(title),"TRIGGER:-PT"+lead+"M","END:VALARM");
+    lines.push("END:VEVENT");
+  };
+  // Items that repeat daily: take them from a non-cook day's list.
+  const perDay = i=>i.kind==="meal"||i.id==="snack"||i.id==="treat"||i.weekly;
+  const daily = itemsFor(today,true).timed.filter(i=>i.kind!=="freezer" && i.kind!=="cook" && !perDay(i));
+  daily.forEach(i=>ev(i.id.replace(/[^a-z0-9]/gi,"-"), today, i.time, i.title, i.detail, "FREQ=DAILY", i.where));
+  for(let k=0;k<7;k++){
+    const d = addDays(today,k), byday = ["SU","MO","TU","WE","TH","FR","SA"][d.getDay()];
+    const its = itemsFor(d,true).timed;
+    its.filter(perDay).forEach(i=>ev(i.id.replace(/[^a-z0-9]/gi,"-")+"-"+byday, d, i.time, i.title, i.detail, "FREQ=WEEKLY;BYDAY="+byday, i.where));
+    // The night before cook day and cook day itself change with A/B weeks, so each of those repeats every 2 weeks.
+    const alt = !!cookSession(addDays(d,1));
+    for(const wk of (alt?[0,7]:[0])){
+      const dd = addDays(d,wk), p = itemsFor(dd,true).timed.find(i=>i.kind==="freezer");
+      if(p) ev("pull-"+byday+(alt?"-"+ymd(dd):""), dd, p.time, p.title, p.list.join("\n"), alt?"FREQ=WEEKLY;INTERVAL=2":"FREQ=WEEKLY;BYDAY="+byday);
+    }
+    for(const wk of [0,7]){
+      const dd = addDays(d,wk), c = itemsFor(dd,true).timed.find(i=>i.kind==="cook");
+      if(c) ev("cook-"+ymd(dd), dd, c.time, c.title, c.detail, "FREQ=WEEKLY;INTERVAL=2");
+    }
+  }
+  lines.push("END:VCALENDAR");
+  return lines.join("\r\n");
+}
+
+/* ---------- events ---------- */
+document.querySelector("nav.tabs").addEventListener("click",e=>{
+  const b = e.target.closest("button[data-tab]"); if(!b) return;
+  TAB = b.dataset.tab; try{ sessionStorage.setItem("dh-tab",TAB); }catch(_){} render(); window.scrollTo(0,0);
+});
+view.addEventListener("input",e=>{ if(e.target.id && e.target.id.startsWith("fb-")) fbPreview(); });
+view.addEventListener("change",e=>{
+  const t = e.target;
+  if(t.dataset.done==="cook"){ const lg = dayLog(t.dataset.day);
+    if(t.checked && !lg.cooked){ const items = cookPlanFor(parseYmd(t.dataset.day)); lg.cooked = items.map(x=>({id:x.id, n:BASES[x.id].yield*x.batches}));
+      for(const x of lg.cooked) S.stock[x.id]=(Number(S.stock[x.id])||0)+x.n; }
+    if(!t.checked && lg.cooked){ for(const x of lg.cooked) S.stock[x.id]=Math.max(0,(Number(S.stock[x.id])||0)-x.n); delete lg.cooked; } }
+  if(t.dataset.stock){ S.stock[t.dataset.stock]=Math.max(0,Number(t.value)||0); save(); renderWeek(); return; }
+  if(t.dataset.done){ const lg = dayLog(t.dataset.day); if(t.checked){ lg.done[t.dataset.done]=true; undoMissed(t.dataset.day, t.dataset.done); } else delete lg.done[t.dataset.done]; save(); render(); return; }
+  if(t.dataset.r!==undefined){ const r=S.routine[+t.dataset.r]; r[t.dataset.f] = t.type==="checkbox"? t.checked : t.value; save(); if(t.type==="checkbox"||t.dataset.f==="times") renderSupps(); return; }
+  for(const [attr,list] of [["r","routine"],["s","supplements"]]){
+    if(t.dataset[attr+"day"]!==undefined){ const x=S[list][+t.dataset[attr+"day"]], dw=+t.value; x.days=(x.days||[]).filter(v=>v!==dw); if(t.checked) x.days.push(dw); x.days.sort(); save(); renderSupps(); return; }
+    if(t.dataset[attr+"alt"]!==undefined){ const x=S[list][+t.dataset[attr+"alt"]]; x.alt=t.checked; if(t.checked) x.altFrom=ymd(new Date()); save(); renderSupps(); return; }
+  }
+  if(t.dataset.s!==undefined){ const s=S.supplements[+t.dataset.s]; s[t.dataset.f] = t.type==="checkbox"? t.checked : t.value; save(); if(t.type==="checkbox"||t.dataset.f==="times") renderSupps(); return; }
+  if(t.dataset.wid){ const w=S.week[t.dataset.wid]=S.week[t.dataset.wid]||{ids:{}}; (w.ids=w.ids||{})[t.dataset.slot]=t.value; save(); renderWeek(); return; }
+  if(t.dataset.wnote){ (S.week[t.dataset.wnote]=S.week[t.dataset.wnote]||{ids:{}}).note=t.value; save(); return; }
+  if(t.dataset.pull){ S.pull[t.dataset.pull]=t.value.split("\n").map(x=>x.trim()).filter(Boolean); save(); return; }
+  if(t.dataset.top){ S[t.dataset.top]=t.value; save(); return; }
+  if(t.dataset.docst){ const x=S.doctor.find(v=>v.id===t.dataset.docst); if(x){ x.status=t.value; save(); renderNotes(); } return; }
+  if(t.dataset.docans){ const x=S.doctor.find(v=>v.id===t.dataset.docans); if(x){ x.answer=t.value; save(); } return; }
+  if(t.dataset.rule){ const k=t.dataset.rule, old=S.rules[k], v=t.value===""?null:Number(t.value); S.rules[k]=v; const f=RULE_FIELDS.find(x=>x[0]===k); logRule(f[1]+": "+(old??"pending")+" → "+(v??"pending")); save(); return; }
+  if(t.dataset.ramp!==undefined){ const i=+t.dataset.ramp, old=S.rules.ramp[i]; S.rules.ramp=[...S.rules.ramp]; S.rules.ramp[i]=t.value===""?null:Number(t.value); logRule("Fiber ramp week "+(i+1)+": "+(old??"blank")+" → "+(S.rules.ramp[i]??"blank")); save(); return; }
+  if(t.dataset.missSet){ const k=t.dataset.missSet, old=S.miss[k]; S.miss[k]= t.type==="number" ? Number(t.value) : t.value; logRule("Missed items, "+MISS_FIELDS.find(x=>x[0]===k)[1].toLowerCase()+": "+old+" → "+S.miss[k]); save(); return; }
+  if(t.dataset.lead){ S.leads[t.dataset.lead]=t.value; save(); return; }
+  if(t.dataset.t){ S.times[t.dataset.t]=t.value; save(); return; }
+  if(t.dataset.on){ S.on[t.dataset.on]=t.checked; save(); return; }
+  if(t.dataset.pack){ const id=t.dataset.pack, on=new Set(S.rules.packs||[]); if(t.checked) on.add(id); else on.delete(id); S.rules.packs=PACKS.map(x=>x[0]).filter(x=>on.has(x)); logRule("Starter list "+PACKS.find(x=>x[0]===id)[1]+(t.checked?" on":" off")); save(); return; }
+  if(t.id && t.id.startsWith("fb-")){ fbPreview(); return; }
+  if(t.dataset.feelnote){ const lg = dayLog(t.dataset.feelnote); lg.feel = Object.assign({}, lg.feel, {note:t.value}); lg.done.checkin = true; save(); return; }
+  if(t.dataset.wsizes){ const xs = t.value.split(/[ ,]+/).map(Number).filter(x=>x>0&&x<200); S.waterSizes = xs.length? xs.slice(0,5) : [4,8]; save(); render(); return; }
+  if(t.id==="lb-days"){ S.lbDays = +t.value; save(); render(); return; }
+  if(t.id==="bkFile" && t.files && t.files[0]){ const r = new FileReader(); r.onload = ()=>{ try{ const v = JSON.parse(r.result); if(!v || typeof v!=="object" || !v.supplements) throw 0; S = merge(v); save(); toast("Backup loaded"); render(); }catch(_){ toast("That file isn't a all systems you backup"); } }; r.readAsText(t.files[0]); return; }
+  if(t.dataset.rh){ S.rhythm[t.dataset.rh]=t.value; save(); render(); return; }
+  if(t.dataset.rhn){ S.rhythm[t.dataset.rhn]=t.value===""?null:Number(t.value); save(); render(); return; }
+  if(t.dataset.rhb){ S.rhythm[t.dataset.rhb]=t.checked; save(); render(); return; }
+  if(t.dataset.rhw){ S.rhythm.walkAfter=Object.assign({}, S.rhythm.walkAfter, {[t.dataset.rhw]:t.checked}); save(); return; }
+  if(t.dataset.pstr){ S[t.dataset.pstr]=t.value; save(); render(); return; }
+  if(t.dataset.pbool){ S[t.dataset.pbool]=t.checked; save(); return; }
+  if(t.dataset.p){ S[t.dataset.p] = t.type==="number"||t.tagName==="SELECT" ? Number(t.value) : t.value; save(); return; }
+  if(t.dataset.nc){ S.nextCook[t.dataset.nc]=t.value; save(); return; }
+});
+view.addEventListener("click",async e=>{
+  const t = e.target;
+  if(t.dataset.miss){ const it = itemsFor(parseYmd(t.dataset.day)).timed.find(x=>x.id===t.dataset.miss); if(it && markMissed(it, t.dataset.day, false)){ save(); render(); const r=S.log[t.dataset.day].missed[it.id]; toast(r.day?"Moved to "+whenText(r.day,r.time):"Skipped"); } return; }
+  if(t.dataset.unmiss){ undoMissed(t.dataset.day, t.dataset.unmiss); save(); render(); return; }
+  if(t.dataset.tododel){ S.todo=(S.todo||[]).filter(x=>x.id!==t.dataset.tododel); save(); renderRules(); return; }
+  if(t.id==="todoAdd"){ const v=document.getElementById("todo-text").value.trim(); if(!v) return; (S.todo=S.todo||[]).push({id:"td"+Date.now(), text:v}); save(); renderRules(); return; }
+  if(t.dataset.glass!==undefined){ const lg=dayLog(ymd(new Date())); const n=+t.dataset.glass+1; lg.water = lg.water===n? n-1 : n; save(); render(); return; }
+  if(t.dataset.del!==undefined){
+    if(t.dataset.armed){ S.supplements.splice(+t.dataset.del,1); save(); renderSupps(); toast("Removed"); }
+    else { t.dataset.armed="1"; t.textContent="Tap again to remove"; }
+    return;
+  }
+  if(t.id==="ruleAddExtra"){ const w=document.getElementById("rx-word").value.trim(); if(!w){ toast("Type a food first"); return; }
+    const x={word:w.toLowerCase(), label:w.charAt(0).toUpperCase()+w.slice(1), level:document.getElementById("rx-level").value, why:document.getElementById("rx-why").value.trim()};
+    S.rules.extra=[...(S.rules.extra||[]), x]; logRule("Added "+x.label+" ("+x.level+")"); save(); renderRules(); toast("Added"); return; }
+  if(t.id==="ruleAddOk"){ const w=document.getElementById("rk-word").value.trim(); if(!w) return;
+    S.rules.ok=[...(S.rules.ok||[]), {word:w.toLowerCase(), label:w.charAt(0).toUpperCase()+w.slice(1)}]; logRule("Marked "+w+" as fine"); save(); renderRules(); toast("Added"); return; }
+  if(t.dataset.ruledel){ const [list,i]=t.dataset.ruledel.split(":"); const x=S.rules[list][+i]; S.rules[list]=S.rules[list].filter((_,j)=>j!==+i); logRule("Removed "+(x.label||x.word)+(list==="ok"?" from fine foods":" from flagged foods")); save(); renderRules(); return; }
+  if(t.id==="labAdd"){
+    const g=id=>document.getElementById(id).value.trim(), name=g("lb-name"), value=g("lb-value");
+    if(!name||value===""){ toast("Add the test name and result"); return; }
+    const prev=(S.labs||[]).filter(x=>x.name.toLowerCase()===name.toLowerCase()).sort((a,b)=>b.date.localeCompare(a.date))[0];
+    const num=v=>v===""?(null):Number(v);
+    S.labs.push({id:"l"+Date.now(), name:prev?prev.name:name, value:Number(value), unit:g("lb-unit")||(prev?prev.unit:""), low:g("lb-low")!==""?num(g("lb-low")):(prev?prev.low:null), high:g("lb-high")!==""?num(g("lb-high")):(prev?prev.high:null), date:g("lb-date")||ymd(new Date()), check:false, note:g("lb-note")});
+    save(); renderLabs(); toast("Result saved"); return;
+  }
+  if(t.dataset.labfix){ const x=S.labs.find(v=>v.id===t.dataset.labfix); if(!x) return;
+    const box=t.closest(".labrow"); box.insertAdjacentHTML("beforeend",`<div class="chips" style="gap:6px"><input type="number" step="any" id="fix-${esc(x.id)}" value="${esc(x.value)}" style="width:8em"><button class="btn ghost" data-labsave="${esc(x.id)}">Save</button></div>`); t.remove(); return; }
+  if(t.dataset.labsave){ const x=S.labs.find(v=>v.id===t.dataset.labsave); const v=document.getElementById("fix-"+x.id).value; if(v!==""){ x.value=Number(v); x.check=false; save(); renderLabs(); toast("Fixed"); } return; }
+  if(t.dataset.labdel){ if(t.dataset.armed){ S.labs=S.labs.filter(x=>x.id!==t.dataset.labdel); save(); renderLabs(); } else { t.dataset.armed="1"; t.textContent="Tap again to delete"; } return; }
+  if(t.id==="visitAdd"){ const g=id=>document.getElementById(id).value.trim(); if(!g("vs-summary")&&!g("vs-changes")){ toast("Write what you talked about"); return; }
+    (S.visits=S.visits||[]).push({id:"v"+Date.now(), date:g("vs-date")||ymd(new Date()), who:g("vs-who"), summary:g("vs-summary"), changes:g("vs-changes")}); save(); renderLabs(); toast("Visit saved"); return; }
+  if(t.dataset.visitdel){ if(t.dataset.armed){ S.visits=S.visits.filter(x=>x.id!==t.dataset.visitdel); save(); renderLabs(); } else { t.dataset.armed="1"; t.textContent="Tap again to delete"; } return; }
+  if(t.dataset.noteabout!==undefined){ NOTE_ABOUT=t.dataset.noteabout; TAB="notes"; render(); window.scrollTo(0,0); document.getElementById("n-text").focus(); return; }
+  if(t.id==="noteAdd"||t.id==="noteAddDoc"){
+    const text=document.getElementById("n-text").value.trim(); if(!text){ toast("Write a note first"); return; }
+    const n={id:"n"+Date.now(), about:document.getElementById("n-about").value, feel:document.getElementById("n-feel").value, date:document.getElementById("n-date").value||ymd(new Date()), time:document.getElementById("n-time").value, text};
+    (S.notes=S.notes||[]).push(n);
+    if(t.id==="noteAddDoc") (S.doctor=S.doctor||[]).push({id:"q"+Date.now(), text:(n.about?n.about+": ":"")+text+" ("+n.date.slice(5).replace("-","/")+")", status:"ask", answer:"", added:ymd(new Date())});
+    NOTE_ABOUT=""; save(); renderNotes(); toast(t.id==="noteAddDoc"?"Saved and added to your doctor list":"Note saved"); return;
+  }
+  if(t.dataset.note2doc){ const n=(S.notes||[]).find(x=>x.id===t.dataset.note2doc); if(n){ S.doctor.push({id:"q"+Date.now(), text:(n.about?n.about+": ":"")+n.text+" ("+n.date.slice(5).replace("-","/")+")", status:"ask", answer:"", added:ymd(new Date())}); save(); renderNotes(); toast("Added to your doctor list"); } return; }
+  if(t.dataset.notedel){ if(t.dataset.armed){ S.notes=S.notes.filter(x=>x.id!==t.dataset.notedel); save(); renderNotes(); } else { t.dataset.armed="1"; t.textContent="Tap again to delete"; } return; }
+  if(t.id==="docAdd"){ const v=document.getElementById("d-text").value.trim(); if(!v) return; S.doctor.push({id:"q"+Date.now(), text:v, status:"ask", answer:"", added:ymd(new Date())}); save(); renderNotes(); toast("Added"); return; }
+  if(t.dataset.docdel){ if(t.dataset.armed){ S.doctor=S.doctor.filter(x=>x.id!==t.dataset.docdel); save(); renderNotes(); } else { t.dataset.armed="1"; t.textContent="Tap again to delete"; } return; }
+  if(t.id==="docCopy"){ const txt=docText(); try{ await navigator.clipboard.writeText(txt); toast("Copied"); }catch(_){ const ta=document.getElementById("docCopyText"); ta.hidden=false; ta.value=txt; ta.select(); toast("Select all and copy"); } return; }
+  if(t.id==="docPrint"){ document.body.classList.add("printing-doc"); window.print(); setTimeout(()=>document.body.classList.remove("printing-doc"),500); return; }
+  if(t.dataset.rdel!==undefined){
+    if(t.dataset.armed){ S.routine.splice(+t.dataset.rdel,1); save(); renderSupps(); toast("Removed"); }
+    else { t.dataset.armed="1"; t.textContent="Tap again to remove"; }
+    return;
+  }
+  if(t.id==="addRoutine"){ (S.routine=S.routine||[]).push({id:"r"+Date.now(), name:"New step", how:"", times:"", days:[], active:true, pending:false, notes:"", where:"home"}); save(); renderSupps(); return; }
+  if(t.id==="addSupp"){ S.supplements.push({id:"s"+Date.now(), name:"New supplement", dose:"", times:"", how:"", binder:false, active:true, pending:true, notes:"", where:"home"}); save(); renderSupps(); return; }
+  if(t.id==="notifyBtn"){
+    try{ const p = await Notification.requestPermission(); toast(p==="granted"?"Reminders on while this page is open":"This browser blocked reminders"); }
+    catch(_){ toast("This browser can't show reminders here"); }
+    return;
+  }
+  if(t.id==="icsBtn"){
+    try{
+      const a=document.createElement("a"); a.href=URL.createObjectURL(new Blob([icsText()],{type:"text/calendar"})); a.download="all-systems-you.ics"; document.body.appendChild(a); a.click(); a.remove();
+      toast("Saved all-systems-you.ics to Downloads");
+    }catch(_){ toast("Saving is blocked here. Use Show calendar text."); }
+    return;
+  }
+  if(t.id==="icsCopy"){ const ta=document.getElementById("icsText"); ta.hidden=false; ta.value=icsText(); ta.select(); return; }
+  if(t.id==="exportBtn"){
+    const txt = JSON.stringify(Object.assign({}, S, {log:{}}));
+    try{ await navigator.clipboard.writeText(txt); toast("Settings copied"); }
+    catch(_){ const ta=document.getElementById("importText"); ta.value=txt; ta.select(); toast("Select all and copy"); }
+    return;
+  }
+  if(t.id==="phonesToggle"){ await fetch("/api/phones",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({enabled:t.checked})}); loadPhones(); return; }
+  if(t.id==="phonesNewKey"){
+    if(!t.dataset.armed){ t.dataset.armed="1"; t.textContent="Tap again: phones you paired will need the new code"; return; }
+    await fetch("/api/phones",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({newKey:true})}); toast("New code made"); loadPhones(); return;
+  }
+  const go = t.closest && t.closest("[data-goto]");
+  if(go){ TAB = go.dataset.goto; try{ sessionStorage.setItem("dh-tab",TAB); }catch(_){} render(); window.scrollTo(0,0); return; }
+  if(t.dataset.wadd){ const lg = dayLog(ymd(new Date())), z = +t.dataset.wadd; lg.waterOz = waterOz(lg)+z; lg.waterTaps = [...(lg.waterTaps||[]), z]; save(); render(); toast("+"+z+" oz"); return; }
+  if(t.id==="wUndo"){ const lg = dayLog(ymd(new Date())), z = (lg.waterTaps||[]).pop(); if(z){ lg.waterOz = Math.max(0, waterOz(lg)-z); save(); render(); } return; }
+  if(t.dataset.feel){ const lg = dayLog(t.dataset.day), v = +t.dataset.v, f = Object.assign({}, lg.feel); f[t.dataset.feel] = f[t.dataset.feel]===v ? undefined : v; lg.feel = f; lg.done.checkin = true; save(); render(); return; }
+  if(t.id==="repPrint"){ printReport(); return; }
+  if(t.id==="lbTxt"||t.id==="lbCopy"||t.id==="lbCsv"){ const days = [7,14,30].includes(+S.lbDays)? +S.lbDays : 7, lb = lookbackSections(days);
+    if(t.id==="lbCsv") dl("all-systems-you-"+days+"-days-"+ymd(new Date())+".csv", lookbackCsv(lb.rows), "text/csv");
+    else { const txt = secsText("Look back: last "+days+" days", lb.secs); if(t.id==="lbTxt") dl("all-systems-you-"+days+"-days-"+ymd(new Date())+".txt", txt); else await copyText(txt); }
+    return; }
+  if(t.id==="vsTxt"||t.id==="vsCopy"){ const txt = secsText("Visit summary", visitSections()); if(t.id==="vsTxt") dl("visit-summary-"+ymd(new Date())+".txt", txt); else await copyText(txt); return; }
+  if(t.id==="vqAdd"){ const el = document.getElementById("vq-text"), v = el.value.trim(); if(!v) return; (S.doctor=S.doctor||[]).push({id:"q"+Date.now(), text:v, status:"ask", answer:"", added:ymd(new Date())}); save(); renderVisit(); toast("Question added"); return; }
+  if(t.id==="bkDownload"){ dl("all-systems-you-backup-"+ymd(new Date())+".json", JSON.stringify(S), "application/json"); return; }
+  if(t.dataset.bkrestore){ const b = backups().find(x=>x.date===t.dataset.bkrestore); if(!b) return; if(!t.dataset.armed){ t.dataset.armed="1"; t.textContent="Tap again to replace what's on this device with the "+niceDate(b.date)+" copy"; return; } try{ S = merge(JSON.parse(b.data)); save(); toast("Restored"); render(); }catch(_){ toast("That copy couldn't be read"); } return; }
+  if(t.id==="fbStart"){ const b = breakFromForm(document.getElementById("fb-preset").value, document.getElementById("fb-word").value, document.getElementById("fb-also").value);
+    const until = document.getElementById("fb-until").value;
+    if(!b){ toast("Pick a list or type a food first"); return; }
+    if(!until || until < ymd(new Date())){ toast("Pick an end date"); return; }
+    b.until = until; b.saved = {}; S.rules.breaks = [...(S.rules.breaks||[]), b]; logRule("Food break "+b.label+" until "+until); save(); renderRules(); toast("Break started"); return; }
+  if(t.dataset.fbswap){ const b = S.rules.breaks[+t.dataset.fbswap]; if(!b) return; let n = 0, miss = 0;
+    for(const a of breakAffected(b)){ const alt = breakSwap(a.k); if(alt){ (S.week[a.dow].ids)[a.k] = alt; b.saved = b.saved||{}; const key = a.dow+":"+a.k; b.saved[key] = {from:(b.saved[key]||{}).from||a.id, to:alt}; n++; } else miss++; }
+    save(); renderRules(); toast(n+" meal"+(n===1?"":"s")+" swapped"+(miss?". "+miss+" had no safe swap; pick one on the Week tab":"")); return; }
+  if(t.dataset.fbend){ const back = endBreak(+t.dataset.fbend, "ended early"); save(); renderRules(); toast("Break ended"+(back?". "+back+" meal"+(back===1?"":"s")+" put back":"")); return; }
+  if(t.id==="rhApply"){ const ew=eatingWindow(new Date()); if(ew){ S.times.breakfast=ew.first; S.times.lunch=ew.lunch; S.times.dinner=ew.last; save(); toast("Meal times set to "+niceTime(ew.first)+", "+niceTime(ew.lunch)+" and "+niceTime(ew.last)); render(); } return; }
+  if(t.id==="resetBtn"){
+    if(!t.dataset.armed){ t.dataset.armed="1"; t.textContent="Tap again to clear everything on this device"; return; }
+    S = defaults(); save(); toast("Started fresh"); render(); return;
+  }
+  if(t.id==="importBtn"){
+    try{ const v = JSON.parse(document.getElementById("importText").value); const log=S.log; S = merge(v); S.log=log; save(); toast("Settings loaded"); render(); }
+    catch(_){ toast("That text isn't a settings copy"); }
+  }
+});
+
+/* Browser-only reminders (phone or the web page) while the page is open. The computer service handles its own. */
+const firedHere = new Set();
+setInterval(()=>{
+  if(SERVER) return;
+  if(!("Notification" in window) || Notification.permission!=="granted") return;
+  const now = new Date(), key = ymd(now), hm = pad(now.getHours())+":"+pad(now.getMinutes());
+  for(const r of buildReminders(1)) if(r.at===key+"T"+hm && !firedHere.has(r.key)){ firedHere.add(r.key); try{ new Notification(r.title,{body:r.body}); }catch(_){} }
+}, 20000);
+/* Keep the checklist current as the day moves on. */
+/* Phones and computer share one copy: pick up changes made on another device when this one comes back into view. */
+document.addEventListener("visibilitychange", async ()=>{
+  if(document.visibilityState!=="visible" || !SERVER) return;
+  if(view.contains(document.activeElement) && document.activeElement.matches("input[type=text],textarea")) return;
+  try{ const j = await (await fetch("/api/state",{cache:"no-store"})).json(); if(j && j.state){ S = merge(j.state); render(); } }catch(e){}
+});
+let lastDay = ymd(new Date());
+setInterval(()=>{ if(sweepMissed()){ save(); if(TAB==="notes") return; } if(TAB==="today"||TAB==="tomorrow"){ if(ymd(new Date())!==lastDay){ lastDay=ymd(new Date()); dailyBackup(); } if(!view.contains(document.activeElement)||document.activeElement===document.body) render(); } }, 60000);
+
+(async ()=>{
+  try{ TAB = sessionStorage.getItem("dh-tab") || "today"; }catch(_){}
+  { const h = location.hash.slice(1); if(TAB_IDS.includes(h)) TAB = h; }
+  if(HHUI.takeHash()) TAB = "household";
+  await load(); dailyBackup(); mountHousehold(); const rolled = rollCook(); const used = useUpStock(); const swept = sweepMissed(); setSync(); render();
+  if(SERVER || rolled || swept || used) save(); // refresh the 60-day reminder schedule on every open
+})();
+</script>

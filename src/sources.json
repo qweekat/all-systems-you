@@ -1,0 +1,377 @@
+{
+ "_about": "Every outside resource the shared app relies on or was built from. status: cited = a starter list or number in the app comes from it; reference = background reading behind the original plan, not yet used in the app's lists. Clinician handouts are named by their publisher only (no clinic's copy linked) to keep any one person's care team private. Each starter-list rule names its source ids. build.py turns this into sources.html.",
+ "sources": [
+  {
+   "id": "fda-grapefruit",
+   "title": "Grapefruit Juice and Some Drugs Don't Mix",
+   "org": "U.S. Food and Drug Administration",
+   "kind": "Consumer Update",
+   "url": "https://www.fda.gov/consumers/consumer-updates/grapefruit-juice-and-some-drugs-dont-mix",
+   "topics": [
+    "Medicine and food warnings"
+   ],
+   "status": "cited"
+  },
+  {
+   "id": "ods-vitamin-k",
+   "title": "Vitamin K: Fact Sheet for Health Professionals",
+   "org": "NIH Office of Dietary Supplements",
+   "kind": "Fact sheet",
+   "url": "https://ods.od.nih.gov/factsheets/VitaminK-HealthProfessional/",
+   "topics": [
+    "Medicine and food warnings"
+   ],
+   "status": "cited"
+  },
+  {
+   "id": "fda-licorice",
+   "title": "Black Licorice: Trick or Treat?",
+   "org": "U.S. Food and Drug Administration (copy on Drugs.com)",
+   "kind": "Consumer Update",
+   "url": "https://www.drugs.com/fda-consumer/black-licorice-trick-or-treat-198.html",
+   "topics": [
+    "Medicine and food warnings"
+   ],
+   "status": "cited"
+  },
+  {
+   "id": "mayo-maoi",
+   "title": "MAOIs and diet: Is it necessary to restrict tyramine?",
+   "org": "Mayo Clinic",
+   "kind": "Expert answer",
+   "url": "https://www.mayoclinic.org/diseases-conditions/depression/expert-answers/maois/faq-20058035",
+   "topics": [
+    "Medicine and food warnings"
+   ],
+   "status": "cited"
+  },
+  {
+   "id": "cdc-carbs",
+   "title": "Choosing Healthy Carbs",
+   "org": "U.S. Centers for Disease Control and Prevention",
+   "kind": "Web page",
+   "url": "https://www.cdc.gov/diabetes/healthy-eating/choosing-healthy-carbs.html",
+   "topics": [
+    "Blood sugar"
+   ],
+   "status": "cited"
+  },
+  {
+   "id": "cdc-drinks",
+   "title": "Rethink Your Drink",
+   "org": "U.S. Centers for Disease Control and Prevention",
+   "kind": "Web page",
+   "url": "https://www.cdc.gov/healthy-weight-growth/rethink-your-drink/index.html",
+   "topics": [
+    "Blood sugar"
+   ],
+   "status": "cited"
+  },
+  {
+   "id": "atkinson-2008",
+   "title": "International Tables of Glycemic Index and Glycemic Load Values: 2008",
+   "org": "Atkinson FS, Foster-Powell K, Brand-Miller JC. Diabetes Care 31(12):2281-2283, 2008",
+   "kind": "Journal article",
+   "url": "https://doi.org/10.2337/dc08-1239",
+   "topics": [
+    "Glycemic index values",
+    "Glycemic load bands"
+   ],
+   "status": "cited",
+   "note": "The food table's GI numbers were taken from these tables without a license check. They need a freely licensed source, or must be marked as estimates, before a public release."
+  },
+  {
+   "id": "usda-fdc",
+   "title": "FoodData Central",
+   "org": "U.S. Department of Agriculture",
+   "kind": "Food composition database",
+   "url": "https://fdc.nal.usda.gov/",
+   "topics": [
+    "Carb and fiber numbers",
+    "Food breaks: arginine and lysine in foods"
+   ],
+   "status": "cited",
+   "note": "The food table's carb and fiber numbers are approximate general values. Check FoodData Central for exact ones."
+  },
+  {
+   "id": "celiac-sources",
+   "title": "Sources of Gluten",
+   "org": "Celiac Disease Foundation",
+   "kind": "Web page",
+   "url": "https://celiac.org/gluten-free-living/what-is-gluten/sources-of-gluten/",
+   "topics": [
+    "Gluten-free"
+   ],
+   "status": "cited"
+  },
+  {
+   "id": "nci-aflatoxin",
+   "title": "Aflatoxins",
+   "org": "National Cancer Institute",
+   "kind": "Web page",
+   "url": "https://www.cancer.gov/about-cancer/causes-prevention/risk/substances/aflatoxins",
+   "topics": [
+    "Low-mold"
+   ],
+   "status": "cited"
+  },
+  {
+   "id": "break-the-mold",
+   "title": "Break the Mold: 5 Tools to Conquer Mold and Take Back Your Health",
+   "org": "Dr. Jill Crista. Wellness Ink, 2018. ISBN 9781988645186",
+   "kind": "Book",
+   "url": "",
+   "topics": [
+    "Low-mold"
+   ],
+   "status": "cited",
+   "note": "The low-mold starter list follows the book's food guidance in general terms. No text is copied from it."
+  },
+  {
+   "id": "glucose-revolution",
+   "title": "Glucose Revolution: The Life-Changing Power of Balancing Your Blood Sugar",
+   "org": "Jessie Inchauspé. Simon & Schuster, 2022. ISBN 9781982179410",
+   "kind": "Book",
+   "url": "https://www.simonandschuster.com/books/Glucose-Revolution/Jessie-Inchauspe/9781982179410",
+   "topics": [
+    "Meal timing and food order",
+    "Walk after meals",
+    "Food order (vegetables first)"
+   ],
+   "status": "cited"
+  },
+  {
+   "id": "glucose-goddess-hacks",
+   "title": "The 10 Glucose Goddess Hacks",
+   "org": "Jessie Inchauspé, glucosegoddess.com",
+   "kind": "Web page",
+   "url": "https://www.glucosegoddess.com/",
+   "topics": [
+    "Meal timing and food order",
+    "Walk after meals",
+    "Food order (vegetables first)"
+   ],
+   "status": "cited"
+  },
+  {
+   "id": "fast-like-a-girl",
+   "title": "Fast Like a Girl",
+   "org": "Dr. Mindy Pelz. Hay House, 2022. ISBN 9781401969929",
+   "kind": "Book",
+   "url": "https://www.penguinrandomhouse.com/books/710817/fast-like-a-girl-by-dr-mindy-pelz/",
+   "topics": [
+    "Fasting windows",
+    "Starting fast length and slow ramp-up"
+   ],
+   "status": "cited"
+  },
+  {
+   "id": "ifm-detox-guide",
+   "title": "Detox Food Plan: Comprehensive Guide",
+   "org": "The Institute for Functional Medicine, 2017",
+   "kind": "Patient handout (given out by clinicians)",
+   "url": "",
+   "topics": [
+    "Detox food plan",
+    "Water goal by body weight",
+    "Bowel movement check"
+   ],
+   "status": "cited"
+  },
+  {
+   "id": "ifm-detox-planner",
+   "title": "Detox Food Plan: Weekly Planner and Recipes",
+   "org": "The Institute for Functional Medicine, 2015",
+   "kind": "Patient handout (given out by clinicians)",
+   "url": "",
+   "topics": [
+    "Detox food plan"
+   ],
+   "status": "reference"
+  },
+  {
+   "id": "ifm-cardiometabolic",
+   "title": "Cardiometabolic Food Plan: Comprehensive Guide",
+   "org": "The Institute for Functional Medicine, 2022",
+   "kind": "Patient handout (given out by clinicians)",
+   "url": "",
+   "topics": [
+    "Blood sugar"
+   ],
+   "status": "reference"
+  },
+  {
+   "id": "ifm-gi-gl",
+   "title": "Glycemic Index and Glycemic Load",
+   "org": "The Institute for Functional Medicine, 2022",
+   "kind": "Patient handout (given out by clinicians)",
+   "url": "",
+   "topics": [
+    "Glycemic load bands"
+   ],
+   "status": "reference"
+  },
+  {
+   "id": "ifm-micronutrients",
+   "title": "Micronutrients for Insulin Sensitivity",
+   "org": "The Institute for Functional Medicine, 2022",
+   "kind": "Patient handout (given out by clinicians)",
+   "url": "",
+   "topics": [
+    "Blood sugar"
+   ],
+   "status": "reference"
+  },
+  {
+   "id": "ifm-histamine",
+   "title": "Histamine Food Triggers",
+   "org": "The Institute for Functional Medicine, 2022",
+   "kind": "Patient handout (given out by clinicians)",
+   "url": "",
+   "topics": [
+    "Histamine"
+   ],
+   "status": "reference"
+  },
+  {
+   "id": "ifm-lean-protein",
+   "title": "Food Sources: Lean Protein",
+   "org": "The Institute for Functional Medicine, 2022",
+   "kind": "Patient handout (given out by clinicians)",
+   "url": "",
+   "topics": [
+    "Protein"
+   ],
+   "status": "reference"
+  },
+  {
+   "id": "ifm-smoothie",
+   "title": "Building a Better Smoothie",
+   "org": "The Institute for Functional Medicine, 2022",
+   "kind": "Patient handout (given out by clinicians)",
+   "url": "",
+   "topics": [
+    "Recipes"
+   ],
+   "status": "reference"
+  },
+  {
+   "id": "ifm-anti-candida",
+   "title": "Anti-Candida Food Plan",
+   "org": "The Institute for Functional Medicine, 2023",
+   "kind": "Patient handout (given out by clinicians)",
+   "url": "",
+   "topics": [
+    "Reference food plans"
+   ],
+   "status": "reference"
+  },
+  {
+   "id": "safm-fiber",
+   "title": "Fiber, Prebiotics, and Resistant Starch Handout",
+   "org": "Purpose Inc., The School of Applied Functional Medicine",
+   "kind": "Patient handout (given out by clinicians)",
+   "url": "",
+   "topics": [
+    "Fiber"
+   ],
+   "status": "reference"
+  },
+  {
+   "id": "mailoo-2017",
+   "title": "Lysine for Herpes Simplex Prophylaxis: A Review of the Evidence",
+   "org": "Mailoo VJ, Rampes S. Integrative Medicine (Encinitas) 2017;16(3):42-46. PMID 30881246",
+   "kind": "Journal article",
+   "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC6419779",
+   "topics": [
+    "Food breaks: low-arginine for cold sores / HSV"
+   ],
+   "status": "cited",
+   "note": "Found the evidence for lysine is limited; it does not set a diet."
+  },
+  {
+   "id": "griffith-1987",
+   "title": "Success of L-Lysine Therapy in Frequently Recurrent Herpes simplex Infection: Treatment and Prophylaxis",
+   "org": "Griffith RS, Walsh DE, Myrmel KH, Thompson RW, Behforooz A. Dermatologica 1987;175(4):183-190. doi:10.1159/000248823",
+   "kind": "Journal article",
+   "url": "https://doi.org/10.1159/000248823",
+   "topics": [
+    "Food breaks: low-arginine for cold sores / HSV"
+   ],
+   "status": "cited",
+   "note": "Small trial of lysine supplements. The arginine-lysine food idea comes from this line of research; diet alone has not been well tested."
+  },
+  {
+   "id": "fda-allergens",
+   "title": "Food Allergies: What You Need to Know",
+   "org": "U.S. Food and Drug Administration",
+   "kind": "Web page",
+   "url": "https://www.fda.gov/food/buy-store-serve-safe-food/food-allergies-what-you-need-know",
+   "topics": [
+    "Food breaks: food groups",
+    "Household sharing and food cards"
+   ],
+   "status": "cited"
+  },
+  {
+   "id": "household",
+   "title": "Mobile Health App Developers: FTC Best Practices",
+   "org": "U.S. Federal Trade Commission",
+   "kind": "Guidance",
+   "url": "https://www.ftc.gov/business-guidance/resources/mobile-health-app-developers-ftc-best-practices",
+   "topics": [
+    "Household sharing and food cards"
+   ],
+   "status": "cited",
+   "note": "Collect and share only what's needed, and let people choose. Why a food card holds food rules only, each line is ticked by its owner, and sensitive lists start unticked."
+  },
+  {
+   "id": "owasp-password-storage",
+   "title": "Password Storage Cheat Sheet",
+   "org": "OWASP Foundation",
+   "kind": "Guidance",
+   "url": "https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html",
+   "topics": [
+    "Household sharing and food cards"
+   ],
+   "status": "cited",
+   "note": "PBKDF2-HMAC-SHA256 with 600,000 rounds, the setting used to turn a card's passcode into its key."
+  },
+  {
+   "id": "nist-sp-800-132",
+   "title": "Recommendation for Password-Based Key Derivation (SP 800-132)",
+   "org": "National Institute of Standards and Technology",
+   "kind": "Standard",
+   "url": "https://doi.org/10.6028/NIST.SP.800-132",
+   "topics": [
+    "Household sharing and food cards"
+   ],
+   "status": "cited",
+   "note": "PBKDF2 with a random salt."
+  },
+  {
+   "id": "nist-sp-800-108",
+   "title": "Recommendation for Key Derivation Using Pseudorandom Functions (SP 800-108r1)",
+   "org": "National Institute of Standards and Technology",
+   "kind": "Standard",
+   "url": "https://doi.org/10.6028/NIST.SP.800-108r1-upd1",
+   "topics": [
+    "Household sharing and food cards"
+   ],
+   "status": "cited",
+   "note": "HMAC in counter mode, used to scramble the card."
+  },
+  {
+   "id": "rfc-2104",
+   "title": "HMAC: Keyed-Hashing for Message Authentication (RFC 2104)",
+   "org": "Internet Engineering Task Force",
+   "kind": "Standard",
+   "url": "https://www.rfc-editor.org/rfc/rfc2104",
+   "topics": [
+    "Household sharing and food cards"
+   ],
+   "status": "cited",
+   "note": "The seal that catches a wrong passcode or a changed card."
+  }
+ ]
+}
