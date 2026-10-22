@@ -1,2 +1,2 @@
-all systems you 0.9.0
-build 0.9.0-2026-10-22-f61773f4
+all systems you 0.10.0
+build 0.10.0-2026-10-22-4afe63ab

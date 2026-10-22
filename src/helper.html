@@ -266,6 +266,24 @@ function expireBreaks(){
   if(msg){ save(); setTimeout(()=>toast(msg), 50); }
 }
 const BK_KEY = "dailyhelper.backups";
+/* Combine: add what another copy has (a phone's or a computer's) without losing anything here. Settings here stay. */
+function combineFrom(v){
+  const o = merge(v); let days = 0, items = 0;
+  for(const [k,ol] of Object.entries(o.log||{})){
+    const sl = S.log[k];
+    if(!sl){ S.log[k] = ol; days++; continue; }
+    sl.done = Object.assign({}, ol.done||{}, sl.done||{});
+    if(waterOz(ol) > waterOz(sl)){ sl.waterOz = waterOz(ol); sl.waterTaps = ol.waterTaps||[]; }
+    if(ol.feel) sl.feel = Object.assign({}, ol.feel, sl.feel||{});
+    if(ol.missed) sl.missed = Object.assign({}, ol.missed, sl.missed||{});
+    days++;
+  }
+  for(const f of ["notes","doctor","labs","visits","supplements","routine"]){
+    const have = new Set((S[f]||[]).map(x=>x.id));
+    for(const x of (o[f]||[])) if(x && x.id && !have.has(x.id)){ (S[f]=S[f]||[]).push(x); items++; }
+  }
+  save(); toast(`Combined: ${days} day${days===1?"":"s"} and ${items} note${items===1?"":"s"}, results or items added`); render();
+}
 function backups(){ try{ const b = JSON.parse(localStorage.getItem(BK_KEY)||"[]"); return Array.isArray(b)? b : []; }catch(e){ return []; } }
 /* Once a day, keep a copy of everything (the state as it was when the day's first open happened). */
 function dailyBackup(){
@@ -399,7 +417,7 @@ async function load(){
     try{
       const r = await fetch("/api/state",{cache:"no-store"});
       const j = await r.json();
-      if(j && j.server){ SERVER = true; LAPTOP = !!j.laptop; S = merge(j.state || local); return; }
+      if(j && j.server){ SERVER = true; LAPTOP = !!j.laptop; SERVER_REV = j.rev ?? null; S = merge(j.state || local); return; }
     }catch(e){}
   }
   S = merge(local);
@@ -414,6 +432,7 @@ function rollCook(){
   return moved;
 }
 let saveTimer = null;
+let SERVER_REV = null;
 function save(){
   pruneLog();
   try{ const cd = nextCookDate(parseYmd(ymd(new Date()))); if(cd) S.cookNext = {date:ymd(cd), items:cookPlanFor(cd).map(x=>({id:x.id, batches:x.batches}))}; }catch(e){}
@@ -422,7 +441,15 @@ function save(){
   saveTimer = setTimeout(async ()=>{
     if(!SERVER) return;
     try{
-      await fetch("/api/state",{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify({state:S, reminders:buildReminders(60)})});
+      const r = await fetch("/api/state",{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify({state:S, reminders:buildReminders(60), rev:SERVER_REV})});
+      const j = await r.json().catch(()=>({}));
+      if(r.status===409 && j.state){
+        // Another window or phone saved newer changes. Take theirs instead of writing over them.
+        SERVER_REV = j.rev; S = merge(j.state); lsSet(S); render();
+        toast("Updated with changes from your other window or phone. If your last change is missing, please make it again.");
+        return;
+      }
+      if(j.rev!=null) SERVER_REV = j.rev;
       setSync();
     }catch(e){ setSync("Could not reach the reminder service. Changes are saved in this browser."); }
   }, 400);
@@ -1186,9 +1213,10 @@ function renderSettings(){
     <textarea id="importText" placeholder="Paste settings here"></textarea>
     <div><button class="btn ghost" id="importBtn">Load pasted settings</button></div>
     <h3>Backups</h3>
-    <p class="muted" style="margin:0">The app saves a copy of everything once a day and keeps the last 7 on this device. A backup file keeps your data safe if this device is lost or its browser data is cleared, so download one now and then.</p>
+    <p class="muted" style="margin:0">The app saves a copy of everything once a day and keeps the last 7 on this device. A backup file keeps your data safe if this device is lost or its browser data is cleared, so download one now and then. On an iPhone, removing the home-screen icon erases its data, and the icon and Safari keep separate copies, so save a backup first.</p>
+    <small class="muted"><b>Combine</b> adds the other copy's days, ticks, water, check-ins, notes, labs and questions to what's here and keeps your settings. Use it to bring a phone and a computer copy together. <b>Replace</b> swaps everything here for the file.</small>
     ${backups().length?`<ol class="day">${backups().map(b=>`<li><span class="t">${esc(b.date.slice(5).replace("-","/"))}</span><span></span><div class="item"><div class="title">Copy from ${esc(niceDate(b.date))}</div><button class="linkbtn" data-bkrestore="${esc(b.date)}">Go back to this copy</button></div></li>`).join("")}</ol>`:""}
-    <div class="chips" style="gap:8px"><button class="btn ghost" id="bkDownload">Download a backup file</button><label class="btn ghost" style="cursor:pointer">Load a backup file (replaces this device's data)<input type="file" id="bkFile" accept=".json,application/json" hidden></label></div>
+    <div class="chips" style="gap:8px"><button class="btn ghost" id="bkDownload">Download a backup file</button><label class="btn ghost" style="cursor:pointer">Combine with a backup file<input type="file" id="bkCombine" accept=".json,application/json" hidden></label><label class="btn ghost" style="cursor:pointer">Replace with a backup file<input type="file" id="bkFile" accept=".json,application/json" hidden></label></div>
   </section>
   <section class="panel"><h2>Start fresh</h2>
     <p style="margin:0">Clears everything on this device, including notes, labs and supplements, and goes back to the blank starting setup with sample meals. Copy your settings first if you might want them back.</p>
@@ -1549,6 +1577,7 @@ view.addEventListener("change",e=>{
   if(t.dataset.feelnote){ const lg = dayLog(t.dataset.feelnote); lg.feel = Object.assign({}, lg.feel, {note:t.value}); lg.done.checkin = true; save(); return; }
   if(t.dataset.wsizes){ const xs = t.value.split(/[ ,]+/).map(Number).filter(x=>x>0&&x<200); S.waterSizes = xs.length? xs.slice(0,5) : [4,8]; save(); render(); return; }
   if(t.id==="lb-days"){ S.lbDays = +t.value; save(); render(); return; }
+  if(t.id==="bkCombine" && t.files && t.files[0]){ const r = new FileReader(); r.onload = ()=>{ try{ const v = JSON.parse(r.result); const st = v && v.state && typeof v.state==="object" ? v.state : v; if(!st || typeof st!=="object" || !st.log) throw 0; combineFrom(st); }catch(_){ toast("That file isn't an all systems you backup"); } }; r.readAsText(t.files[0]); t.value=""; return; }
   if(t.id==="bkFile" && t.files && t.files[0]){ const r = new FileReader(); r.onload = ()=>{ try{ const v = JSON.parse(r.result); if(!v || typeof v!=="object" || !v.supplements) throw 0; S = merge(v); save(); toast("Backup loaded"); render(); }catch(_){ toast("That file isn't a all systems you backup"); } }; r.readAsText(t.files[0]); return; }
   if(t.dataset.rh){ S.rhythm[t.dataset.rh]=t.value; save(); render(); return; }
   if(t.dataset.rhn){ S.rhythm[t.dataset.rhn]=t.value===""?null:Number(t.value); save(); render(); return; }
@@ -1694,7 +1723,7 @@ setInterval(()=>{
 document.addEventListener("visibilitychange", async ()=>{
   if(document.visibilityState!=="visible" || !SERVER) return;
   if(view.contains(document.activeElement) && document.activeElement.matches("input[type=text],textarea")) return;
-  try{ const j = await (await fetch("/api/state",{cache:"no-store"})).json(); if(j && j.state){ S = merge(j.state); render(); } }catch(e){}
+  try{ const j = await (await fetch("/api/state",{cache:"no-store"})).json(); if(j && j.state){ S = merge(j.state); SERVER_REV = j.rev ?? SERVER_REV; render(); } }catch(e){}
 });
 let lastDay = ymd(new Date());
 setInterval(()=>{ if(sweepMissed()){ save(); if(TAB==="notes") return; } if(TAB==="today"||TAB==="tomorrow"){ if(ymd(new Date())!==lastDay){ lastDay=ymd(new Date()); dailyBackup(); } if(!view.contains(document.activeElement)||document.activeElement===document.body) render(); } }, 60000);

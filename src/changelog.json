@@ -2,6 +2,15 @@
  "note": "Newest first. MAJOR.MINOR.PATCH: MINOR for new features, PATCH for fixes. The top entry is the app's version.",
  "changes": [
   {
+   "v": "0.10.0",
+   "date": "2026-10-22",
+   "items": [
+    "Backups: new Combine with a backup file, to bring a phone and a computer copy together without losing either.",
+    "With the computer app, an old open window can no longer save over newer changes from another window or phone.",
+    "Clearer warning: on an iPhone, removing the home-screen icon erases its data, so save a backup first."
+   ]
+  },
+  {
    "v": "0.9.0",
    "date": "2026-10-22",
    "items": [
