@@ -59,6 +59,7 @@ body{padding-bottom:calc(64px + env(safe-area-inset-bottom,0px))}
     document.querySelectorAll(".botnav a").forEach(function(a){ if (a.dataset.nav === cur) a.setAttribute("aria-current","page"); else a.removeAttribute("aria-current"); });
   }
   mark(); window.addEventListener("hashchange", mark); window.addEventListener("dh-nav", mark);
+  document.addEventListener("click", function(e){ var a = e.target.closest && e.target.closest('a[href*="grocery"]'); if (a) try { sessionStorage.setItem("open-grocery", "1"); } catch (_) {} }, true);
 })();
 </script>
 </body>

@@ -144,7 +144,7 @@ table.rep{width:100%;border-collapse:collapse;font-size:.92rem}table.rep th,tabl
     <button role="tab" data-tab="more" aria-selected="false">More</button>
   </nav>
   <main id="view"></main>
-  <footer class="muted" style="padding:16px 0 32px;font-size:.85rem;line-height:1.4"><b>all systems you</b>. Your health is complicated. Managing it shouldn't be.<br>all systems you helps you follow the plan you and your care team set. It is not medical advice and does not replace your doctor, dietitian or nurse. Check with them before changing your diet, medicines or supplements. Everything you enter stays on this device. Free and open source under the GNU AGPL 3.0. <a href="sources.html">Sources</a>. <span class="appver">Version 0.8.0.</span></footer>
+  <footer class="muted" style="padding:16px 0 32px;font-size:.85rem;line-height:1.4"><b>all systems you</b>. Your health is complicated. Managing it shouldn't be.<br>all systems you helps you follow the plan you and your care team set. It is not medical advice and does not replace your doctor, dietitian or nurse. Check with them before changing your diet, medicines or supplements. Everything you enter stays on this device. Free and open source under the GNU AGPL 3.0. <a href="sources.html">Sources</a>. <span class="appver">Version 0.9.0.</span></footer>
 </div>
 <div class="toast" id="toast" hidden></div>
 
@@ -946,7 +946,7 @@ const esc = s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":
 
 /* ---------- plan logic ---------- */
 function fiberWeek(d){
-  const st = parseYmd(S.fiberStart); if(!st) return 1;
+  const st = parseYmd(S.fiberStart); if(!st) return 4;   // no ramp start date: go straight to the goal
   return Math.max(1, Math.floor((d - st)/86400000/7)+1);
 }
 function fiberInfo(d){
@@ -954,7 +954,7 @@ function fiberInfo(d){
   const R = S.rules||defaultRules(), ramp = R.ramp||[];
   const g = w>=4 ? (R.fiberGoal ?? ramp[3]) : ramp[w-1];
   const target = (g==null || g==="") ? "" : g+" g";
-  return {w, target, on: !!(S.fiberStart && target)};
+  return {w, target, on: !!target};
 }
 function cookSession(d){
   if(d.getDay()!==Number(S.cookDay)) return null;
@@ -1305,7 +1305,7 @@ function renderDay(offset){
   const head = `  <section class="panel">
     <h2>${DAYS_LONG[d.getDay()]}, ${d.toLocaleDateString(undefined,{month:"long",day:"numeric"})}</h2>
     <div class="chips">
-      ${f.on?`<span class="chip">Fiber week ${f.w}: ${esc(f.target)}</span>`:""}
+      ${f.on?`<span class="chip">${S.fiberStart?"Fiber week "+f.w:"Fiber goal"}: ${esc(f.target)}</span>`:""}
       ${sess?`<span class="chip dusk">Cook day</span>`:""}
       ${pendingCount?`<span class="chip pending">${pendingCount} supplement times not confirmed</span>`:""}
     </div>
@@ -1798,6 +1798,8 @@ function renderRules(){
     <p class="muted" style="margin:0">Small changes you can make yourself. The checklist, the pantry and shopping list, and the meal checker all use these. Only enter numbers your doctor, dietitian or nurse gave you. Blank means the rule is off.</p>
     <div class="grid2">${RULE_FIELDS.map(([k,l,u,hint])=>`<label>${l} <small class="muted" style="font-weight:400">(${u})</small><input type="number" step="any" min="0" id="rule-${k}" data-rule="${k}" value="${R[k]==null?"":esc(R[k])}" placeholder="${R[k]==null?"Pending":""}">${hint?`<small class="muted" style="font-weight:400">${hint}</small>`:""}</label>`).join("")}</div>
     <h3>Fiber ramp (g a day)</h3>
+    <small class="muted">Optional. To raise fiber slowly, set a start date and a number for each week. With no start date, Today uses your fiber goal above.</small>
+    <div class="grid2"><label>Ramp started<input type="date" id="rule-fiberStart" data-p="fiberStart" value="${esc(S.fiberStart||"")}"></label></div>
     <div class="grid2">${[0,1,2,3].map(i=>`<label>Week ${i+1}${i===3?" and on":""}<input type="number" min="0" id="ramp-${i}" data-ramp="${i}" value="${R.ramp[i]==null?"":esc(R.ramp[i])}"></label>`).join("")}</div>
   </section>
   ${breaksPanel()}
@@ -1854,6 +1856,13 @@ function renderLabs(){
     <label>Note (optional)<input type="text" id="lb-note"></label>
     <div><button class="btn" id="labAdd">Save result</button></div>
   </section>
+  <section class="panel"><h2>Add many results at once</h2>
+    <p class="muted" style="margin:0">Copy the text from your lab report and paste it here. On an iPhone, open the photo or PDF, press and hold on the text (Live Text) and choose Copy All. The app picks out each test, result, unit and range for you to check before saving.</p>
+    <label>Date of the labs<input type="date" id="lp-date" value="${ymd(new Date())}"></label>
+    <label>Pasted report<textarea id="lp-text" placeholder="Vitamin D, 25-Hydroxy  28  ng/mL  30-100\nFerritin 45 ng/mL 15-150"></textarea></label>
+    <div><button class="btn ghost" id="lpRead">Read the results</button></div>
+    <div id="lp-out"></div>
+  </section>
   <section class="panel"><h2>Your results</h2>
     <small class="muted">A "check" tag means a number is marked to double-check against your paper report.</small>
     <div class="labs">${[...byName].map(([name,xs])=>{ const x=xs[0], f=labFlag(x);
@@ -1873,6 +1882,28 @@ function renderLabs(){
     <div class="warnbox">If a visit changes a carb target, a limit or a medicine, update My rules and your supplement list to match. Answers to your questions go on the Notes tab under "For my doctor".</div>
   </section></div>`;
   view.innerHTML = h;
+}
+
+/* Pasted lab text: one result per line, like "Ferritin 45 ng/mL 15-150" or "Vitamin D  28 L  ng/mL  30 - 100". */
+let LAB_PASTE = [];
+function parseLabText(txt){
+  const out = [];
+  for(const raw of String(txt||"").split(/\r?\n/)){
+    const line = raw.replace(/\s+/g," ").trim(); if(line.length<3) continue;
+    const m = line.match(/^([A-Za-z][A-Za-z0-9 ,()'\-\/%.#]*?[A-Za-z)%])\s*[:\s]\s*([<>]?\d+(?:[.,]\d+)?)\s*(?:\b(H|L|HIGH|LOW|High|Low)\b)?\s*([a-zA-Zµμ%][a-zA-Z0-9µμ%\/.^*]*(?:\/[a-zA-Z0-9.]+)?)?\s*(?:\(?\s*(?:ref(?:erence)?(?: range)?:?\s*)?([<>]?\s*\d+(?:[.,]\d+)?)\s*(?:-|–|to)\s*(\d+(?:[.,]\d+)?)\s*\)?)?/i);
+    if(!m) continue;
+    const n = s=>s==null?null:Number(String(s).replace(",",".").replace(/[<>\s]/g,""));
+    if(/^(page|date|collected|received|reported|patient|dob|phone|fax)\b/i.test(m[1])) continue;
+    out.push({name:m[1].replace(/[\s,:]+$/,""), value:n(m[2]), unit:m[4]||"", low:n(m[5]), high:n(m[6]), on:true});
+  }
+  return out;
+}
+function labPasteHtml(){
+  if(!LAB_PASTE.length) return `<small class="muted">No results found. Each line needs a test name followed by a number.</small>`;
+  return `<div class="tablewrap"><table class="rep"><thead><tr><th>Save</th><th>Test</th><th>Result</th><th>Unit</th><th>Low</th><th>High</th></tr></thead><tbody>
+    ${LAB_PASTE.map((r,i)=>`<tr><td><input type="checkbox" data-lp="${i}" data-lpf="on" ${r.on?"checked":""} aria-label="Save ${esc(r.name)}"></td>${["name","value","unit","low","high"].map(f=>`<td><input type="${f==="name"||f==="unit"?"text":"number"}" step="any" data-lp="${i}" data-lpf="${f}" value="${r[f]==null?"":esc(r[f])}" style="min-width:${f==="name"?"9em":"4.5em"}"></td>`).join("")}</tr>`).join("")}
+    </tbody></table></div><small class="muted">Check each number against the report. Saved results get a "check" tag until you confirm them.</small>
+    <div><button class="btn" id="lpSave">Save ${LAB_PASTE.filter(r=>r.on).length} results</button></div>`;
 }
 
 function docText(){
@@ -1911,7 +1942,7 @@ function mountHousehold(){
 
 /* The bottom bar links here with #today or #more, so a home-screen app (no back button) can always get around. */
 /* Filled in at build time from changelog.json. APP_BUILD tells two builds of the same version apart. */
-const APP_VERSION = "0.8.0", APP_BUILD = "0.8.0-2026-10-22-de142571", CHANGES = [{"v": "0.8.0", "date": "2026-10-22", "items": ["Fix a meal: type a meal's ingredients and the meal checker suggests swaps, trims and adds that follow your lists and limits."]}, {"v": "0.7.0", "date": "2026-10-22", "items": ["A gentle check-in when a supplement or routine step hasn't been ticked off in a while: keep it, change how often, or pause it.", "Version number and this What's new list."]}, {"v": "0.6.0", "date": "2026-10-21", "items": ["Bottom bar on every page, so a home-screen app can always get around.", "Quick view and phone tap shortcuts.", "Installed copies now pick up new versions."]}, {"v": "0.5.0", "date": "2026-10-21", "items": ["Tap to add water (sizes you choose) and a simpler home page.", "Evening check-in: how did I feel today?", "Look back over 7 to 30 days, and a For my visit summary; both print and download.", "Grocery mode for the store.", "Automatic daily backups."]}, {"v": "0.4.0", "date": "2026-10-21", "items": ["Food breaks: take a break from a food until a date, with a low-arginine list for cold sores and HSV, common food groups, or any food you type. Planned meals can be swapped and come back after."]}, {"v": "0.3.0", "date": "2026-10-21", "items": ["Daily rhythm settings: wake and bed times, fasting window, walks after meals, food order, water goal by weight."]}, {"v": "0.2.0", "date": "2026-10-21", "items": ["Sources page; every food rule shows where it comes from."]}, {"v": "0.1.0", "date": "2026-10-21", "items": ["Daily checklist, pantry planner and meal checker that work offline. Starter food lists (drafts)."]}];
+const APP_VERSION = "0.9.0", APP_BUILD = "0.9.0-2026-10-22-571fc29c", CHANGES = [{"v": "0.9.0", "date": "2026-10-22", "items": ["Labs: paste a whole lab report (or copy it from a photo or PDF with Live Text) and save many results at once.", "Pantry: items you add go into the right section (or pick one), and any item can be removed from your list.", "Grocery mode opens reliably from More and the bottom bar.", "Fiber: set the ramp start date on My rules; with no ramp, Today shows your fiber goal."]}, {"v": "0.8.0", "date": "2026-10-22", "items": ["Fix a meal: type a meal's ingredients and the meal checker suggests swaps, trims and adds that follow your lists and limits."]}, {"v": "0.7.0", "date": "2026-10-22", "items": ["A gentle check-in when a supplement or routine step hasn't been ticked off in a while: keep it, change how often, or pause it.", "Version number and this What's new list."]}, {"v": "0.6.0", "date": "2026-10-21", "items": ["Bottom bar on every page, so a home-screen app can always get around.", "Quick view and phone tap shortcuts.", "Installed copies now pick up new versions."]}, {"v": "0.5.0", "date": "2026-10-21", "items": ["Tap to add water (sizes you choose) and a simpler home page.", "Evening check-in: how did I feel today?", "Look back over 7 to 30 days, and a For my visit summary; both print and download.", "Grocery mode for the store.", "Automatic daily backups."]}, {"v": "0.4.0", "date": "2026-10-21", "items": ["Food breaks: take a break from a food until a date, with a low-arginine list for cold sores and HSV, common food groups, or any food you type. Planned meals can be swapped and come back after."]}, {"v": "0.3.0", "date": "2026-10-21", "items": ["Daily rhythm settings: wake and bed times, fasting window, walks after meals, food order, water goal by weight."]}, {"v": "0.2.0", "date": "2026-10-21", "items": ["Sources page; every food rule shows where it comes from."]}, {"v": "0.1.0", "date": "2026-10-21", "items": ["Daily checklist, pantry planner and meal checker that work offline. Starter food lists (drafts)."]}];
 const TAB_IDS = ["today","quick","phone","tomorrow","more","supps","week","notes","labs","lookback","visit","rules","settings","household"];
 /* A food card link opened while the app is already open. */
 window.addEventListener("hashchange", ()=>{ if(HHUI.takeHash()){ TAB = "household"; render(); window.scrollTo(0,0); } });
@@ -2007,6 +2038,7 @@ view.addEventListener("change",e=>{
   if(t.dataset.on){ S.on[t.dataset.on]=t.checked; save(); return; }
   if(t.dataset.pack){ const id=t.dataset.pack, on=new Set(S.rules.packs||[]); if(t.checked) on.add(id); else on.delete(id); S.rules.packs=PACKS.map(x=>x[0]).filter(x=>on.has(x)); logRule("Starter list "+PACKS.find(x=>x[0]===id)[1]+(t.checked?" on":" off")); save(); return; }
   if(t.id && t.id.startsWith("fb-")){ fbPreview(); return; }
+  if(t.dataset.lp!==undefined){ const r = LAB_PASTE[+t.dataset.lp], f = t.dataset.lpf; if(!r) return; r[f] = f==="on" ? t.checked : (f==="name"||f==="unit") ? t.value : (t.value===""?null:Number(t.value)); if(f==="on"){ const b=document.getElementById("lpSave"); if(b) b.textContent="Save "+LAB_PASTE.filter(x=>x.on).length+" results"; } return; }
   if(t.dataset.feelnote){ const lg = dayLog(t.dataset.feelnote); lg.feel = Object.assign({}, lg.feel, {note:t.value}); lg.done.checkin = true; save(); return; }
   if(t.dataset.wsizes){ const xs = t.value.split(/[ ,]+/).map(Number).filter(x=>x>0&&x<200); S.waterSizes = xs.length? xs.slice(0,5) : [4,8]; save(); render(); return; }
   if(t.id==="lb-days"){ S.lbDays = +t.value; save(); render(); return; }
@@ -2038,6 +2070,11 @@ view.addEventListener("click",async e=>{
   if(t.id==="ruleAddOk"){ const w=document.getElementById("rk-word").value.trim(); if(!w) return;
     S.rules.ok=[...(S.rules.ok||[]), {word:w.toLowerCase(), label:w.charAt(0).toUpperCase()+w.slice(1)}]; logRule("Marked "+w+" as fine"); save(); renderRules(); toast("Added"); return; }
   if(t.dataset.ruledel){ const [list,i]=t.dataset.ruledel.split(":"); const x=S.rules[list][+i]; S.rules[list]=S.rules[list].filter((_,j)=>j!==+i); logRule("Removed "+(x.label||x.word)+(list==="ok"?" from fine foods":" from flagged foods")); save(); renderRules(); return; }
+  if(t.id==="lpRead"){ LAB_PASTE = parseLabText(document.getElementById("lp-text").value); document.getElementById("lp-out").innerHTML = labPasteHtml(); return; }
+  if(t.id==="lpSave"){ const date = document.getElementById("lp-date").value || ymd(new Date()); let n = 0;
+    for(const r of LAB_PASTE) if(r.on && r.name && Number.isFinite(r.value)){ const prev = (S.labs||[]).filter(x=>x.name.toLowerCase()===r.name.toLowerCase()).sort((a,b)=>b.date.localeCompare(a.date))[0];
+      (S.labs=S.labs||[]).push({id:"l"+Date.now()+"_"+n, name:prev?prev.name:r.name, value:r.value, unit:r.unit||(prev?prev.unit:""), low:r.low!=null?r.low:(prev?prev.low:null), high:r.high!=null?r.high:(prev?prev.high:null), date, check:true, note:"From pasted report"}); n++; }
+    LAB_PASTE = []; save(); renderLabs(); toast(n+" result"+(n===1?"":"s")+" saved"); return; }
   if(t.id==="labAdd"){
     const g=id=>document.getElementById(id).value.trim(), name=g("lb-name"), value=g("lb-value");
     if(!name||value===""){ toast("Add the test name and result"); return; }
@@ -2360,6 +2397,7 @@ body{padding-bottom:calc(64px + env(safe-area-inset-bottom,0px))}
     document.querySelectorAll(".botnav a").forEach(function(a){ if (a.dataset.nav === cur) a.setAttribute("aria-current","page"); else a.removeAttribute("aria-current"); });
   }
   mark(); window.addEventListener("hashchange", mark); window.addEventListener("dh-nav", mark);
+  document.addEventListener("click", function(e){ var a = e.target.closest && e.target.closest('a[href*="grocery"]'); if (a) try { sessionStorage.setItem("open-grocery", "1"); } catch (_) {} }, true);
 })();
 </script>
 </body>

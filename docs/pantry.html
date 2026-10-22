@@ -149,6 +149,7 @@ footer { color: var(--muted); font-size: 0.85rem; display: flex; flex-direction:
       </div>
       <div class="row">
         <input type="text" id="custom-name" placeholder="Something else you have, like &quot;frozen peas&quot;" aria-label="Add another item">
+        <select id="custom-cat" aria-label="Which section"><option value="">Section: guess for me</option></select>
         <button class="btn" id="btn-add-custom">Add to pantry</button>
         <label class="btn" id="btn-label" hidden>Add from a label photo<input type="file" id="label-file" accept="image/*" hidden></label>
       </div>
@@ -691,6 +692,17 @@ var HH = (function(){
   const glBand = gl => gl <= R.glLow ? ['ok', 'Low'] : gl < R.glHigh ? ['limit', 'Medium'] : ['avoid', 'High'];
   const r1 = x => Math.round(x);
 
+  // Which section a typed item goes in. Checked in this order, so "peanut butter" lands in Pantry, not Dairy.
+  const CAT_GUESS = [
+    ['dairy', /\b(?:oat|almond|soy|rice|cashew|coconut|hemp) milk\b/i],
+    ['meat', /\b(chicken|beef|pork|turkey|lamb|bison|venison|elk|fish|salmon|tuna|cod|halibut|trout|shrimp|prawns?|sardines?|anchov|eggs?|bacon|sausages?|ham|steaks?|ground (?:beef|turkey|pork)|meat)/i],
+    ['spice', /\b(salt|black pepper|spices?|seasoning|cumin|paprika|oregano|cinnamon|turmeric|thyme|rosemary|chili powder|oils?|vinegar|sugar|honey|syrup|stevia|baking|sauce|mustard|ketchup|mayo|mayonnaise|broth|stock|bouillon|extract)\b/i],
+    ['pantry', /\b(peanut butter|almond butter|nut butter|nuts?|seeds?|almonds?|walnuts?|pecans?|cashews?|rice|pasta|noodles?|oats?|oatmeal|quinoa|lentils?|(?<!green )beans?|chickpeas?|canned|cans?|jars?|cereal|crackers?|flour|coffee|tea|dried|chips|popcorn|tahini|coconut milk)\b/i],
+    ['dairy', /\b(milk|cheese|yogh?urt|butter|cream|kefir|ghee|bread|tortillas?|bagels?|buns?|rolls?)\b/i],
+    ['produce', /\b(fruit|vegetables?|veggies|apples?|bananas?|berr(?:y|ies)|grapes?|melons?|oranges?|lemons?|limes?|peach(?:es)?|pears?|plums?|avocados?|lettuce|greens|kale|spinach|chard|onions?|garlic|ginger|peppers?|tomato(?:es)?|potato(?:es)?|squash|zucchini|carrots?|celery|cucumbers?|broccoli|cauliflower|cabbage|beets?|radish(?:es)?|mushrooms?|peas|green beans|corn|herbs?|cilantro|parsley|basil|mint)\b/i],
+  ];
+  function guessCat(name) { for (const [c, re] of CAT_GUESS) if (re.test(name)) return c; return 'other'; }
+
   // ---------- Pantry items ----------
   // [id, name, category, in season locally? (sample: none marked), extra search words, made by batch recipe, staple]
   const CATS = [
@@ -798,7 +810,7 @@ var HH = (function(){
   let ITEM = {}, RECIPE = {};
   function rebuild() {
     ITEM = Object.fromEntries(ITEMS.map(i => [i.id, i]));
-    for (const c of state.custom) ITEM[c.id] = { id: c.id, n: c.n, c: 'other', alias: '', make: '', custom: true, label: c.label };
+    for (const c of state.custom) ITEM[c.id] = { id: c.id, n: c.n, c: c.c || guessCat(c.n), alias: '', make: '', custom: true, label: c.label };
     RECIPE = Object.fromEntries([...RECIPES, ...state.mine].map(r => [r.id, r]));
   }
   rebuild();
@@ -872,7 +884,7 @@ var HH = (function(){
     const q = document.getElementById('pantry-search').value.trim().toLowerCase();
     const out = [];
     for (const [cid, cname] of CATS) {
-      const items = Object.values(ITEM).filter(i => i.c === cid && (!q || (i.n + ' ' + i.alias).toLowerCase().includes(q)));
+      const items = Object.values(ITEM).filter(i => i.c === cid && !(state.hidden || {})[i.id] && (!q || (i.n + ' ' + i.alias).toLowerCase().includes(q)));
       if (!items.length) continue;
       const n = items.filter(i => has(i.id)).length;
       out.push(`<div class="card"><div class="section-h"><h2>${esc(cname)}</h2><span class="small muted">${n} of ${items.length}</span></div>
@@ -882,10 +894,12 @@ var HH = (function(){
           const w = i.custom ? warnFor(i.n + ' ' + (i.label?.ingredients || '')) : null;
           return `<label><input type="checkbox" data-item="${i.id}" ${has(i.id) ? 'checked' : ''}><span>${esc(i.n)}${i.local ? ' <span class="loc">local now</span>' : ''}
             ${labelLine(i.label)}${w ? `<br><span class="warn-line ${w.lvl}">${esc(w.text)}</span>` : ''}
-            ${i.custom ? ` <button class="btn ghost sm" data-del-custom="${i.id}" aria-label="Remove ${esc(i.n)}">remove</button>` : ''}</span></label>`;
+            <button class="btn ghost sm" data-del-custom="${i.id}" aria-label="Remove ${esc(i.n)} from my list">remove</button></span></label>`;
         }).join('')}</div></div>`);
     }
-    document.getElementById('pantry-groups').innerHTML = out.join('') || '<p class="empty">Nothing matches.</p>';
+    const nh = Object.keys(state.hidden || {}).length;
+    document.getElementById('pantry-groups').innerHTML = (out.join('') || '<p class="empty">Nothing matches.</p>')
+      + (nh ? `<p class="small muted">${nh} item${nh > 1 ? 's' : ''} removed from your list. <button class="btn ghost sm" id="btn-unhide">Bring them back</button></p>` : '');
   }
   document.getElementById('pantry-search').addEventListener('input', renderPantry);
   document.getElementById('pantry-groups').addEventListener('change', e => {
@@ -895,9 +909,12 @@ var HH = (function(){
     save(); renderCounts();
   });
   document.getElementById('pantry-groups').addEventListener('click', e => {
+    if (e.target.id === 'btn-unhide') { state.hidden = {}; save(); render(); return; }
     const id = e.target.dataset.delCustom;
     if (!id) return;
     e.preventDefault();
+    // Your own items are deleted. Built-in ones are taken off your list (Bring them back restores them).
+    if (!ITEM[id]?.custom) { state.hidden = Object.assign({}, state.hidden, { [id]: 1 }); delete state.pantry[id]; save(); render(); toast(`Removed ${ITEM[id]?.n || ''}`); return; }
     state.custom = state.custom.filter(c => c.id !== id);
     delete state.pantry[id];
     save(); rebuild(); render();
@@ -910,6 +927,7 @@ var HH = (function(){
     if (!confirm('Untick everything in your pantry?')) return;
     state.pantry = {}; save(); render();
   });
+  document.getElementById('custom-cat').insertAdjacentHTML('beforeend', CATS.filter(([id]) => id !== 'cooked').map(([id, n]) => `<option value="${id}">${esc(n)}</option>`).join(''));
   const customName = document.getElementById('custom-name');
   customName.addEventListener('input', () => {
     const w = warnFor(customName.value);
@@ -920,10 +938,12 @@ var HH = (function(){
     if (!n) return;
     const known = Object.values(ITEM).find(i => i.n.toLowerCase() === n.toLowerCase());
     const id = known ? known.id : 'x_' + n.toLowerCase().replace(/[^a-z0-9]+/g, '_') + '_' + Date.now().toString(36);
-    if (!known) state.custom.push({ id, n });
+    const cat = document.getElementById('custom-cat').value || guessCat(n);
+    if (!known) state.custom.push({ id, n, c: cat });
+    if (known && state.hidden) delete state.hidden[known.id];
     state.pantry[id] = 1;
     customName.value = ''; document.getElementById('custom-warn').innerHTML = '';
-    save(); rebuild(); render(); toast(`Added ${n}`);
+    save(); rebuild(); render(); toast(`Added ${n} to ${(CATS.find(c => c[0] === (known ? known.c : cat)) || [, 'your pantry'])[1]}`);
   }
   document.getElementById('btn-add-custom').addEventListener('click', addCustom);
   customName.addEventListener('keydown', e => { if (e.key === 'Enter') addCustom(); });
@@ -1210,7 +1230,10 @@ var HH = (function(){
     if (e.target.id === 'g-close') closeGrocery();
     if (e.target.id === 'g-done') { closeGrocery(); document.getElementById('btn-bought').click(); }
   });
-  if (/[?&]grocery\b/.test(location.search) || location.hash === '#grocery') setTimeout(openGrocery, 0);
+  // Grocery mode can be asked for by #grocery, ?grocery, or a note left by the bottom bar (a home-screen app may reopen this page as it was).
+  function wantGrocery() { let flag = false; try { flag = sessionStorage.getItem('open-grocery') === '1'; sessionStorage.removeItem('open-grocery'); } catch (e) {} return flag || /[?&]grocery\b/.test(location.search) || location.hash === '#grocery'; }
+  if (wantGrocery()) setTimeout(openGrocery, 0);
+  window.addEventListener('pageshow', e => { if (e.persisted && wantGrocery()) openGrocery(); });
   window.addEventListener('hashchange', () => { if (location.hash === '#grocery') openGrocery(); });
   document.getElementById('days').addEventListener('change', e => { state.days = Math.min(14, Math.max(1, +e.target.value || 7)); save(); renderPlan(); });
   document.getElementById('btn-clear-plan').addEventListener('click', () => { state.plan = {}; state.got = {}; save(); render(); });
@@ -1630,6 +1653,7 @@ body{padding-bottom:calc(64px + env(safe-area-inset-bottom,0px))}
     document.querySelectorAll(".botnav a").forEach(function(a){ if (a.dataset.nav === cur) a.setAttribute("aria-current","page"); else a.removeAttribute("aria-current"); });
   }
   mark(); window.addEventListener("hashchange", mark); window.addEventListener("dh-nav", mark);
+  document.addEventListener("click", function(e){ var a = e.target.closest && e.target.closest('a[href*="grocery"]'); if (a) try { sessionStorage.setItem("open-grocery", "1"); } catch (_) {} }, true);
 })();
 </script>
 </body>
