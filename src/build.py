@@ -8,7 +8,6 @@ import os, shutil, sys
 here = os.path.dirname(os.path.abspath(__file__))
 out = sys.argv[1]
 os.makedirs(os.path.join(out, 'icons'), exist_ok=True)
-VERSION = '0.1.0'
 APP_NAME = 'all systems you'
 TAGLINE = "Your health is complicated. Managing it shouldn't be."
 
@@ -65,6 +64,8 @@ def add_to_full_page(src):
     return src.replace('</body>', SW + '</body>', 1)
 
 import json, html
+CHANGELOG = json.load(open(os.path.join(here, 'changelog.json')))['changes']
+VERSION = CHANGELOG[0]['v']   # the newest changelog entry is the app's version
 SOURCES = json.load(open(os.path.join(here, 'sources.json')))['sources']
 chk = open(os.path.join(here, 'checker.html')).read()
 assert '/*SOURCES*/{}' in chk
@@ -93,6 +94,9 @@ def pack_pats(js):
 helper = open(os.path.join(here, 'helper.html')).read()
 assert '/*PACKPATS*/{}' in helper
 helper = helper.replace('/*PACKPATS*/{}', json.dumps(pack_pats(packs)))
+assert '/*APPVERSION*/"dev"' in helper and '/*CHANGES*/[]' in helper
+helper = helper.replace('/*APPVERSION*/"dev"', json.dumps(VERSION)).replace('/*CHANGES*/[]', json.dumps(CHANGELOG))
+helper = helper.replace('</footer>', ' <span class="appver">Version ' + VERSION + '.</span></footer>', 1)
 # Household (people you share meals with, food cards): one copy of the code in household/, shared with a personal copy of the app.
 HH_CORE = open(os.path.join(here, 'household', 'hh-core.js')).read().replace('/*HH-PACKS*/{}', json.dumps(pack_pats(packs)))
 HH_UI = open(os.path.join(here, 'household', 'hh-ui.js')).read()
@@ -174,7 +178,12 @@ import hashlib
 _h = hashlib.sha256()
 for _f in ['index.html', 'pantry.html', 'checker.html', 'sources.html', 'manifest.webmanifest', 'qrcode.js']:
     _h.update(open(os.path.join(out, _f), 'rb').read())
-BUILD = VERSION + '-' + _h.hexdigest()[:10]
+import datetime
+BUILD = VERSION + '-' + datetime.date.today().isoformat() + '-' + _h.hexdigest()[:8]
+# The build id goes in after hashing, so it can name the hash.
+_ix = os.path.join(out, 'index.html'); _t = open(_ix).read()
+if '/*APPBUILD*/""' in _t: open(_ix, 'w').write(_t.replace('/*APPBUILD*/""', json.dumps(BUILD)))
+open(os.path.join(out, 'VERSION.txt'), 'w').write('all systems you ' + VERSION + '\nbuild ' + BUILD + '\n')
 open(os.path.join(out, 'sw.js'), 'w').write('''// Keeps the app's own files on the device so it opens with no internet. Health data is never sent anywhere.
 const CACHE = "all-systems-you-%s";
 const FILES = ["./", "index.html", "pantry.html", "checker.html", "sources.html", "manifest.webmanifest", "qrcode.js", "icons/icon-180.png", "icons/icon-512.png", "icons/daily-helper.svg"];

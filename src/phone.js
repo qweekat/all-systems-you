@@ -1,10 +1,11 @@
 /* ---------- phone build: works anywhere with the data on this phone only ---------- */
 /* Adds the Quick view, one-tap links for iPhone Shortcuts (?do=...), first-run setup, backups to Files, and offline install. */
-const PHONE_FRESH = (()=>{ try{ return !localStorage.getItem(LS_KEY); }catch(_){ return false; } })();
 const TOUCH = matchMedia("(pointer: coarse)").matches;
 let QUICK_FLASH = "";
 function pGet(k){ try{ return localStorage.getItem(k); }catch(_){ return null; } }
 function pSet(k,v){ try{ localStorage.setItem(k,v); }catch(_){} }
+/* Not set up yet: no supplements (the phone build starts with none) and the welcome hasn't been dismissed. */
+function needsSetup(){ return PHX.welcome && !pGet("dh.welcomed") && !(S.supplements||[]).length; }
 function appUrl(q){ return location.origin + location.pathname.replace(/[^/]*$/, "") + (q||""); }
 function daysSinceBackup(){ const d = parseYmd(pGet("dh.lastBackup")||""); return d ? Math.round((parseYmd(ymd(new Date())) - d)/864e5) : null; }
 
@@ -51,13 +52,14 @@ function phoneAfterLoad(){
   const p = new URLSearchParams(location.search);
   if(p.get("do")){ QUICK_FLASH = runAction(p); TAB = "quick"; save(); }
   if(p.get("view")==="quick") TAB = "quick";
+  if(needsSetup()) TAB = "quick";
   if(location.search) history.replaceState(null, "", location.pathname + (TAB==="quick" ? "#quick" : ""));
   if(navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(()=>{});
   if("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(()=>{});
 }
 
 function welcomeHtml(){
-  if(!PHX.welcome || !PHONE_FRESH || pGet("dh.welcomed")) return "";
+  if(!needsSetup()) return "";
   return `<section class="panel" style="border-color:var(--juniper)"><h2>Bring your data to this phone</h2>
     <p style="margin:0">Your information lives only on this phone. To start with your own supplements, routine, labs and pantry, open a backup file from your laptop or your setup file.</p>
     <div class="chips" style="gap:8px"><label class="btn">Open a backup or setup file<input type="file" accept=".json,application/json" ${PHX.restoreAttr} hidden></label>
@@ -65,7 +67,7 @@ function welcomeHtml(){
     <small class="muted">On the laptop: More, then Backups, then Download a backup now. Send the file to your phone (email it to yourself or save it to iCloud), then tap the button above.</small></section>`;
 }
 function backupNudge(){
-  if(PHX.welcome && PHONE_FRESH && !pGet("dh.welcomed")) return "";
+  if(needsSetup()) return "";
   const n = daysSinceBackup();
   if(n!==null && n<7) return "";
   return `<section class="panel"><b>${n===null?"Save your first backup":"Last backup was "+n+" days ago"}</b>

@@ -1,0 +1,68 @@
+{
+ "note": "Newest first. MAJOR.MINOR.PATCH: MINOR for new features, PATCH for fixes. The top entry is the app's version.",
+ "changes": [
+  {
+   "v": "0.8.0",
+   "date": "2026-10-22",
+   "items": [
+    "Fix a meal: type a meal's ingredients and the meal checker suggests swaps, trims and adds that follow your lists and limits."
+   ]
+  },
+  {
+   "v": "0.7.0",
+   "date": "2026-10-22",
+   "items": [
+    "A gentle check-in when a supplement or routine step hasn't been ticked off in a while: keep it, change how often, or pause it.",
+    "Version number and this What's new list."
+   ]
+  },
+  {
+   "v": "0.6.0",
+   "date": "2026-10-21",
+   "items": [
+    "Bottom bar on every page, so a home-screen app can always get around.",
+    "Quick view and phone tap shortcuts.",
+    "Installed copies now pick up new versions."
+   ]
+  },
+  {
+   "v": "0.5.0",
+   "date": "2026-10-21",
+   "items": [
+    "Tap to add water (sizes you choose) and a simpler home page.",
+    "Evening check-in: how did I feel today?",
+    "Look back over 7 to 30 days, and a For my visit summary; both print and download.",
+    "Grocery mode for the store.",
+    "Automatic daily backups."
+   ]
+  },
+  {
+   "v": "0.4.0",
+   "date": "2026-10-21",
+   "items": [
+    "Food breaks: take a break from a food until a date, with a low-arginine list for cold sores and HSV, common food groups, or any food you type. Planned meals can be swapped and come back after."
+   ]
+  },
+  {
+   "v": "0.3.0",
+   "date": "2026-10-21",
+   "items": [
+    "Daily rhythm settings: wake and bed times, fasting window, walks after meals, food order, water goal by weight."
+   ]
+  },
+  {
+   "v": "0.2.0",
+   "date": "2026-10-21",
+   "items": [
+    "Sources page; every food rule shows where it comes from."
+   ]
+  },
+  {
+   "v": "0.1.0",
+   "date": "2026-10-21",
+   "items": [
+    "Daily checklist, pantry planner and meal checker that work offline. Starter food lists (drafts)."
+   ]
+  }
+ ]
+}

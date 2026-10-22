@@ -144,7 +144,7 @@ table.rep{width:100%;border-collapse:collapse;font-size:.92rem}table.rep th,tabl
     <button role="tab" data-tab="more" aria-selected="false">More</button>
   </nav>
   <main id="view"></main>
-  <footer class="muted" style="padding:16px 0 32px;font-size:.85rem;line-height:1.4"><b>all systems you</b>. Your health is complicated. Managing it shouldn't be.<br>all systems you helps you follow the plan you and your care team set. It is not medical advice and does not replace your doctor, dietitian or nurse. Check with them before changing your diet, medicines or supplements. Everything you enter stays on this device. Free and open source under the GNU AGPL 3.0. <a href="sources.html">Sources</a>.</footer>
+  <footer class="muted" style="padding:16px 0 32px;font-size:.85rem;line-height:1.4"><b>all systems you</b>. Your health is complicated. Managing it shouldn't be.<br>all systems you helps you follow the plan you and your care team set. It is not medical advice and does not replace your doctor, dietitian or nurse. Check with them before changing your diet, medicines or supplements. Everything you enter stays on this device. Free and open source under the GNU AGPL 3.0. <a href="sources.html">Sources</a>. <span class="appver">Version 0.8.0.</span></footer>
 </div>
 <div class="toast" id="toast" hidden></div>
 
@@ -813,7 +813,7 @@ function defaults(){
     times: {breakfast:"08:00", lunch:"12:30", snack:"15:30", dinner:"18:00", walkAfter:30, treat:"19:30", pull:"20:00", cook:"10:00", water:"10:00, 13:00, 16:00"},
     on: {supps:true, meals:true, snack:true, walk:true, treat:true, pull:true, cook:true, water:true, routine:true},
     fiberStart: "",
-    waterGoal: null, glassOz: 8, waterMode: "fixed", weightLb: null, waterSizes: [4, 8], simpleHome: true, checkin: true, lbDays: 7,
+    waterGoal: null, glassOz: 8, waterMode: "fixed", weightLb: null, waterSizes: [4, 8], simpleHome: true, checkin: true, lbDays: 7, nudgeDays: 7,
     /* Daily rhythm. Everything is off or blank until the person sets it; starting values come from the cited sources. */
     rhythm: {wake:"", bed:"", fastOn:false, fastHours:13, rampStart:"", lastMealGap:3, walkMin:10, walkAfter:{b:false, l:false, d:false}, foodOrder:false, bmCheck:false},
     eaters: 1, burners: 2, oven: true,
@@ -1038,7 +1038,8 @@ function dueOn(x, d){
 function freqHtml(x, i, attr){
   return `<div class="row">${DAYS.map((n,dw)=>`<label class="inline"><input type="checkbox" data-${attr}day="${i}" value="${dw}" ${!x.alt&&(x.days||[]).includes(dw)?"checked":""} ${x.alt?"disabled":""}> ${n}</label>`).join("")}
     <label class="inline"><input type="checkbox" data-${attr}alt="${i}" ${x.alt?"checked":""}> Every other day</label></div>
-    <small class="muted">${x.alt?"Every other day, starting "+esc(x.altFrom||"today")+".":(x.days||[]).length?x.days.length+" days a week.":"Every day."}</small>`;
+    <small class="muted">${x.alt?"Every other day, starting "+esc(x.altFrom||"today")+".":(x.days||[]).length?x.days.length+" days a week.":"Every day."}</small>
+    <label class="inline">Check in with me if it's not done for <input type="number" min="0" max="90" style="width:5em" data-${attr}="${i}" data-f="nudgeDays" value="${x.nudgeDays==null?"":esc(x.nudgeDays)}" placeholder="${S.nudgeDays||"off"}"> days <small class="muted">(blank uses your default, 0 is off)</small></label>`;
 }
 
 /* Every task for one date, timed or not. */
@@ -1311,7 +1312,7 @@ function renderDay(offset){
     ${limitsText()?`<div class="facts"><div class="fact"><small class="muted">Your limits</small><b>${esc(limitsText())}</b></div></div>`:""}
     ${f.on?`<small class="muted">Raise fiber slowly and drink extra water. Stop raising it if bloating or cramping gets worse.</small>`:""}
   </section>`;
-  let h = `<div class="stack">${offset===0?waterPanel(lg, wg):""}${brkHtml}${simple?"":head}`;
+  let h = `<div class="stack">${offset===0?waterPanel(lg, wg)+nudgePanel():""}${brkHtml}${simple?"":head}`;
   if(next) h += `<div class="next"><b>Next: ${niceTime(next.time)}</b> · ${esc(next.title)}</div>`;
   if(warns.length) h += `<div class="warnbox"><b>Spacing check.</b> Your rule keeps fiber and binder supplements at least ${Math.round((Number(S.rules.spacingMin)||120)/6)/10} hours from medicines and other supplements. ${warns.map(esc).join(" ")}</div>`;
   h += `<section class="panel"><h2>${offset===0?"Today's checklist":"Tomorrow"}</h2><ol class="day">`;
@@ -1349,7 +1350,45 @@ function renderMore(){
     <a class="tile" href="pantry.html"><b>Pantry &amp; shopping</b><small>Plan meals and make the list</small></a>
     <a class="tile" href="pantry.html?grocery"><b>Grocery mode</b><small>Big tap list for the store</small></a>
     <a class="tile" href="checker.html"><b>Meal checker</b><small>Check a meal or recipe</small></a>
-  </div></section></div>`;
+  </div></section>
+  <section class="panel"><details><summary><b>Version ${esc(APP_VERSION)}</b> · What's new</summary>
+    ${CHANGES.slice(0,3).map(c=>`<h3 style="margin:10px 0 4px">${esc(c.v)} <small class="muted">${esc(c.date)}</small></h3><ul style="margin:0;padding-left:20px">${c.items.map(x=>`<li>${esc(x)}</li>`).join("")}</ul>`).join("")}
+    <small class="muted">Build ${esc(APP_BUILD||"dev")}. Please mention the version when you send feedback.</small></details></section></div>`;
+}
+
+/* ---------- "haven't done it lately" check-ins ----------
+   A supplement or routine step that was due at least twice in the last Y days and never ticked gets a gentle question on Today. */
+function nudgeDaysFor(x){ return x.nudgeDays!=null && x.nudgeDays!=="" ? Number(x.nudgeDays) : Number(S.nudgeDays)||0; }
+function nudges(){
+  const today = new Date(), tk = ymd(today), cache = {}, keys = Object.keys(S.log||{}).sort();
+  const items = i => cache[i] || (cache[i] = (()=>{ const d = addDays(today,-i), all = itemsFor(d, true); return [...all.timed, ...all.untimed]; })());
+  const targets = [...S.supplements.filter(x=>x.active).map(x=>({key:"supp:"+x.id, kind:"s", x})), ...(S.routine||[]).filter(x=>x.active).map(x=>({key:"rt:"+x.id, kind:"r", x}))];
+  const out = [];
+  for(const t of targets){
+    const y = Math.min(90, nudgeDaysFor(t.x)); if(!(y>0)) continue;
+    if(t.x.nudgeSnooze && t.x.nudgeSnooze > tk) continue;
+    if(!keys.length || keys[0] > ymd(addDays(today,-y))) continue;   // not using the app long enough yet
+    const isFor = id => id===t.key || id.startsWith(t.key+":") || id.includes(":"+t.key+":") || id.endsWith(":"+t.key);
+    let due = 0, done = false;
+    for(let i=1; i<=y && !done; i++){ const its = items(i).filter(it=>it.id===t.key || it.id.startsWith(t.key+":")), lg = S.log[ymd(addDays(today,-i))];
+      if(its.length) due++; if(lg && Object.keys(lg.done||{}).some(id=>lg.done[id] && isFor(id))) done = true; }
+    if(done || due < 2) continue;
+    let last = null;
+    for(const k of keys.slice().reverse()){ const dn = (S.log[k]||{}).done||{}; if(Object.keys(dn).some(id=>dn[id] && isFor(id))){ last = k; break; } }
+    out.push({...t, y, days: Math.round((parseYmd(tk)-parseYmd(last||keys[0]))/864e5), never: !last});
+  }
+  return out;
+}
+function nudgePanel(){
+  const ns = nudges(); if(!ns.length) return "";
+  const n = ns[0], list = n.kind==="s" ? S.supplements : S.routine, i = list.indexOf(n.x), cur = n.x.nudgeDays==null||n.x.nudgeDays==="" ? "" : String(n.x.nudgeDays);
+  const b = (a,label,ghost)=>`<button class="btn${ghost?" ghost":""}" data-nudge="${a}" data-nk="${n.kind}" data-ni="${i}">${label}</button>`;
+  return `<section class="panel"><h2>A quick check-in</h2>
+    <p style="margin:0">${n.never?`You haven't ticked off <b>${esc(n.x.name)}</b> since you started the app (${n.days} days).`:`It's been ${n.days} days since you ticked off <b>${esc(n.x.name)}</b>.`} That's fine. Life happens. Does it still fit your days, or should it change?</p>
+    <div class="chips" style="gap:8px">${b("keep","Keep it as is")}${b("change","Change how often",1)}${b("pause","Pause it",1)}</div>
+    <label class="inline">Ask about this after <select data-${n.kind}="${i}" data-f="nudgeDays" data-nudgesel="1"><option value="" ${cur===""?"selected":""}>my default (${Number(S.nudgeDays)||"off"})</option>${[7,14,30].map(d=>`<option value="${d}" ${cur===String(d)?"selected":""}>${d} days</option>`).join("")}<option value="0" ${cur==="0"?"selected":""}>never</option></select></label>
+    ${ns.length>1?`<small class="muted">${ns.length-1} more to look at after this one.</small>`:""}
+    <small class="muted">If it's a medicine or something your care team asked for, check with them before stopping.</small></section>`;
 }
 
 /* ---------- water taps ---------- */
@@ -1411,7 +1450,7 @@ function lookbackSections(days){
       +(r.missed.length?". Missed: "+r.missed.join("; "):"")+(r.notes.length?". Notes: "+r.notes.join("; "):"") : "nothing logged"))]);
   return {rows, sm, secs};
 }
-function secsText(title, secs){ return [title, "Made with all systems you on "+new Date().toLocaleDateString()+". Not medical advice.", "", ...secs.flatMap(([h,ls])=>[h.toUpperCase(), ...(ls.length?ls:["(none)"]).map(l=>"- "+l), ""])].join("\n").trim(); }
+function secsText(title, secs){ return [title, "Made with all systems you "+APP_VERSION+" on "+new Date().toLocaleDateString()+". Not medical advice.", "", ...secs.flatMap(([h,ls])=>[h.toUpperCase(), ...(ls.length?ls:["(none)"]).map(l=>"- "+l), ""])].join("\n").trim(); }
 function secsHtml(secs){ return secs.map(([h,ls])=>`<div class="rep-sec"><h3>${esc(h)}</h3>${ls.length?`<ul>${ls.map(l=>`<li>${esc(l)}</li>`).join("")}</ul>`:`<small class="muted">None</small>`}</div>`).join(""); }
 function lookbackCsv(rows){
   const q = v=>'"'+String(v==null?"":v).replace(/"/g,'""')+'"';
@@ -1460,7 +1499,7 @@ function renderVisit(){
   view.innerHTML = `<div class="stack"><section class="panel" id="report"><h2>For my visit</h2>
     <p class="muted noprint" style="margin:0">A one-page summary to print, bring, or send to your clinic. It uses what's on this device: supplements, rules, the last 14 days, labs, and your questions.</p>
     <div class="row noprint"><button class="btn" id="repPrint">Print or save as PDF</button><button class="btn ghost" id="vsTxt">Download text</button><button class="btn ghost" id="vsCopy">Copy</button></div>
-    <small class="muted">Prepared ${esc(new Date().toLocaleDateString())} with all systems you. Not medical advice.</small>
+    <small class="muted">Prepared ${esc(new Date().toLocaleDateString())} with all systems you ${esc(APP_VERSION)}. Not medical advice.</small>
     ${secsHtml(secs)}
     <div class="grid2 noprint"><label>Add a question<input type="text" id="vq-text" placeholder="e.g. Can I raise my fiber goal?"></label></div>
     <div class="noprint"><button class="btn ghost" id="vqAdd">Add question</button></div></section></div>`;
@@ -1607,6 +1646,7 @@ function renderSettings(){
     <label>Water buttons (oz)<input type="text" id="p-wsizes" data-wsizes="1" value="${esc(waterSizes().join(", "))}" placeholder="4, 8"><small class="muted" style="font-weight:400">One button per size, e.g. 4, 8, 12.</small></label>
     <label class="inline"><input type="checkbox" data-pbool="simpleHome" ${S.simpleHome?"checked":""}> Simple home page (water and checklist first)</label>
     <label class="inline"><input type="checkbox" data-pbool="checkin" ${S.checkin?"checked":""}> Evening check-in</label>
+    <label>Check in about things I haven't done for (days)<input type="number" min="0" max="90" id="p-nudge" data-p="nudgeDays" value="${S.nudgeDays||""}" placeholder="Off"><small class="muted" style="font-weight:400">If a supplement or routine step goes unticked this long, Today asks if it still works for you. Each one can have its own number. Blank or 0 is off.</small></label>
     <label>Glass size (oz)<input type="number" id="p-glass" data-p="glassOz" min="4" value="${esc(S.glassOz)}"></label>
     <label>People eating dinner<input type="number" id="p-eaters" data-p="eaters" min="1" max="12" value="${esc(S.eaters)}"></label>
     <label>Stove burners<input type="number" id="p-burners" data-p="burners" min="1" max="8" value="${esc(S.burners)}"></label>
@@ -1870,6 +1910,8 @@ function mountHousehold(){
 }
 
 /* The bottom bar links here with #today or #more, so a home-screen app (no back button) can always get around. */
+/* Filled in at build time from changelog.json. APP_BUILD tells two builds of the same version apart. */
+const APP_VERSION = "0.8.0", APP_BUILD = "0.8.0-2026-10-22-de142571", CHANGES = [{"v": "0.8.0", "date": "2026-10-22", "items": ["Fix a meal: type a meal's ingredients and the meal checker suggests swaps, trims and adds that follow your lists and limits."]}, {"v": "0.7.0", "date": "2026-10-22", "items": ["A gentle check-in when a supplement or routine step hasn't been ticked off in a while: keep it, change how often, or pause it.", "Version number and this What's new list."]}, {"v": "0.6.0", "date": "2026-10-21", "items": ["Bottom bar on every page, so a home-screen app can always get around.", "Quick view and phone tap shortcuts.", "Installed copies now pick up new versions."]}, {"v": "0.5.0", "date": "2026-10-21", "items": ["Tap to add water (sizes you choose) and a simpler home page.", "Evening check-in: how did I feel today?", "Look back over 7 to 30 days, and a For my visit summary; both print and download.", "Grocery mode for the store.", "Automatic daily backups."]}, {"v": "0.4.0", "date": "2026-10-21", "items": ["Food breaks: take a break from a food until a date, with a low-arginine list for cold sores and HSV, common food groups, or any food you type. Planned meals can be swapped and come back after."]}, {"v": "0.3.0", "date": "2026-10-21", "items": ["Daily rhythm settings: wake and bed times, fasting window, walks after meals, food order, water goal by weight."]}, {"v": "0.2.0", "date": "2026-10-21", "items": ["Sources page; every food rule shows where it comes from."]}, {"v": "0.1.0", "date": "2026-10-21", "items": ["Daily checklist, pantry planner and meal checker that work offline. Starter food lists (drafts)."]}];
 const TAB_IDS = ["today","quick","phone","tomorrow","more","supps","week","notes","labs","lookback","visit","rules","settings","household"];
 /* A food card link opened while the app is already open. */
 window.addEventListener("hashchange", ()=>{ if(HHUI.takeHash()){ TAB = "household"; render(); window.scrollTo(0,0); } });
@@ -1944,6 +1986,7 @@ view.addEventListener("change",e=>{
     if(!t.checked && lg.cooked){ for(const x of lg.cooked) S.stock[x.id]=Math.max(0,(Number(S.stock[x.id])||0)-x.n); delete lg.cooked; } }
   if(t.dataset.stock){ S.stock[t.dataset.stock]=Math.max(0,Number(t.value)||0); save(); renderWeek(); return; }
   if(t.dataset.done){ const lg = dayLog(t.dataset.day); if(t.checked){ lg.done[t.dataset.done]=true; undoMissed(t.dataset.day, t.dataset.done); } else delete lg.done[t.dataset.done]; save(); render(); return; }
+  if(t.dataset.nudgesel){ const x = (t.dataset.s!==undefined ? S.supplements[+t.dataset.s] : S.routine[+t.dataset.r]); if(x){ x.nudgeDays = t.value; save(); render(); } return; }
   if(t.dataset.r!==undefined){ const r=S.routine[+t.dataset.r]; r[t.dataset.f] = t.type==="checkbox"? t.checked : t.value; save(); if(t.type==="checkbox"||t.dataset.f==="times") renderSupps(); return; }
   for(const [attr,list] of [["r","routine"],["s","supplements"]]){
     if(t.dataset[attr+"day"]!==undefined){ const x=S[list][+t.dataset[attr+"day"]], dw=+t.value; x.days=(x.days||[]).filter(v=>v!==dw); if(t.checked) x.days.push(dw); x.days.sort(); save(); renderSupps(); return; }
@@ -2057,6 +2100,11 @@ view.addEventListener("click",async e=>{
   }
   const go = t.closest && t.closest("[data-goto]");
   if(go){ TAB = go.dataset.goto; try{ sessionStorage.setItem("dh-tab",TAB); }catch(_){} render(); window.scrollTo(0,0); return; }
+  if(t.dataset.nudge){ const list = t.dataset.nk==="s" ? S.supplements : S.routine, x = list[+t.dataset.ni], a = t.dataset.nudge; if(!x) return;
+    if(a==="keep"){ x.nudgeSnooze = ymd(addDays(new Date(), Math.max(1, nudgeDaysFor(x)))); logRule("Kept "+x.name+" after a check-in"); toast("Kept. I'll check again in "+Math.max(1, nudgeDaysFor(x))+" days"); }
+    else if(a==="change"){ x.nudgeSnooze = ymd(addDays(new Date(), 3)); save(); TAB = "supps"; try{ sessionStorage.setItem("dh-tab",TAB); }catch(_){} render(); window.scrollTo(0,0); return; }
+    else if(a==="pause"){ x.active = false; logRule("Paused "+x.name); toast("Paused. Turn it back on any time on Supplements & routine"); }
+    save(); render(); return; }
   if(t.dataset.wadd){ const lg = dayLog(ymd(new Date())), z = +t.dataset.wadd; lg.waterOz = waterOz(lg)+z; lg.waterTaps = [...(lg.waterTaps||[]), z]; save(); render(); toast("+"+z+" oz"); return; }
   if(t.id==="wUndo"){ const lg = dayLog(ymd(new Date())), z = (lg.waterTaps||[]).pop(); if(z){ lg.waterOz = Math.max(0, waterOz(lg)-z); save(); render(); } return; }
   if(t.dataset.feel){ const lg = dayLog(t.dataset.day), v = +t.dataset.v, f = Object.assign({}, lg.feel); f[t.dataset.feel] = f[t.dataset.feel]===v ? undefined : v; lg.feel = f; lg.done.checkin = true; save(); render(); return; }
@@ -2067,7 +2115,7 @@ view.addEventListener("click",async e=>{
     return; }
   if(t.id==="vsTxt"||t.id==="vsCopy"){ const txt = secsText("Visit summary", visitSections()); if(t.id==="vsTxt") dl("visit-summary-"+ymd(new Date())+".txt", txt); else await copyText(txt); return; }
   if(t.id==="vqAdd"){ const el = document.getElementById("vq-text"), v = el.value.trim(); if(!v) return; (S.doctor=S.doctor||[]).push({id:"q"+Date.now(), text:v, status:"ask", answer:"", added:ymd(new Date())}); save(); renderVisit(); toast("Question added"); return; }
-  if(t.id==="bkDownload"){ dl("all-systems-you-backup-"+ymd(new Date())+".json", JSON.stringify(S), "application/json"); return; }
+  if(t.id==="bkDownload"){ dl("all-systems-you-backup-"+ymd(new Date())+".json", JSON.stringify(Object.assign({appVersion:APP_VERSION}, S)), "application/json"); return; }
   if(t.dataset.bkrestore){ const b = backups().find(x=>x.date===t.dataset.bkrestore); if(!b) return; if(!t.dataset.armed){ t.dataset.armed="1"; t.textContent="Tap again to replace what's on this device with the "+niceDate(b.date)+" copy"; return; } try{ S = merge(JSON.parse(b.data)); save(); toast("Restored"); render(); }catch(_){ toast("That copy couldn't be read"); } return; }
   if(t.id==="fbStart"){ const b = breakFromForm(document.getElementById("fb-preset").value, document.getElementById("fb-word").value, document.getElementById("fb-also").value);
     const until = document.getElementById("fb-until").value;
@@ -2120,11 +2168,12 @@ const PHX = {
 };
 /* ---------- phone build: works anywhere with the data on this phone only ---------- */
 /* Adds the Quick view, one-tap links for iPhone Shortcuts (?do=...), first-run setup, backups to Files, and offline install. */
-const PHONE_FRESH = (()=>{ try{ return !localStorage.getItem(LS_KEY); }catch(_){ return false; } })();
 const TOUCH = matchMedia("(pointer: coarse)").matches;
 let QUICK_FLASH = "";
 function pGet(k){ try{ return localStorage.getItem(k); }catch(_){ return null; } }
 function pSet(k,v){ try{ localStorage.setItem(k,v); }catch(_){} }
+/* Not set up yet: no supplements (the phone build starts with none) and the welcome hasn't been dismissed. */
+function needsSetup(){ return PHX.welcome && !pGet("dh.welcomed") && !(S.supplements||[]).length; }
 function appUrl(q){ return location.origin + location.pathname.replace(/[^/]*$/, "") + (q||""); }
 function daysSinceBackup(){ const d = parseYmd(pGet("dh.lastBackup")||""); return d ? Math.round((parseYmd(ymd(new Date())) - d)/864e5) : null; }
 
@@ -2171,13 +2220,14 @@ function phoneAfterLoad(){
   const p = new URLSearchParams(location.search);
   if(p.get("do")){ QUICK_FLASH = runAction(p); TAB = "quick"; save(); }
   if(p.get("view")==="quick") TAB = "quick";
+  if(needsSetup()) TAB = "quick";
   if(location.search) history.replaceState(null, "", location.pathname + (TAB==="quick" ? "#quick" : ""));
   if(navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(()=>{});
   if("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(()=>{});
 }
 
 function welcomeHtml(){
-  if(!PHX.welcome || !PHONE_FRESH || pGet("dh.welcomed")) return "";
+  if(!needsSetup()) return "";
   return `<section class="panel" style="border-color:var(--juniper)"><h2>Bring your data to this phone</h2>
     <p style="margin:0">Your information lives only on this phone. To start with your own supplements, routine, labs and pantry, open a backup file from your laptop or your setup file.</p>
     <div class="chips" style="gap:8px"><label class="btn">Open a backup or setup file<input type="file" accept=".json,application/json" ${PHX.restoreAttr} hidden></label>
@@ -2185,7 +2235,7 @@ function welcomeHtml(){
     <small class="muted">On the laptop: More, then Backups, then Download a backup now. Send the file to your phone (email it to yourself or save it to iCloud), then tap the button above.</small></section>`;
 }
 function backupNudge(){
-  if(PHX.welcome && PHONE_FRESH && !pGet("dh.welcomed")) return "";
+  if(needsSetup()) return "";
   const n = daysSinceBackup();
   if(n!==null && n<7) return "";
   return `<section class="panel"><b>${n===null?"Save your first backup":"Last backup was "+n+" days ago"}</b>
