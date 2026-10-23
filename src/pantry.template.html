@@ -507,7 +507,7 @@ footer { color: var(--muted); font-size: 0.85rem; display: flex; flex-direction:
           const w = i.custom ? warnFor(i.n + ' ' + (i.label?.ingredients || '')) : null;
           return `<label><input type="checkbox" data-item="${i.id}" ${has(i.id) ? 'checked' : ''}><span>${esc(i.n)}${i.local ? ' <span class="loc">local now</span>' : ''}
             ${labelLine(i.label)}${w ? `<br><span class="warn-line ${w.lvl}">${esc(w.text)}</span>` : ''}
-            <button class="btn ghost sm" data-del-custom="${i.id}" aria-label="Remove ${esc(i.n)} from my list">remove</button></span></label>`;
+            ${i.custom ? `<button class="btn ghost sm" data-edit-custom="${i.id}" aria-label="Edit ${esc(i.n)}">edit</button> ` : ''}<button class="btn ghost sm" data-del-custom="${i.id}" aria-label="Remove ${esc(i.n)} from my list">remove</button></span></label>`;
         }).join('')}</div></div>`);
     }
     const nh = Object.keys(state.hidden || {}).length;
@@ -523,6 +523,19 @@ footer { color: var(--muted); font-size: 0.85rem; display: flex; flex-direction:
   });
   document.getElementById('pantry-groups').addEventListener('click', e => {
     if (e.target.id === 'btn-unhide') { state.hidden = {}; save(); render(); return; }
+    const ed = e.target.dataset.editCustom;
+    if (ed) {
+      // Open an item you added in the label form, to fix its name or fill in what a photo missed. Checks run again as you type.
+      e.preventDefault();
+      const c = state.custom.find(x => x.id === ed);
+      if (!c) return;
+      const l = c.label || {}, fields = {};
+      for (const [k] of LABEL_FIELDS) fields[k] = l[k] ?? '';
+      label = { name: c.n, fields, ingredients: l.ingredients || '', missing: [], suspect: [], editId: ed };
+      renderLabel();
+      document.getElementById('label-form').scrollIntoView({ block: 'start', behavior: 'smooth' });
+      return;
+    }
     const id = e.target.dataset.delCustom;
     if (!id) return;
     e.preventDefault();
@@ -534,7 +547,7 @@ footer { color: var(--muted); font-size: 0.85rem; display: flex; flex-direction:
   });
   document.getElementById('btn-staples').addEventListener('click', () => {
     ITEMS.filter(i => i.staple).forEach(i => state.pantry[i.id] = 1);
-    save(); render(); toast('Spices, oils and stevia ticked');
+    save(); render(); toast('Spices and oils ticked');
   });
   document.getElementById('btn-clear-pantry').addEventListener('click', () => {
     if (!confirm('Untick everything in your pantry?')) return;
@@ -595,9 +608,8 @@ footer { color: var(--muted); font-size: 0.85rem; display: flex; flex-direction:
     const carbs = n(fl.carbs), fiber = n(fl.fiber);
     return { carbs, fiber, net: carbs != null ? Math.max(0, carbs - (fiber || 0)) : null, added: n(fl.addedSugar) };
   }
-  function renderLabel() {
-    const el = document.getElementById('label-form');
-    if (!label) { el.innerHTML = ''; return; }
+  // The checks under the form. Updated on their own so a tap on Save right after typing isn't lost to a re-render.
+  function labelSummary() {
     const hits = scan(label.ingredients + ' ' + label.name);
     const flags = [...new Map(hits.map(h => [h.rule.label, h])).values()].sort((a, b) => ORDER.indexOf(a.rule.level) - ORDER.indexOf(b.rule.level));
     const nm = labelNums(label.fields);
@@ -609,18 +621,23 @@ footer { color: var(--muted); font-size: 0.85rem; display: flex; flex-direction:
     if (nm.fiber != null) pills.push(`<span class="pill ${nm.fiber >= 3 ? 'ok' : 'plain'}">${nm.fiber} g fiber</span>`);
     if (gl != null) { const [bl, bn] = glBand(gl); pills.push(`<span class="pill ${bl}">GL ~${r1(gl)} ${bn} (est., using ${esc(food.name)})</span>`); }
     if (nm.added) pills.push('<span class="pill avoid">Added sugar</span>');
+    return `<div class="row">${pills.join('')}</div>
+      ${nm.added ? '<p class="warn-line limit">This has added sugar.</p>' : ''}
+      ${flags.length ? flags.map(h => `<p class="warn-line ${h.rule.level}">${LEVELS[h.rule.level]}: ${esc(h.word)} · ${esc(h.rule.why)}</p>`).join('') : (label.ingredients.trim() ? '<p class="pill ok">Ingredients fit your food rules.</p>' : '<p class="small muted">No ingredient list found. Type it in to have it checked.</p>')}`;
+  }
+  function renderLabel() {
+    const el = document.getElementById('label-form');
+    if (!label) { el.innerHTML = ''; return; }
     el.innerHTML = `<div class="card" style="background:var(--sunk)">
-      <h3>Check these against the label</h3>
+      <h3>${label.editId ? 'Edit ' + esc(label.name || 'this item') : 'Check these against the label'}</h3>
       <p class="small muted">Photo reading often mixes up numbers, like 5g read as 59 or 0 read as O. Fix anything that looks off, then save.</p>
       <div class="row"><input type="text" data-lf="name" value="${esc(label.name)}" placeholder="Product name" aria-label="Product name"></div>
       <div class="checks">${LABEL_FIELDS.map(([k, t, ty]) => `<label style="flex-direction:column;gap:2px;cursor:default"><span class="small ${label.missing.includes(k) || label.suspect.includes(k) ? 'warn-line limit' : 'muted'}">${t}${label.missing.includes(k) ? ' (not found)' : label.suspect.includes(k) ? ' (looks off, check it)' : ''}</span>
         <input type="text" inputmode="${ty === 'num' ? 'decimal' : 'text'}" data-lf="${k}" value="${esc(label.fields[k] ?? '')}"></label>`).join('')}</div>
       <label class="small muted" for="lf-ing">Ingredients</label>
       <textarea id="lf-ing" data-lf="ingredients" style="min-height:80px">${esc(label.ingredients)}</textarea>
-      <div class="row">${pills.join('')}</div>
-      ${nm.added ? '<p class="warn-line limit">This has added sugar.</p>' : ''}
-      ${flags.length ? flags.map(h => `<p class="warn-line ${h.rule.level}">${LEVELS[h.rule.level]}: ${esc(h.word)} · ${esc(h.rule.why)}</p>`).join('') : (label.ingredients.trim() ? '<p class="pill ok">Ingredients fit your food rules.</p>' : '<p class="small muted">No ingredient list found. Type it in to have it checked.</p>')}
-      <div class="row"><button class="btn primary" id="btn-label-save">Save to my pantry</button><button class="btn ghost sm" id="btn-label-cancel">Cancel</button></div>
+      <div id="lf-summary">${labelSummary()}</div>
+      <div class="row"><button class="btn primary" id="btn-label-save">${label.editId ? 'Save changes' : 'Save to my pantry'}</button><button class="btn ghost sm" id="btn-label-cancel">Cancel</button></div>
     </div>`;
   }
   const labelEl = document.getElementById('label-form');
@@ -631,7 +648,7 @@ footer { color: var(--muted); font-size: 0.85rem; display: flex; flex-direction:
     else if (k === 'ingredients') label.ingredients = e.target.value;
     else label.fields[k] = e.target.value;
   });
-  labelEl.addEventListener('change', e => { if (e.target.dataset.lf) renderLabel(); });
+  labelEl.addEventListener('change', e => { if (e.target.dataset.lf && label) document.getElementById('lf-summary').innerHTML = labelSummary(); });
   labelEl.addEventListener('click', e => {
     if (e.target.id === 'btn-label-cancel') { label = null; renderLabel(); }
     if (e.target.id === 'btn-label-save') {
@@ -639,11 +656,15 @@ footer { color: var(--muted); font-size: 0.85rem; display: flex; flex-direction:
       if (!n) { toast('Give it a name first'); return; }
       const fields = {};
       for (const [k, , ty] of LABEL_FIELDS) { const v = label.fields[k]; fields[k] = ty === 'num' ? (v === '' || v == null || isNaN(+v) ? null : +v) : (v || ''); }
-      const id = 'x_' + n.toLowerCase().replace(/[^a-z0-9]+/g, '_') + '_' + Date.now().toString(36);
-      state.custom.push({ id, n, label: { ...fields, ingredients: label.ingredients.trim() } });
-      state.pantry[id] = 1;
+      const old = label.editId && state.custom.find(c => c.id === label.editId);
+      if (old) { old.n = n; old.label = { ...fields, ingredients: label.ingredients.trim() }; }
+      else {
+        const id = 'x_' + n.toLowerCase().replace(/[^a-z0-9]+/g, '_') + '_' + Date.now().toString(36);
+        state.custom.push({ id, n, c: guessCat(n), label: { ...fields, ingredients: label.ingredients.trim() } });
+        state.pantry[id] = 1;
+      }
       label = null; renderLabel();
-      save(); rebuild(); render(); toast(`Added ${n} to your pantry`);
+      save(); rebuild(); render(); toast(old ? `Saved changes to ${n}` : `Added ${n} to your pantry`);
     }
   });
   const labelLine = l => {

@@ -2,6 +2,13 @@
  "note": "Newest first. MAJOR.MINOR.PATCH: MINOR for new features, PATCH for fixes. The top entry is the app's version.",
  "changes": [
   {
+   "v": "0.11.0",
+   "date": "2026-10-23",
+   "items": [
+    "Pantry: an edit button on items you added, to fix the name or fill in what a label photo missed."
+   ]
+  },
+  {
    "v": "0.10.2",
    "date": "2026-10-23",
    "items": [
