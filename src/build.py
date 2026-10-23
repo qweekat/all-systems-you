@@ -93,6 +93,18 @@ def pack_pats(js):
         out[m.group(1)] = {'name': m.group(2).replace(' (draft)', ''), 'avoid': [un(p) for l, p in rules if l == 'avoid'], 'ok': [un(p) for l, p in rules if l == 'ok']}
     return out
 helper = open(os.path.join(here, 'helper.html')).read()
+# Setup guide: its own file, plus the pantry's starter items so it can ask what's in the kitchen.
+def pantry_items(js):
+    i = js.index('const ITEMS = ['); j = js.index('].map(([id, n, c,', i)
+    out = []
+    for m in re.finditer(r"\[('(?:[^'\\]|\\.)*'(?:, (?:'(?:[^'\\]|\\.)*'|\d))*)\]", js[i+len('const ITEMS = ['):j]):
+        f = [x[0] if x[0] or not x[1] else x[1] for x in re.findall(r"'((?:[^'\\]|\\.)*)'|(\d)", m.group(1))]
+        out.append([f[0], f[1].replace("\\'", "'"), f[2]])
+    return out
+assert '/*ONBOARDING*/' in helper
+ONBOARD = open(os.path.join(here, 'onboarding.js')).read()
+assert '/*PANTRYITEMS*/[]' in ONBOARD
+helper = helper.replace('/*ONBOARDING*/', ONBOARD.replace('/*PANTRYITEMS*/[]', json.dumps(pantry_items(tpl))))
 assert '/*PACKPATS*/{}' in helper
 helper = helper.replace('/*PACKPATS*/{}', json.dumps(pack_pats(packs)))
 assert '/*APPVERSION*/"dev"' in helper and '/*CHANGES*/[]' in helper

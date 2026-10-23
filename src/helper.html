@@ -107,6 +107,17 @@ table.rep{width:100%;border-collapse:collapse;font-size:.92rem}table.rep th,tabl
   body.printing-doc main .stack>section:not(#doctorList){display:none!important}
   body.printing-doc .panel{border:0;padding:0}
 }
+/* Setup guide: one question per screen, a thin progress bar, big tick boxes. */
+.su-step{gap:14px}.su-step p{margin:0}
+.su-prog{height:6px;border-radius:999px;background:var(--line);overflow:hidden}.su-prog>span{display:block;height:100%;background:var(--juniper)}
+.su-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:8px}.su-grid.tight{grid-template-columns:repeat(auto-fill,minmax(170px,1fr))}
+.su-ck{display:flex;gap:10px;align-items:flex-start;font-weight:400;border:1px solid var(--line);border-radius:10px;padding:10px 12px;cursor:pointer;min-height:48px}
+.su-ck:has(input:checked){border-color:var(--juniper);background:var(--juniper-soft)}
+.su-ck span{display:grid;gap:2px}.su-ck small{font-weight:400}
+.su-list{margin:0;padding-left:20px;display:grid;gap:6px}
+.su-cat{border:0;padding:0;margin:0;display:grid;gap:8px}.su-cat legend{padding:0 0 6px}
+.su-more summary{cursor:pointer;font-weight:700;color:var(--juniper)}.su-more[open]{display:grid;gap:10px}
+.su-nav{display:flex;flex-wrap:wrap;gap:10px;align-items:center}.su-nav .btn{min-height:48px;padding:10px 20px}
 @media (prefers-reduced-motion:no-preference){.glass{transition:background .15s}}
 </style>
 
@@ -366,6 +377,7 @@ function defaults(){
 let S = defaults();
 let SERVER = false;
 let LAPTOP = false; /* true on the computer itself, false on a paired phone */
+let FRESH = false; /* nothing saved yet anywhere: a brand-new copy, which opens the setup guide */
 function lsGet(){ try{ return JSON.parse(localStorage.getItem(LS_KEY)||"null"); }catch(e){ return null; } }
 function lsSet(v){ try{ localStorage.setItem(LS_KEY, JSON.stringify(v)); }catch(e){} }
 function merge(saved){
@@ -417,9 +429,10 @@ async function load(){
     try{
       const r = await fetch("/api/state",{cache:"no-store"});
       const j = await r.json();
-      if(j && j.server){ SERVER = true; LAPTOP = !!j.laptop; SERVER_REV = j.rev ?? null; S = merge(j.state || local); BASE = j.state ? copyOf(S) : null; return; }
+      if(j && j.server){ SERVER = true; LAPTOP = !!j.laptop; SERVER_REV = j.rev ?? null; FRESH = !j.state && !local; S = merge(j.state || local); BASE = j.state ? copyOf(S) : null; return; }
     }catch(e){}
   }
+  FRESH = !local;
   S = merge(local);
 }
 /* Keep nextCook on the coming cook day, so the pantry planner always sees the right session. */
@@ -889,7 +902,7 @@ function renderDay(offset){
     ${limitsText()?`<div class="facts"><div class="fact"><small class="muted">Your limits</small><b>${esc(limitsText())}</b></div></div>`:""}
     ${f.on?`<small class="muted">Raise fiber slowly and drink extra water. Stop raising it if bloating or cramping gets worse.</small>`:""}
   </section>`;
-  let h = `<div class="stack">${offset===0?waterPanel(lg, wg)+nudgePanel():""}${brkHtml}${simple?"":head}`;
+  let h = `<div class="stack">${offset===0?setupNudge()+waterPanel(lg, wg)+nudgePanel():""}${brkHtml}${simple?"":head}`;
   if(next) h += `<div class="next"><b>Next: ${niceTime(next.time)}</b> · ${esc(next.title)}</div>`;
   if(warns.length) h += `<div class="warnbox"><b>Spacing check.</b> Your rule keeps fiber and binder supplements at least ${Math.round((Number(S.rules.spacingMin)||120)/6)/10} hours from medicines and other supplements. ${warns.map(esc).join(" ")}</div>`;
   h += `<section class="panel"><h2>${offset===0?"Today's checklist":"Tomorrow"}</h2><ol class="day">`;
@@ -921,6 +934,7 @@ function renderDay(offset){
 /* ---------- More: everything that isn't today, as big tiles ---------- */
 const MORE_TILES = [["supps","Supplements & routine","What you take and when"],["week","Meals & freezer","The week's meals"],["notes","Notes","Notes and questions"],["labs","Labs & visits","Results and visits"],
   ["lookback","Look back","Last 7 to 30 days, printable"],["visit","For my visit","Summary to print or send"],["household","Household","People you share meals with, food cards"],["rules","My rules","Limits, food lists, food breaks"],["settings","Times & reminders","Times, water, rhythm, backups"]];
+MORE_TILES.unshift(["setup","Setup guide","Answer a few questions to fit the app to you"]);
 function renderMore(){
   view.innerHTML = `<div class="stack"><section class="panel"><h2>More</h2><div class="tiles">
     ${MORE_TILES.map(([id,n,d])=>`<button class="tile" data-goto="${id}"><b>${esc(n)}</b><small>${esc(d)}</small></button>`).join("")}
@@ -1051,6 +1065,7 @@ function renderLookback(){
 }
 function visitSections(){
   const secs = [], lb = lookbackSections(14);
+  if((S.profile||{}).other) secs.push(["What I'm managing", [S.profile.other]]);
   secs.push(["Medicines and supplements I take", S.supplements.filter(x=>x.active).map(x=>[x.name, x.dose, x.times&&("at "+x.times), x.how, x.pending&&"(time not confirmed)"].filter(Boolean).join(", "))]);
   const PN = Object.fromEntries(PACKS.map(x=>[x[0],x[1]]));
   secs.push(["My food rules", [limitsText()||"No number limits set", "Starter lists on: "+((S.rules.packs||[]).map(id=>PN[id]||id).join(", ")||"none"),
@@ -1171,7 +1186,7 @@ function renderWeek(){
 }
 
 /* "From: ..." with a link to that source on the Sources page. */
-const SRC_NAMES = {"ifm-detox-guide":"IFM Detox Food Plan guide","fast-like-a-girl":"Fast Like a Girl","glucose-goddess-hacks":"Glucose Goddess hacks","glucose-revolution":"Glucose Revolution","ifm-cardiometabolic":"IFM Cardiometabolic Food Plan","usda-fdc":"USDA FoodData Central","mailoo-2017":"Mailoo and Rampes 2017","griffith-1987":"Griffith and others 1987","fda-allergens":"FDA: Food Allergies","celiac-sources":"Celiac disease guidance"};
+const SRC_NAMES = {"ifm-detox-guide":"IFM Detox Food Plan guide","fast-like-a-girl":"Fast Like a Girl","glucose-goddess-hacks":"Glucose Goddess hacks","glucose-revolution":"Glucose Revolution","ifm-cardiometabolic":"IFM Cardiometabolic Food Plan","usda-fdc":"USDA FoodData Central","mailoo-2017":"Mailoo and Rampes 2017","griffith-1987":"Griffith and others 1987","fda-allergens":"FDA: Food Allergies","celiac-sources":"Celiac disease guidance","cdc-carbs":"CDC: Choosing Healthy Carbs","cdc-drinks":"CDC: Rethink Your Drink","nci-aflatoxin":"NCI: Aflatoxins","break-the-mold":"Break the Mold","fda-grapefruit":"FDA: Grapefruit and drugs","ods-vitamin-k":"NIH: Vitamin K","fda-licorice":"FDA: Black licorice","mayo-maoi":"Mayo Clinic: MAOIs and diet"};
 function srcNote(...ids){ return "From: "+ids.map(id=>`<a href="sources.html#${id}" target="_blank" rel="noopener">${esc(SRC_NAMES[id]||id)}</a>`).join(", ")+"."; }
 function rhythmPanel(){
   const R = S.rhythm, ew = eatingWindow(new Date()), w = R.walkAfter||{};
@@ -1259,8 +1274,12 @@ function renderSettings(){
     ${backups().length?`<ol class="day">${backups().map(b=>`<li><span class="t">${esc(b.date.slice(5).replace("-","/"))}</span><span></span><div class="item"><div class="title">Copy from ${esc(niceDate(b.date))}</div><button class="linkbtn" data-bkrestore="${esc(b.date)}">Go back to this copy</button></div></li>`).join("")}</ol>`:""}
     <div class="chips" style="gap:8px"><button class="btn ghost" id="bkDownload">Download a backup file</button><label class="btn ghost" style="cursor:pointer">Combine with a backup file<input type="file" id="bkCombine" accept=".json,application/json" hidden></label><label class="btn ghost" style="cursor:pointer">Replace with a backup file<input type="file" id="bkFile" accept=".json,application/json" hidden></label></div>
   </section>
+  <section class="panel"><h2>Setup guide</h2>
+    <p style="margin:0">Go through the first-time questions again: health, foods, medicines, your day, household, kitchen, pantry and reminders. It shows what's already set, so you only change what you want.</p>
+    <div><button class="btn ghost" data-goto="setup">Open the setup guide</button></div>
+  </section>
   <section class="panel"><h2>Start fresh</h2>
-    <p style="margin:0">Clears everything on this device, including notes, labs and supplements, and goes back to the blank starting setup with sample meals. Copy your settings first if you might want them back.</p>
+    <p style="margin:0">Clears everything on this device, including notes, labs and supplements, and goes back to the blank starting setup with sample meals. Copy your settings first if you might want them back. The setup guide opens afterward.</p>
     <div><button class="btn ghost" id="resetBtn">Clear everything on this device</button></div>
   </section></div>`;
 }
@@ -1374,6 +1393,7 @@ function renderRules(){
   view.innerHTML = `<div class="stack">
   <section class="panel"><h2>My rules</h2>
     <p class="muted" style="margin:0">Small changes you can make yourself. The checklist, the pantry and shopping list, and the meal checker all use these. Only enter numbers your doctor, dietitian or nurse gave you. Blank means the rule is off.</p>
+    <label>What I'm managing <small class="muted" style="font-weight:400">(for your notes and visit summary; the starter lists below do the food flagging)</small><input type="text" id="prof-other" data-prof="other" maxlength="200" value="${esc((S.profile||{}).other||"")}" placeholder="e.g. high blood pressure, IBS"></label>
     <div class="grid2">${RULE_FIELDS.map(([k,l,u,hint])=>`<label>${l} <small class="muted" style="font-weight:400">(${u})</small><input type="number" step="any" min="0" id="rule-${k}" data-rule="${k}" value="${R[k]==null?"":esc(R[k])}" placeholder="${R[k]==null?"Pending":""}">${hint?`<small class="muted" style="font-weight:400">${hint}</small>`:""}</label>`).join("")}</div>
     <h3>Fiber ramp (g a day)</h3>
     <small class="muted">Optional. To raise fiber slowly, set a start date and a number for each week. With no start date, Today uses your fiber goal above.</small>
@@ -1496,7 +1516,7 @@ function docText(){
 function householdMine(){
   const out = [], R = S.rules||{}, SENS = ["medicines","low_arginine"];
   for(const x of R.extra||[]) if(["avoid","limit","ask"].includes(x.level) && x.word) out.push({key:"x:"+x.word, label:x.label||x.word, detail:x.level==="avoid"?"":HH.LEVELS[x.level],
-    item:{label:x.label||x.word, pat:HH.wordsPat(String(x.word).replace(/\|/g,",")), level:x.level}, on:true});
+    item:{label:x.label||x.word, pat:x.pat||HH.wordsPat(String(x.word).replace(/\|/g,",")), level:x.level, src:x.src||[]}, on:true});
   for(const id of R.packs||[]) if(PACK_PATS[id]) out.push({key:"p:"+id, label:PACK_PATS[id].name, detail:SENS.includes(id)?"Could hint at a health condition":"", item:{label:PACK_PATS[id].name, pack:id, level:"avoid"}, on:!SENS.includes(id)});
   for(const b of breaksOn()) out.push({key:"b:"+b.label+":"+b.until, label:"Food break: "+b.label, detail:"Until "+niceDate(b.until)+". Could hint at a health condition",
     item:b.pack&&!b.pat ? {label:b.label, pack:b.pack, level:"avoid", until:b.until, src:b.src||[]} : {label:b.label, pat:b.pat, level:"avoid", until:b.until, src:b.src||[]}, on:false});
@@ -1521,7 +1541,7 @@ function mountHousehold(){
 /* The bottom bar links here with #today or #more, so a home-screen app (no back button) can always get around. */
 /* Filled in at build time from changelog.json. APP_BUILD tells two builds of the same version apart. */
 const APP_VERSION = /*APPVERSION*/"dev", APP_BUILD = /*APPBUILD*/"", CHANGES = /*CHANGES*/[];
-const TAB_IDS = ["today","tomorrow","more","supps","week","notes","labs","lookback","visit","rules","settings","household"];
+const TAB_IDS = ["today","tomorrow","more","supps","week","notes","labs","lookback","visit","rules","settings","household","setup"];
 /* A food card link opened while the app is already open. */
 window.addEventListener("hashchange", ()=>{ if(HHUI.takeHash()){ TAB = "household"; render(); window.scrollTo(0,0); } });
 window.addEventListener("hashchange", ()=>{ const h = location.hash.slice(1); if(TAB_IDS.includes(h) && h!==TAB){ TAB = h; try{ sessionStorage.setItem("dh-tab",TAB); }catch(_){} render(); window.scrollTo(0,0); } });
@@ -1541,6 +1561,7 @@ function render(){
   else if(TAB==="visit") renderVisit();
   else if(TAB==="rules") renderRules();
   else if(TAB==="household") HHUI.render(view);
+  else if(TAB==="setup") renderSetup();
   else { renderSettings(); if(LAPTOP) loadPhones(); }
 }
 
@@ -1579,6 +1600,7 @@ function icsText(){
   return lines.join("\r\n");
 }
 
+/*ONBOARDING*/
 /* ---------- events ---------- */
 document.querySelector("nav.tabs").addEventListener("click",e=>{
   const b = e.target.closest("button[data-tab]"); if(!b) return;
@@ -1743,7 +1765,7 @@ view.addEventListener("click",async e=>{
   if(t.id==="rhApply"){ const ew=eatingWindow(new Date()); if(ew){ S.times.breakfast=ew.first; S.times.lunch=ew.lunch; S.times.dinner=ew.last; save(); toast("Meal times set to "+niceTime(ew.first)+", "+niceTime(ew.lunch)+" and "+niceTime(ew.last)); render(); } return; }
   if(t.id==="resetBtn"){
     if(!t.dataset.armed){ t.dataset.armed="1"; t.textContent="Tap again to clear everything on this device"; return; }
-    S = defaults(); save(); toast("Started fresh"); render(); return;
+    S = defaults(); S.setup = {status:"new", step:0}; TAB = "setup"; save(); toast("Started fresh"); render(); window.scrollTo(0,0); return;
   }
   if(t.id==="importBtn"){
     try{ const v = JSON.parse(document.getElementById("importText").value); const log=S.log; S = merge(v); S.log=log; save(); toast("Settings loaded"); render(); }
@@ -1774,7 +1796,7 @@ setInterval(()=>{ if(sweepMissed()){ save(); if(TAB==="notes") return; } if(TAB=
   try{ TAB = sessionStorage.getItem("dh-tab") || "today"; }catch(_){}
   { const h = location.hash.slice(1); if(TAB_IDS.includes(h)) TAB = h; }
   if(HHUI.takeHash()) TAB = "household";
-  await load(); dailyBackup(); mountHousehold(); const rolled = rollCook(); const used = useUpStock(); const swept = sweepMissed(); setSync(); render();
+  await load(); dailyBackup(); setupFirstRun(); mountHousehold(); const rolled = rollCook(); const used = useUpStock(); const swept = sweepMissed(); setSync(); render();
   if(SERVER || rolled || swept || used) save(); // refresh the 60-day reminder schedule on every open
 })();
 </script>

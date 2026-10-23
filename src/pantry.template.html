@@ -253,7 +253,8 @@ footer { color: var(--muted); font-size: 0.85rem; display: flex; flex-direction:
   }
   // A rule word is plain text with "|" between alternatives, matched whole-word and case-insensitive.
   const userPat = w => String(w || '').split('|').map(x => x.trim()).filter(Boolean).map(x => x.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/\s+/g, '\\s+')).join('|');
-  const userRule = (level, x) => { const p = userPat(x && x.word); return p ? { level, re: new RegExp('(?<![\\p{L}\\p{N}])(?:' + p + ')(?![\\p{L}\\p{N}])', 'giu'), label: x.label || x.word, why: x.why || 'From your rules.' } : null; };
+  // Setup's food groups carry a ready-made pattern (pat), which also catches plurals and dishes made from the food.
+  const userRule = (level, x) => { const p = x && x.pat || userPat(x && x.word); return p ? { level, re: new RegExp('(?<![\\p{L}\\p{N}])(?:' + p + ')(?![\\p{L}\\p{N}])', 'giu'), label: x.label || x.word, why: x.why || 'From your rules.' } : null; };
   const USER_OK = ((USER_RULES && USER_RULES.ok) || []).map(x => userRule('ok', x)).filter(Boolean);
   const USER_EXTRA = ((USER_RULES && USER_RULES.extra) || []).filter(x => x && ['avoid', 'limit', 'ask', 'note'].includes(x.level)).map(x => userRule(x.level, x)).filter(Boolean);
   const spacingText = R.spacingMin % 60 === 0 ? `${R.spacingMin / 60} hour${R.spacingMin === 60 ? '' : 's'}` : `${R.spacingMin} minutes`;
@@ -593,6 +594,16 @@ footer { color: var(--muted); font-size: 0.85rem; display: flex; flex-direction:
   let state = {};
   try { state = JSON.parse(localStorage.getItem(KEY) || '{}'); } catch (e) {}
   state = Object.assign({ pantry: {}, custom: [], plan: {}, mine: [], tab: 'pantry', filter: 'all', got: {}, days: 7 }, state);
+  // Items ticked in the app's setup guide wait in its saved data until this page opens.
+  try {
+    const pk = ((JSON.parse(localStorage.getItem('dailyhelper.v1') || 'null') || {}).setup || {}).pantry;
+    if (pk && pk.at && pk.at !== state.setupAt) {
+      for (const id of pk.on || []) state.pantry[id] = 1;
+      for (const id of pk.off || []) delete state.pantry[id];
+      state.setupAt = pk.at;
+      localStorage.setItem(KEY, JSON.stringify(state));
+    }
+  } catch (e) {}
   let memo = null;   // what you have and how items sit with your rules, worked out again after each change
   const save = () => { memo = null; try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} };
 
