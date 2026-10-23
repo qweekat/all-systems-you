@@ -147,6 +147,7 @@ footer { color: var(--muted); font-size: 0.85rem; display: flex; flex-direction:
         <button class="btn sm" id="btn-staples">I have my usual spices and oils</button>
         <button class="btn sm ghost" id="btn-clear-pantry">Clear pantry</button>
       </div>
+      <label class="small"><input type="checkbox" id="staples-soft"> Count a meal as ready even if a spice or oil isn't ticked</label>
       <div class="row">
         <input type="text" id="custom-name" placeholder="Something else you have, like &quot;frozen peas&quot;" aria-label="Add another item">
         <select id="custom-cat" aria-label="Which section"><option value="">Section: guess for me</option></select>
@@ -715,19 +716,61 @@ var HH = (function(){
     ['tomato', 'Tomatoes', 'produce'], ['cucumber', 'Cucumbers', 'produce'], ['sweetpotato', 'Sweet potatoes', 'produce'],
     ['butternut', 'Winter squash', 'produce', 0, 'butternut acorn'], ['lemon', 'Lemons or limes', 'produce', 0, 'lime'],
     ['herbs', 'Fresh herbs', 'produce', 0, 'cilantro parsley basil'], ['apple', 'Apples', 'produce'], ['berries', 'Berries, fresh or frozen', 'produce', 0, 'raspberries blueberries'],
+    ['broccoli', 'Broccoli', 'produce'], ['cauliflower', 'Cauliflower', 'produce'], ['cabbage', 'Cabbage', 'produce'], ['bellpepper', 'Bell peppers', 'produce'],
+    ['mushrooms', 'Mushrooms', 'produce'], ['greenbeans', 'Green beans', 'produce'], ['lettuce', 'Lettuce or salad greens', 'produce', 0, 'romaine arugula'],
+    ['potato', 'Potatoes', 'produce'], ['avocado', 'Avocados', 'produce'], ['banana', 'Bananas', 'produce'],
+    ['frozenveg', 'Frozen mixed vegetables', 'produce'], ['peas', 'Peas, frozen', 'produce'],
     ['chicken', 'Chicken breast or thigh', 'meat', 0, 'chicken'], ['turkey', 'Ground turkey', 'meat', 0, 'turkey'], ['fish', 'Fish fillets', 'meat', 0, 'cod salmon trout'],
-    ['eggs', 'Eggs', 'meat'],
+    ['eggs', 'Eggs', 'meat'], ['beef', 'Ground beef or bison', 'meat', 0, 'steak'], ['pork', 'Pork chops or tenderloin', 'meat'], ['tofu', 'Tofu or tempeh', 'meat'],
     ['m_soup', 'Chicken vegetable soup', 'cooked', 0, '', 'r_soup'], ['m_chili', 'Turkey and bean chili', 'cooked', 0, '', 'r_chili'],
     ['m_shredded', 'Shredded chicken', 'cooked', 0, '', 'r_shredded'], ['m_grain', 'Cooked grain', 'cooked', 0, 'quinoa rice', 'r_grain'],
-    ['m_roastveg', 'Roasted vegetables', 'cooked', 0, '', 'r_roastveg'],
+    ['m_roastveg', 'Roasted vegetables', 'cooked', 0, '', 'r_roastveg'], ['m_lentil', 'Lentil soup', 'cooked', 0, '', 'r_lentil'],
+    ['m_hbeggs', 'Hard-boiled eggs', 'cooked', 0, '', 'r_hbeggs'],
     ['beans', 'Canned beans', 'pantry', 0, 'black kidney pinto'], ['chickpeas', 'Canned chickpeas', 'pantry', 0, 'garbanzo'],
     ['tomatocan', 'Canned tomatoes', 'pantry'], ['broth', 'Chicken broth', 'pantry', 0, 'stock'], ['grain', 'Quinoa or brown rice (dry)', 'pantry', 0, 'quinoa rice'],
     ['nutbutter', 'Nut or seed butter', 'pantry'], ['hummus', 'Hummus', 'pantry'], ['nuts', 'Nuts', 'pantry', 0, 'walnuts'], ['tea', 'Herbal tea', 'pantry'],
-    ['yogurt', 'Plain yogurt', 'dairy'], ['cheese', 'Cheese', 'dairy'],
+    ['lentils', 'Lentils', 'pantry'], ['oats', 'Rolled oats', 'pantry'], ['pasta', 'Pasta or noodles', 'pantry'], ['tuna', 'Canned tuna or salmon', 'pantry', 0, 'sardines'],
+    ['coconutmilk', 'Canned coconut milk', 'pantry'], ['salsa', 'Salsa', 'pantry'], ['seeds', 'Seeds (chia, flax, pumpkin)', 'pantry'],
+    ['yogurt', 'Plain yogurt', 'dairy'], ['cheese', 'Cheese', 'dairy'], ['milk', 'Milk or plant milk', 'dairy'], ['butter', 'Butter or ghee', 'dairy'], ['tortillas', 'Tortillas or wraps', 'dairy'],
     ['salt', 'Salt', 'spice', 0, '', '', 1], ['pepper', 'Black pepper', 'spice', 0, '', '', 1], ['oliveoil', 'Olive oil', 'spice', 0, '', '', 1],
     ['cumin', 'Cumin', 'spice', 0, '', '', 1], ['oregano', 'Oregano', 'spice', 0, '', '', 1], ['thyme', 'Thyme', 'spice', 0, '', '', 1], ['bay', 'Bay leaves', 'spice', 0, '', '', 1],
+    ['paprika', 'Paprika', 'spice', 0, '', '', 1], ['chilipowder', 'Chili powder', 'spice', 0, '', '', 1], ['cinnamon', 'Cinnamon', 'spice', 0, '', '', 1],
+    ['soysauce', 'Soy sauce or tamari', 'spice', 0, 'coconut aminos', '', 1], ['vinegar', 'Vinegar', 'spice', 0, '', '', 1],
     ['rice', 'Rice', 'others'], ['bread', 'Bread', 'others'],
   ].map(([id, n, c, local = 0, alias = '', make = '', staple = 0]) => ({ id, n, c, local: !!local, alias, make, staple: !!staple }));
+  // What else counts as each item, so things you type in ("salmon", "kale", "black beans") count for the meals that use them.
+  // [words that match, words that rule it out]. Plurals match too.
+  const MATCH = {
+    onion: ['onion|shallot|leek|scallion'], garlic: ['garlic', 'powder|salt'], carrots: ['carrot'], celery: ['celery', 'salt|seed'],
+    zucchini: ['zucchini|courgette|yellow squash|summer squash'], spinach: ['spinach'], greens: ['kale|chard|collards?|bok choy|mustard greens|cooking greens'],
+    tomato: ['tomato', 'canned|can|sauce|paste|crushed|diced|sun.?dried'], cucumber: ['cucumber'], sweetpotato: ['sweet potato|yam'],
+    butternut: ['butternut|acorn squash|winter squash|pumpkin|delicata|kabocha|spaghetti squash', 'seed|pie|spice|canned'], lemon: ['lemon|lime', 'grass'],
+    herbs: ['cilantro|parsley|basil|mint|dill|fresh herbs', 'tea|dried'], apple: ['apple', 'sauce|juice|cider|vinegar'],
+    berries: ['berry|berries|strawberr(?:y|ies)|blueberr(?:y|ies)|raspberr(?:y|ies)|blackberr(?:y|ies)', 'jam|jelly|juice'],
+    broccoli: ['broccoli|broccolini'], cauliflower: ['cauliflower'], cabbage: ['cabbage|coleslaw|slaw'], bellpepper: ['bell pepper|sweet pepper|red pepper|green pepper|yellow pepper', 'flake'],
+    mushrooms: ['mushroom'], greenbeans: ['green bean|string bean|haricots? verts?'], lettuce: ['lettuce|romaine|arugula|salad greens|salad mix|spring mix|mixed greens'],
+    potato: ['potato', 'sweet|chip'], avocado: ['avocado', 'oil'], banana: ['banana', 'chip|bread'], frozenveg: ['frozen (?:mixed )?vegetable|frozen veg(?:gie)?|stir.?fry mix|mixed vegetable'],
+    peas: ['peas|green peas', 'chick|snap|snow|split'],
+    chicken: ['chicken', 'broth|stock|bouillon|sausage'], turkey: ['turkey', 'broth|stock|bacon|deli'], fish: ['fish|salmon|cod|halibut|trout|tilapia|snapper|haddock|pollock|mahi|sablefish|catfish', 'canned|can|sauce|oil'],
+    eggs: ['eggs?', 'plant|noodle'], beef: ['beef|bison|steak|venison|elk', 'broth|stock|jerky'], pork: ['pork|pork chop|tenderloin', 'rind|bacon'], tofu: ['tofu|tempeh'],
+    beans: ['black beans?|pinto|kidney beans?|white beans?|cannellini|navy beans?|great northern|refried beans|beans', 'green|string|coffee|jelly|vanilla|garbanzo'],
+    chickpeas: ['chickpeas?|garbanzos?', 'flour'], tomatocan: ['(?:canned|crushed|diced|whole peeled|stewed) tomato|tomato sauce|tomato paste|passata|marinara'],
+    broth: ['broth|stock|bouillon'], grain: ['rice|quinoa|millet|buckwheat|barley|farro|bulgur|couscous', 'vinegar|milk|noodle|cake|flour|paper|cracker'],
+    nutbutter: ['(?:peanut|almond|cashew|nut|seed|sunflower) butter|sunbutter'], hummus: ['hummus'],
+    nuts: ['nuts?|walnut|almond|pecan|cashew|pistachio|hazelnut|peanut', 'butter|milk|flour|meg|coconut'], tea: ['tea'],
+    lentils: ['lentils?|dal'], oats: ['oats?|oatmeal', 'milk|flour'], pasta: ['pasta|spaghetti|penne|macaroni|noodles?|fusilli|linguine|rigatoni'],
+    tuna: ['tuna|sardines?|canned salmon|tinned fish'], coconutmilk: ['coconut milk|coconut cream'], salsa: ['salsa|pico de gallo'],
+    seeds: ['chia|flax|flaxseed|pumpkin seeds?|pepitas|sunflower seeds?|hemp hearts?|hemp seeds?|sesame seeds?'],
+    yogurt: ['yogh?urt|skyr|kefir'], cheese: ['cheese|cheddar|mozzarella|feta|parmesan|swiss|jack|gouda|ricotta|cottage'],
+    milk: ['milk', 'coconut milk'], butter: ['butter|ghee', 'peanut|almond|nut|seed|sunflower|cashew'], tortillas: ['tortillas?|wraps?|pita'],
+    salt: ['salt'], pepper: ['black pepper|peppercorns?'], oliveoil: ['oil', 'sesame oil'], cumin: ['cumin'], oregano: ['oregano'], thyme: ['thyme'], bay: ['bay leaf|bay leaves'],
+    paprika: ['paprika'], chilipowder: ['chili powder|chile powder'], cinnamon: ['cinnamon'], soysauce: ['soy sauce|tamari|coconut aminos|shoyu'], vinegar: ['vinegar'],
+    bread: ['bread|sourdough|bagel|buns?|rolls?'],
+  };
+  const MATCH_RE = Object.fromEntries(Object.entries(MATCH).map(([id, [yes, no]]) => [id, [
+    new RegExp('(?<![a-z])(?:' + yes + ')(?:e?s)?(?![a-z])', 'i'), no ? new RegExp(no, 'i') : null]]));
+  // Starter items that a thing you typed in counts as.
+  function matchIds(name) { return Object.entries(MATCH_RE).filter(([, [y, n]]) => y.test(name) && !(n && n.test(name))).map(([id]) => id); }
 
   // ---------- Recipes ----------
   // Made-up samples so the app isn't empty. Replace them with your own on the Add tab.
@@ -755,24 +798,24 @@ var HH = (function(){
 
     // Breakfast
     { id: 'b_eggs', n: 'Eggs and greens (sample)', t: 'breakfast', makes: '10 min',
-      ings: [['eggs', '2'], ['spinach', 'handful'], ['tomato', '1', 'opt'], ['oliveoil', '1 tsp']],
+      ings: [['eggs', '2'], [['spinach', 'greens'], 'handful'], ['tomato', '1', 'opt'], [['oliveoil', 'butter'], '1 tsp']],
       plate: [['spinachc', 1], ['oliveoil', 1]],
       steps: 'Wilt the spinach in the oil, then cook the eggs. Sliced tomato on the side.' },
     { id: 'b_yogurt', n: 'Plain yogurt with berries (sample)', t: 'breakfast', makes: 'no cooking',
-      ings: [['yogurt', '3/4 cup'], ['berries', '1/2 cup'], ['nuts', 'a few']],
+      ings: [['yogurt', '3/4 cup'], [['berries', 'banana', 'apple'], '1/2 cup'], [['nuts', 'seeds'], 'a few']],
       plate: [['yogurt', 1.5], ['raspberries', 0.5], ['walnuts', 1]] },
 
     // Lunch
     { id: 'l_bowl', n: 'Chicken and grain bowl (sample)', t: 'lunch', makes: 'no cooking',
-      ings: [['m_shredded', '4 oz'], [['m_grain', 'grain'], '1/2 cup'], ['cucumber', '1/2'], ['spinach', 'handful'], ['oliveoil', '2 tsp'], ['lemon', '1/2']],
+      ings: [[['m_shredded', 'tuna', 'm_hbeggs'], '4 oz'], [['m_grain', 'grain'], '1/2 cup'], [['cucumber', 'bellpepper', 'tomato', 'carrots'], '1/2'], [['spinach', 'lettuce'], 'handful'], ['oliveoil', '2 tsp'], [['lemon', 'vinegar'], '1/2']],
       plate: [['chicken', 1], ['quinoa', 1], ['cucumber', 1], ['spinach', 1], ['oliveoil', 2]],
       steps: 'Shredded chicken over the grain with raw vegetables, olive oil and lemon.' },
     { id: 'l_thermos', n: 'Leftover soup in a thermos (sample)', t: 'lunch', makes: 'reheat 5 min',
-      ings: [[['m_soup', 'm_chili'], '1 bowl']],
+      ings: [[['m_soup', 'm_chili', 'm_lentil'], '1 bowl']],
       plate: [['chicken', 1], ['spinachc', 1], ['onion', 0.5]],
       steps: 'Heat a bowl of last night\'s soup or chili and pour it into a wide-mouth thermos.' },
     { id: 'l_salad', n: 'Bean and vegetable jar salad (sample)', t: 'lunch', makes: 'no cooking · keeps 3 days',
-      ings: [[['chickpeas', 'beans'], '1/2 cup'], ['cucumber', '1/2'], ['tomato', '1'], ['herbs', 'handful', 'opt'], ['oliveoil', '2 tsp'], ['lemon', '1/2']],
+      ings: [[['chickpeas', 'beans'], '1/2 cup'], [['cucumber', 'bellpepper'], '1/2'], ['tomato', '1'], ['herbs', 'handful', 'opt'], ['oliveoil', '2 tsp'], [['lemon', 'vinegar'], '1/2']],
       plate: [['chickpeas', 1], ['cucumber', 1], ['oliveoil', 2]],
       steps: 'Layer it all in a jar.' },
 
@@ -790,14 +833,146 @@ var HH = (function(){
       plate: [['chicken', 1], ['sweetpotato', 0.5], ['zucchini', 1]],
       steps: 'Warm the chicken in a pan with a splash of broth. Plate with the roasted vegetables.' },
     { id: 'd_fish', n: 'Sheet-pan fish and vegetables (sample)', t: 'dinner', makes: 'oven · 35 min', shared: 1, others: 'rice',
-      ings: [['fish', '2 fillets'], [['zucchini', 'butternut'], '2 cups sliced'], ['lemon', '1/2'], ['oliveoil', '2 tsp'], ['rice', '1 cup cooked', 'others']],
+      ings: [['fish', '2 fillets'], [['zucchini', 'butternut', 'broccoli', 'greenbeans', 'cauliflower'], '2 cups sliced'], ['lemon', '1/2'], ['oliveoil', '2 tsp'], ['rice', '1 cup cooked', 'others']],
       plate: [['cod', 1], ['zucchini', 1], ['oliveoil', 1]],
       steps: 'Roast the vegetables at 400 °F for 20 min. Add the fish and bake 10 to 12 min more. Finish with lemon.' },
 
     // Snacks and evening
-    { id: 's_apple', n: 'Apple with nut butter (sample)', t: 'snack', ings: [['apple', '1/2'], ['nutbutter', '1 tbsp']], plate: [['walnuts', 1]] },
-    { id: 's_veg', n: 'Vegetables with hummus (sample)', t: 'snack', ings: [['cucumber', '1/2'], ['hummus', '3 tbsp']], plate: [['cucumber', 1], ['chickpeas', 0.5]] },
+    { id: 's_apple', n: 'Apple with nut butter (sample)', t: 'snack', ings: [[['apple', 'banana'], '1/2'], ['nutbutter', '1 tbsp']], plate: [['walnuts', 1]] },
+    { id: 's_veg', n: 'Vegetables with hummus (sample)', t: 'snack', ings: [[['cucumber', 'carrots', 'bellpepper', 'celery'], '1 cup'], ['hummus', '3 tbsp']], plate: [['cucumber', 1], ['chickpeas', 0.5]] },
     { id: 'e_tea', n: 'Herbal tea (sample)', t: 'evening', ings: [['tea', '1 bag']], plate: [] },
+
+    // More everyday meals. Stand-ins are listed together, so a meal counts if you have any one of them.
+    // Batch bases
+    { id: 'r_lentil', n: 'Lentil soup (sample)', t: 'batch', makes: '8 bowls · 50 min', shared: 1,
+      ings: [['lentils', '2 cups dry'], ['onion', '1'], ['carrots', '2'], ['celery', '2 stalks', 'opt'], ['garlic', '3 cloves'], ['tomatocan', '1 can'], ['broth', '8 cups'], ['cumin', '1 tsp'], ['oliveoil', '1 tbsp']],
+      steps: 'Soften the onion, carrot and celery in the oil. Add garlic and cumin, then lentils, tomatoes and broth. Simmer 35 to 40 min. Freeze in bowls.' },
+    { id: 'r_hbeggs', n: 'Hard-boiled eggs (sample)', t: 'batch', makes: '12 eggs · 15 min', ings: [['eggs', '12']],
+      steps: 'Cover with cold water, bring to a boil, then turn off the heat and cover for 10 to 12 min. Cool in cold water. Fridge up to a week.' },
+
+    // Breakfast
+    { id: 'b_oats', n: 'Overnight oats (sample)', t: 'breakfast', makes: '5 min the night before',
+      ings: [['oats', '1/2 cup'], [['milk', 'yogurt'], '1/2 cup'], [['berries', 'banana', 'apple'], '1/2 cup'], ['seeds', '1 tbsp', 'opt'], ['cinnamon', 'pinch', 'opt']],
+      plate: [['oats', 1], ['blueberries', 0.5]],
+      steps: 'Stir oats and milk in a jar, top with fruit, fridge overnight.' },
+    { id: 'b_oatmeal', n: 'Warm oatmeal with fruit (sample)', t: 'breakfast', makes: '10 min',
+      ings: [['oats', '1/2 cup'], [['apple', 'banana', 'berries'], '1/2 cup'], ['cinnamon', 'pinch'], [['nuts', 'seeds', 'nutbutter'], '1 tbsp', 'opt'], ['milk', 'a splash', 'opt']],
+      plate: [['oats', 1], ['walnuts', 1]],
+      steps: 'Simmer oats in water or milk for 5 min. Stir in chopped fruit and cinnamon.' },
+    { id: 'b_scramble', n: 'Vegetable scramble (sample)', t: 'breakfast', makes: '10 min',
+      ings: [['eggs', '2'], [['bellpepper', 'mushrooms', 'spinach', 'zucchini', 'greens', 'tomato'], '1 cup'], ['onion', '1/4', 'opt'], ['cheese', 'a little', 'opt'], [['oliveoil', 'butter'], '1 tsp']],
+      plate: [['spinachc', 1], ['onion', 0.5], ['oliveoil', 1]],
+      steps: 'Cook the vegetables in the oil until soft, then add the beaten eggs and stir until set.' },
+    { id: 'b_tofu', n: 'Tofu scramble (sample)', t: 'breakfast', makes: '15 min',
+      ings: [['tofu', '1/2 block'], [['spinach', 'greens', 'bellpepper', 'mushrooms'], '1 cup'], ['onion', '1/4', 'opt'], ['cumin', 'pinch'], ['oliveoil', '1 tsp']],
+      plate: [['tofu', 2], ['spinachc', 1], ['oliveoil', 1]],
+      steps: 'Crumble the tofu into a hot pan with the oil and cumin. Add the vegetables and cook 5 to 8 min.' },
+    { id: 'b_hash', n: 'Potato and egg hash (sample)', t: 'breakfast', makes: '20 min',
+      ings: [[['sweetpotato', 'potato'], '1'], ['eggs', '2'], [['onion', 'bellpepper'], '1/2'], ['paprika', 'pinch', 'opt'], ['oliveoil', '2 tsp']],
+      plate: [['sweetpotato', 1], ['onion', 0.5], ['oliveoil', 2]],
+      steps: 'Dice and pan-fry the potato in the oil until tender, about 12 min. Make two wells and cook the eggs in them.' },
+    { id: 'b_tacos', n: 'Breakfast tacos (sample)', t: 'breakfast', makes: '10 min',
+      ings: [['tortillas', '2'], ['eggs', '2'], [['salsa', 'tomato'], '2 tbsp'], ['avocado', '1/4', 'opt'], ['beans', '1/4 cup', 'opt'], ['cheese', 'a little', 'opt']],
+      plate: [['tomato', 0.5]],
+      steps: 'Scramble the eggs, warm the tortillas, fill and top.' },
+    { id: 'b_smoothie', n: 'Fruit smoothie (sample)', t: 'breakfast', makes: '5 min',
+      ings: [[['berries', 'banana'], '1 cup'], [['yogurt', 'milk'], '3/4 cup'], [['seeds', 'nutbutter'], '1 tbsp', 'opt'], ['spinach', 'handful', 'opt']],
+      plate: [['raspberries', 1], ['yogurt', 1]],
+      steps: 'Blend until smooth.' },
+
+    // Lunch
+    { id: 'l_tuna', n: 'Tuna or salmon salad (sample)', t: 'lunch', makes: '10 min',
+      ings: [['tuna', '1 can'], [['lettuce', 'spinach', 'cucumber'], '2 cups'], ['celery', '1 stalk', 'opt'], [['lemon', 'vinegar'], '1/2'], [['oliveoil', 'yogurt'], '1 tbsp']],
+      plate: [['tuna', 1], ['lettuce', 1], ['oliveoil', 2]],
+      steps: 'Mix the fish with lemon, oil or yogurt and chopped celery. Serve on the greens.' },
+    { id: 'l_quesadilla', n: 'Bean and cheese quesadilla (sample)', t: 'lunch', makes: '10 min',
+      ings: [['tortillas', '2'], [['beans', 'm_chili'], '1/2 cup'], ['cheese', '1/4 cup'], ['spinach', 'handful', 'opt'], ['salsa', 'to serve', 'opt']],
+      plate: [['blackbeans', 1]],
+      steps: 'Fill the tortilla, fold, and cook in a dry pan 2 to 3 min a side.' },
+    { id: 'l_wraps', n: 'Chicken or tofu lettuce wraps (sample)', t: 'lunch', makes: '10 min',
+      ings: [[['m_shredded', 'tofu', 'tuna'], '4 oz'], ['lettuce', '4 leaves'], [['carrots', 'cucumber', 'bellpepper', 'cabbage'], '1 cup'], [['lemon', 'soysauce'], 'to taste']],
+      plate: [['chicken', 1], ['lettuce', 0.5], ['cucumber', 1]],
+      steps: 'Spoon the filling and crunchy vegetables into lettuce cups.' },
+    { id: 'l_eggsalad', n: 'Egg salad over greens (sample)', t: 'lunch', makes: '10 min',
+      ings: [[['m_hbeggs', 'eggs'], '3'], [['lettuce', 'spinach'], '2 cups'], ['celery', '1 stalk', 'opt'], [['yogurt', 'oliveoil'], '1 tbsp'], ['pepper', 'pinch']],
+      plate: [['lettuce', 1], ['oliveoil', 1]],
+      steps: 'Chop the eggs and mix with yogurt or oil, celery and pepper. Serve on the greens.' },
+    { id: 'l_hummus', n: 'Hummus plate (sample)', t: 'lunch', makes: 'no cooking',
+      ings: [['hummus', '1/3 cup'], [['cucumber', 'carrots', 'bellpepper', 'celery', 'tomato'], '2 cups'], [['m_hbeggs', 'cheese', 'nuts'], 'a little', 'opt'], ['tortillas', '1', 'opt']],
+      plate: [['chickpeas', 1], ['cucumber', 1], ['tomato', 1]],
+      steps: 'Hummus with plenty of cut vegetables.' },
+    { id: 'l_pastasalad', n: 'Pasta and vegetable salad (sample)', t: 'lunch', makes: '20 min · keeps 3 days',
+      ings: [['pasta', '1 cup cooked'], [['tomato', 'cucumber', 'bellpepper', 'spinach'], '1 cup'], [['chickpeas', 'tuna', 'cheese'], '1/2 cup', 'opt'], ['oliveoil', '1 tbsp'], [['vinegar', 'lemon'], '1 tbsp']],
+      plate: [['tomato', 1], ['cucumber', 1], ['oliveoil', 3]],
+      steps: 'Toss cooked, cooled pasta with the vegetables, oil and vinegar.' },
+    { id: 'l_burrito', n: 'Burrito bowl (sample)', t: 'lunch', makes: '10 min with a cooked grain',
+      ings: [[['m_grain', 'grain'], '1/2 cup'], [['beans', 'm_chili', 'm_shredded'], '1/2 cup'], [['lettuce', 'cabbage', 'spinach'], '1 cup'], [['salsa', 'tomato'], '1/4 cup'], ['avocado', '1/4', 'opt'], ['cheese', 'a little', 'opt'], ['lemon', '1/2', 'opt']],
+      plate: [['brownrice', 1], ['blackbeans', 1], ['lettuce', 0.5], ['tomato', 1]],
+      steps: 'Layer it all in a bowl.' },
+
+    // Dinner
+    { id: 'd_stirfry', n: 'Stir-fry with vegetables (sample)', t: 'dinner', makes: '20 min', shared: 1, others: 'rice',
+      ings: [[['chicken', 'tofu', 'beef', 'pork'], '1 lb'], [['broccoli', 'frozenveg', 'bellpepper', 'cabbage', 'greenbeans', 'mushrooms'], '4 cups'], ['garlic', '2 cloves'], ['soysauce', '2 tbsp'], ['oliveoil', '1 tbsp'], [['m_grain', 'grain'], '1/2 cup each', 'opt'], ['rice', '1 cup cooked', 'others']],
+      plate: [['chicken', 1], ['snappeas', 1], ['oliveoil', 1]],
+      steps: 'Sear the sliced protein in a hot pan, set aside. Stir-fry the vegetables and garlic 4 to 5 min, return the protein, add soy sauce.' },
+    { id: 'd_tacos', n: 'Taco night (sample)', t: 'dinner', makes: '20 min', shared: 1,
+      ings: [[['beef', 'turkey', 'chicken', 'fish', 'beans'], '1 lb'], ['tortillas', '8'], [['lettuce', 'cabbage'], '2 cups'], [['salsa', 'tomato'], '1 cup'], ['cumin', '1 tsp'], ['onion', '1/2', 'opt'], ['avocado', '1', 'opt'], ['cheese', 'to top', 'opt'], ['lemon', '1', 'opt']],
+      plate: [['beef', 1], ['lettuce', 0.5], ['tomato', 1]],
+      steps: 'Cook the filling with cumin and a pinch of salt. Set out the toppings and let everyone build their own.' },
+    { id: 'd_lentil', n: 'Lentil soup night (sample)', t: 'dinner', makes: 'reheat 10 min', shared: 1, others: 'bread',
+      ings: [['m_lentil', '2 bowls'], ['spinach', 'handful', 'opt'], ['bread', '1 slice each', 'others']],
+      plate: [['blackbeans', 1], ['onion', 0.5], ['tomato', 1]],
+      steps: 'Reheat the soup and stir in a handful of spinach.' },
+    { id: 'd_curry', n: 'Vegetable and chickpea curry (sample)', t: 'dinner', makes: '30 min', shared: 1, others: 'rice',
+      ings: [[['chickpeas', 'lentils', 'beans', 'tofu'], '1 can'], [['coconutmilk', 'tomatocan'], '1 can'], ['onion', '1'], ['garlic', '2 cloves'], [['cauliflower', 'sweetpotato', 'spinach', 'frozenveg', 'zucchini'], '3 cups'], ['cumin', '2 tsp'], ['oliveoil', '1 tbsp'], ['rice', '1 cup cooked', 'others']],
+      plate: [['chickpeas', 1], ['spinachc', 1], ['onion', 0.5]],
+      steps: 'Soften onion and garlic in the oil with the cumin. Add the vegetables, chickpeas and coconut milk or tomatoes. Simmer 20 min.' },
+    { id: 'd_pasta', n: 'Pasta with meat or bean sauce (sample)', t: 'dinner', makes: '30 min', shared: 1,
+      ings: [['pasta', '8 oz'], ['tomatocan', '1 can'], [['beef', 'turkey', 'lentils', 'beans'], '1 lb'], ['onion', '1'], ['garlic', '2 cloves'], ['oregano', '1 tsp'], [['zucchini', 'spinach', 'mushrooms', 'bellpepper'], '2 cups', 'opt'], ['cheese', 'to top', 'opt'], ['oliveoil', '1 tbsp']],
+      plate: [['beef', 1], ['tomato', 1], ['onion', 0.5]],
+      steps: 'Brown the meat (or warm the beans) with onion and garlic, add tomatoes and oregano, simmer 15 min. Toss with cooked pasta.' },
+    { id: 'd_sheetchicken', n: 'Sheet-pan chicken and vegetables (sample)', t: 'dinner', makes: 'oven · 40 min', shared: 1,
+      ings: [[['chicken', 'pork', 'tofu'], '1 1/2 lb'], [['potato', 'sweetpotato', 'butternut', 'carrots', 'broccoli', 'cauliflower', 'greenbeans'], '4 cups'], ['onion', '1', 'opt'], ['oliveoil', '2 tbsp'], [['oregano', 'thyme', 'paprika'], '1 tsp']],
+      plate: [['chicken', 1], ['sweetpotato', 0.5], ['oliveoil', 2]],
+      steps: 'Toss everything with oil, herbs and salt on a sheet pan. Roast at 425 °F for 30 to 35 min, until the chicken is cooked through.' },
+    { id: 'd_frittata', n: 'Vegetable frittata (sample)', t: 'dinner', makes: '25 min', shared: 1,
+      ings: [['eggs', '8'], [['spinach', 'zucchini', 'bellpepper', 'mushrooms', 'broccoli', 'potato'], '2 cups'], ['onion', '1/2', 'opt'], ['cheese', '1/2 cup', 'opt'], [['oliveoil', 'butter'], '1 tbsp']],
+      plate: [['spinachc', 1], ['onion', 0.5], ['oliveoil', 1]],
+      steps: 'Soften the vegetables in an oven-safe pan, pour in the beaten eggs and cook until the edges set. Finish under the broiler 3 to 4 min.' },
+    { id: 'd_friedrice', n: 'Vegetable fried rice (sample)', t: 'dinner', makes: '15 min with a cooked grain', shared: 1,
+      ings: [[['m_grain', 'grain', 'rice'], '3 cups cooked'], ['eggs', '2'], [['frozenveg', 'peas', 'carrots', 'cabbage', 'broccoli'], '2 cups'], ['garlic', '2 cloves'], ['soysauce', '2 tbsp'], ['oliveoil', '1 tbsp'], [['m_shredded', 'tofu'], '1 cup', 'opt']],
+      plate: [['brownrice', 2], ['peas', 1], ['oliveoil', 1]],
+      steps: 'Stir-fry the vegetables and garlic, push aside and scramble the eggs, then add the cold grain and soy sauce and fry until hot.' },
+    { id: 'd_beansoup', n: 'White bean and greens soup (sample)', t: 'dinner', makes: '30 min', shared: 1, others: 'bread',
+      ings: [[['beans', 'chickpeas'], '2 cans'], ['broth', '4 cups'], [['greens', 'spinach', 'cabbage'], '1 bunch'], ['onion', '1'], ['garlic', '3 cloves'], ['carrots', '2', 'opt'], ['tomatocan', '1 can', 'opt'], ['thyme', '1 tsp'], ['oliveoil', '1 tbsp'], ['bread', '1 slice each', 'others']],
+      plate: [['blackbeans', 1], ['spinachc', 1], ['onion', 0.5]],
+      steps: 'Soften onion, carrot and garlic in the oil. Add broth, beans and thyme and simmer 15 min. Stir in the greens until wilted.' },
+    { id: 'd_potatobar', n: 'Stuffed baked potatoes (sample)', t: 'dinner', makes: 'oven · 50 min', shared: 1,
+      ings: [[['potato', 'sweetpotato'], '1 each'], [['m_chili', 'beans', 'broccoli', 'm_shredded'], '1 cup each'], [['cheese', 'yogurt'], 'to top', 'opt'], ['herbs', 'to top', 'opt']],
+      plate: [['sweetpotato', 1], ['blackbeans', 1]],
+      steps: 'Bake the potatoes at 400 °F for 45 to 50 min. Split and fill.' },
+    { id: 'd_pork', n: 'Pork chops with green beans (sample)', t: 'dinner', makes: '25 min', shared: 1, others: 'rice',
+      ings: [[['pork', 'chicken'], '1 lb'], [['greenbeans', 'broccoli', 'm_roastveg', 'frozenveg'], '3 cups'], ['garlic', '2 cloves'], [['thyme', 'oregano'], '1 tsp'], ['oliveoil', '1 tbsp'], ['rice', '1 cup cooked', 'others']],
+      plate: [['beef', 1], ['zucchini', 1], ['oliveoil', 1]],
+      steps: 'Season and sear the chops 4 to 5 min a side. Cook the vegetables with garlic in the same pan.' },
+    { id: 'd_salmonbowl', n: 'Fish and grain bowl (sample)', t: 'dinner', makes: '20 min', shared: 1,
+      ings: [[['fish', 'tuna'], '2 fillets'], [['m_grain', 'grain'], '1 cup'], [['broccoli', 'spinach', 'cucumber', 'cabbage', 'greenbeans'], '2 cups'], [['soysauce', 'lemon'], 'to taste'], ['avocado', '1/2', 'opt'], ['oliveoil', '1 tsp']],
+      plate: [['salmon', 1], ['quinoa', 1], ['spinachc', 1]],
+      steps: 'Bake or pan-sear the fish, serve over the grain with the vegetables.' },
+
+    // Snacks
+    { id: 's_eggs', n: 'Hard-boiled egg and vegetables (sample)', t: 'snack', ings: [[['m_hbeggs', 'eggs'], '1'], [['cucumber', 'carrots', 'bellpepper', 'tomato'], '1 cup']], plate: [['cucumber', 1]] },
+    { id: 's_yogurt', n: 'Yogurt with seeds (sample)', t: 'snack', ings: [['yogurt', '1/2 cup'], [['seeds', 'nuts'], '1 tbsp']], plate: [['yogurt', 1], ['chia', 1]] },
+    { id: 's_nuts', n: 'Nuts and fruit (sample)', t: 'snack', ings: [['nuts', 'a small handful'], [['apple', 'berries', 'banana'], '1 small']], plate: [['walnuts', 2], ['raspberries', 0.5]] },
+    { id: 's_cheese', n: 'Cheese and apple (sample)', t: 'snack', ings: [['cheese', '1 oz'], ['apple', '1/2']], plate: [['mozz', 1]] },
+    { id: 's_avocado', n: 'Avocado with lime and salt (sample)', t: 'snack', ings: [['avocado', '1/2'], ['lemon', '1/2'], ['salt', 'pinch']] },
+    { id: 's_tunacuke', n: 'Tuna on cucumber rounds (sample)', t: 'snack', ings: [['tuna', '1/2 can'], ['cucumber', '1'], ['lemon', 'squeeze', 'opt']], plate: [['tuna', 0.5], ['cucumber', 1]] },
+
+    // Evening
+    { id: 'e_milk', n: 'Warm milk with cinnamon (sample)', t: 'evening', ings: [['milk', '1 cup'], ['cinnamon', 'pinch']] },
+    { id: 'e_berries', n: 'Berries with yogurt (sample)', t: 'evening', ings: [['berries', '1/2 cup'], ['yogurt', '2 tbsp', 'opt']], plate: [['raspberries', 0.5]] },
+    { id: 'e_apple', n: 'Baked cinnamon apple (sample)', t: 'evening', makes: 'oven · 30 min', ings: [['apple', '1'], ['cinnamon', 'pinch'], [['nuts', 'seeds'], '1 tbsp', 'opt'], ['butter', '1 tsp', 'opt']],
+      steps: 'Core the apple, fill with cinnamon and nuts, bake at 375 °F for 25 to 30 min.' },
   ];
 
   // ---------- State ----------
@@ -805,36 +980,79 @@ var HH = (function(){
   let state = {};
   try { state = JSON.parse(localStorage.getItem(KEY) || '{}'); } catch (e) {}
   state = Object.assign({ pantry: {}, custom: [], plan: {}, mine: [], tab: 'pantry', filter: 'all', got: {}, days: 7 }, state);
-  const save = () => { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} };
+  let memo = null;   // what you have and how items sit with your rules, worked out again after each change
+  const save = () => { memo = null; try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} };
 
   let ITEM = {}, RECIPE = {};
   function rebuild() {
     ITEM = Object.fromEntries(ITEMS.map(i => [i.id, i]));
     for (const c of state.custom) ITEM[c.id] = { id: c.id, n: c.n, c: c.c || guessCat(c.n), alias: '', make: '', custom: true, label: c.label };
     RECIPE = Object.fromEntries([...RECIPES, ...state.mine].map(r => [r.id, r]));
+    memo = null;
   }
   rebuild();
 
-  const has = id => !!state.pantry[id];
+  function getMemo() {
+    if (memo) return memo;
+    // Things you typed in count for the starter items they match, so "salmon" covers fish fillets.
+    const via = {};
+    for (const c of state.custom) if (state.pantry[c.id]) for (const id of matchIds(c.n)) (via[id] = via[id] || []).push(c.n);
+    // "For others" rice counts as your own grain too.
+    if (state.pantry.rice) (via.grain = via.grain || []).push(ITEM.rice.n);
+    return (memo = { via, hits: {} });
+  }
+  const has = id => !!state.pantry[id] || !!getMemo().via[id];
+  const coveredBy = id => !state.pantry[id] && getMemo().via[id];
+  // Spices and oils you haven't ticked don't stop a meal from counting as ready, unless you turn that off.
+  const softStaples = () => state.staplesSoft !== false;
+  const hardBuy = nd => [...nd.buy.keys()].filter(id => !(softStaples() && ITEM[id] && ITEM[id].staple));
+
+  // How an item sits with your food rules. A batch base takes on its ingredients' flags.
+  function itemHits(id, seen) {
+    const m = getMemo().hits;
+    if (m[id]) return m[id];
+    const it = ITEM[id], base = it && it.make && RECIPE[it.make];
+    seen = seen || new Set();
+    if (base && seen.has(base.id)) return [];
+    const own = scan(it ? it.n + ' ' + (it.label?.ingredients || '') : id);
+    if (base) { seen.add(base.id); own.push(...recipeHits(base, seen).hits); }
+    return (m[id] = own);
+  }
+  const lvlOf = hits => worst(hits);
+  const rank = l => l ? ORDER.indexOf(l) : 99;   // lower is more serious
+  // Stand-ins that your rules say to avoid are skipped when another one fits.
   const idsOf = e => Array.isArray(e[0]) ? e[0] : [e[0]];
+  const okIds = e => { const ids = idsOf(e); const ok = ids.filter(id => lvlOf(itemHits(id)) !== 'avoid'); return ok.length ? ok : ids; };
+  // A meal's flags: each ingredient counts by its mildest stand-in. Optional ones and others' add-ons don't count against the meal.
+  function recipeHits(r, seen) {
+    const hits = [];
+    for (const e of r.ings) {
+      if (e[2]) continue;
+      let bestHits = [], bestRank = -1;
+      for (const id of idsOf(e)) { const h = itemHits(id, seen && new Set(seen)), rk = rank(lvlOf(h)); if (rk > bestRank) { bestRank = rk; bestHits = h; } }
+      hits.push(...bestHits);
+    }
+    return { hits, lvl: lvlOf(hits) };
+  }
   const counted = e => !e[2];
 
   // What a recipe still needs. Made items (batch bases) expand into their own ingredients.
   function baseGaps(rid) {
     const r = RECIPE[rid];
-    return r ? r.ings.filter(counted).filter(e => !idsOf(e).some(has)) : [];
+    return r ? r.ings.filter(counted).filter(e => !okIds(e).some(has)) : [];
   }
   // Batch recipes in the current plan get cooked anyway, so meals lean on them.
   let cooking = new Set();
   function optionCost(id) {
     if (has(id)) return 0;
     const it = ITEM[id];
+    if (it && it.staple && softStaples()) return 0.1;
     if (it && it.make && cooking.has(it.make)) return 0.4;
     if (it && it.make) { const g = baseGaps(it.make).length; return g === 0 ? 0.5 : g + 0.25; }
     return 1;
   }
   function pick(e) {
-    const ids = idsOf(e);
+    const ids = okIds(e);
     if (ids.some(has)) return null;
     let best = ids[0], cost = Infinity;
     for (const id of ids) { const c = optionCost(id); if (c < cost) { cost = c; best = id; } }
@@ -886,13 +1104,15 @@ var HH = (function(){
     for (const [cid, cname] of CATS) {
       const items = Object.values(ITEM).filter(i => i.c === cid && !(state.hidden || {})[i.id] && (!q || (i.n + ' ' + i.alias).toLowerCase().includes(q)));
       if (!items.length) continue;
-      const n = items.filter(i => has(i.id)).length;
+      const n = items.filter(i => state.pantry[i.id]).length;
       out.push(`<div class="card"><div class="section-h"><h2>${esc(cname)}</h2><span class="small muted">${n} of ${items.length}</span></div>
         ${cid === 'cooked' ? '<p class="small muted">Tick what\'s in your freezer or fridge after a cook day. Untick it when the last bag is gone.</p>' : ''}
         ${cid === 'others' ? '<p class="small muted">Only for other people\'s plates, not yours.</p>' : ''}
         <div class="checks">${items.map(i => {
           const w = i.custom ? warnFor(i.n + ' ' + (i.label?.ingredients || '')) : null;
-          return `<label><input type="checkbox" data-item="${i.id}" ${has(i.id) ? 'checked' : ''}><span>${esc(i.n)}${i.local ? ' <span class="loc">local now</span>' : ''}
+          const cov = coveredBy(i.id), as = i.custom ? matchIds(i.n).map(id => ITEM[id] && ITEM[id].n).filter(Boolean) : [];
+          return `<label><input type="checkbox" data-item="${i.id}" ${state.pantry[i.id] ? 'checked' : ''}><span>${esc(i.n)}${i.local ? ' <span class="loc">local now</span>' : ''}
+            ${cov ? `<br><span class="small muted">Covered by ${esc(cov.join(', '))}</span>` : ''}${as.length ? `<br><span class="small muted">Counts as ${esc(as.join(', '))}</span>` : ''}
             ${labelLine(i.label)}${w ? `<br><span class="warn-line ${w.lvl}">${esc(w.text)}</span>` : ''}
             ${i.custom ? `<button class="btn ghost sm" data-edit-custom="${i.id}" aria-label="Edit ${esc(i.n)}">edit</button> ` : ''}<button class="btn ghost sm" data-del-custom="${i.id}" aria-label="Remove ${esc(i.n)} from my list">remove</button></span></label>`;
         }).join('')}</div></div>`);
@@ -936,6 +1156,9 @@ var HH = (function(){
     ITEMS.filter(i => i.staple).forEach(i => state.pantry[i.id] = 1);
     save(); render(); toast('Spices and oils ticked');
   });
+  const softEl = document.getElementById('staples-soft');
+  softEl.checked = softStaples();
+  softEl.addEventListener('change', () => { state.staplesSoft = softEl.checked; save(); render(); });
   document.getElementById('btn-clear-pantry').addEventListener('click', () => {
     if (!confirm('Untick everything in your pantry?')) return;
     state.pantry = {}; save(); render();
@@ -1068,10 +1291,13 @@ var HH = (function(){
     return r.n + ' ' + r.ings.filter(e => e[2] !== 'others').map(e => idsOf(e).map(id => { const it = ITEM[id], b = RECIPE[id] || (it && it.make && RECIPE[it.make]); return (it ? it.n : '') + ' ' + (b ? hhText(b, seen) : ''); }).join(' ')).join(' ');
   }
   function mealCard(r) {
-    const nd = needs(r);
-    const nBuy = nd.buy.size;
+    const nd = needs(r), fit = recipeHits(r);
+    const hard = hardBuy(nd), nBuy = hard.length;
+    const soft = [...nd.buy.keys()].filter(id => !hard.includes(id));
     const counts = r.ings.filter(e => counted(e) && e[2] !== 'others');
-    const haveN = counts.filter(e => idsOf(e).some(has)).length;
+    const haveN = counts.filter(e => okIds(e).some(has)).length;
+    const flagLines = [...new Map(fit.hits.map(h => [h.rule.label, h])).values()].sort((a, b) => rank(a.rule.level) - rank(b.rule.level))
+      .map(h => `<p class="warn-line ${h.rule.level}">${LEVELS[h.rule.level]}: ${esc(h.word)} · ${esc(h.rule.why)}</p>`).join('');
     const pct = counts.length ? haveN / counts.length * 100 : 100;
     const pn = r.plate ? plateNums(r.plate) : null;
     const pills = [`<span class="pill plain">${esc(TYPE_NAME[r.t])}</span>`];
@@ -1088,9 +1314,9 @@ var HH = (function(){
       const g = baseGaps(b).length;
       return `<b>${esc(RECIPE[b].n)}</b> ${g ? `<span class="muted">(needs ${g} item${g > 1 ? 's' : ''})</span>` : '<span class="muted">(you have everything)</span>'}`;
     });
-    const buyList = [...nd.buy.keys()].map(id => esc(ITEM[id]?.n || id));
+    const buyList = hard.map(id => esc(ITEM[id]?.n || id));
     const ingList = r.ings.map(e => {
-      const ok = idsOf(e).some(has);
+      const ok = okIds(e).some(has);
       const names = idsOf(e).map(id => ITEM[id]?.n || id).join(' or ');
       const tag = e[2] === 'opt' ? ' <span class="muted">(optional)</span>' : e[2] === 'others' ? ' <span class="muted">(others)</span>' : '';
       return `<li class="${ok ? 'have' : 'miss'}">${ok ? '✓' : '○'} ${esc(names)}, ${esc(e[1])}${tag}</li>`;
@@ -1100,9 +1326,11 @@ var HH = (function(){
       <div class="row spread"><h3>${esc(r.n)}</h3>${r.makes ? `<span class="small muted">${esc(r.makes)}</span>` : ''}</div>
       <div class="row">${pills.join('')}</div>
       <div class="bar" aria-label="${haveN} of ${counts.length} ingredients in stock"><i style="width:${pct}%"></i></div>
+      ${flagLines}
       ${!nBuy && !nd.cook.size ? '<p class="need"><b>You have everything.</b></p>' : ''}
       ${cookList.length ? `<p class="need">Cook first: ${cookList.join(', ')}</p>` : ''}
       ${buyList.length ? `<p class="need">Buy: ${buyList.join(', ')}</p>` : ''}
+      ${soft.length ? `<p class="small muted">Check you have: ${soft.map(id => esc(ITEM[id].n)).join(', ')}</p>` : ''}
       ${r.others ? `<p class="small muted">Others add ${esc(r.others)}.</p>` : ''}
       ${r.shared || r.t === 'batch' ? HH.tableHtml(hhText(r), HHH, { title: 'At the table' }) : ''}
       <details><summary>Ingredients and steps</summary><ul>${ingList}</ul>${r.steps ? `<p class="small" style="margin-top:6px">${esc(r.steps)}</p>` : ''}</details>
@@ -1116,13 +1344,15 @@ var HH = (function(){
     const f = document.getElementById('meal-filter');
     f.innerHTML = [['all', 'All'], ...TYPES].map(([k, n]) => `<button class="chip" data-filter="${k}" aria-pressed="${state.filter === k}">${esc(n)}</button>`).join('');
     const list = Object.values(RECIPE).filter(r => state.filter === 'all' ? r.t !== 'batch' : r.t === state.filter);
-    const scored = list.map(r => { const nd = needs(r); return { r, buy: nd.buy.size, cook: nd.cook.size }; })
+    const all = list.map(r => { const nd = needs(r); return { r, buy: hardBuy(nd).length, cook: nd.cook.size, off: recipeHits(r).lvl === 'avoid' }; })
       .sort((a, b) => a.buy - b.buy || a.cook - b.cook || a.r.n.localeCompare(b.r.n));
+    const scored = all.filter(x => !x.off);
     const groups = [
       ['Ready now', scored.filter(x => x.buy === 0 && x.cook === 0)],
       ['Ready after a batch cook', scored.filter(x => x.buy === 0 && x.cook > 0)],
       ['Missing 1 or 2 things', scored.filter(x => x.buy > 0 && x.buy <= 2)],
       ['Missing more', scored.filter(x => x.buy > 2)],
+      ["Doesn't fit your food rules", all.filter(x => x.off)],
     ];
     document.getElementById('meal-groups').innerHTML = groups.filter(g => g[1].length).map(([h, xs]) =>
       `<div class="section-h"><h2>${h}</h2><span class="small muted">${xs.length}</span></div><div class="grid">${xs.map(x => mealCard(x.r)).join('')}</div>`
@@ -1270,11 +1500,11 @@ var HH = (function(){
     const days = Math.max(1, +state.days || 7);
     const plan = {};
     let beans = 0;
-    const score = r => { const nd = needs(r); return nd.buy.size + nd.cook.size * 0.3; };
+    const score = r => { const nd = needs(r); return hardBuy(nd).length + nd.cook.size * 0.3; };
     const beanOf = r => r.plate ? plateNums(r.plate).beans : 0;
     // Dinners first, since lunch can pick up a bean serving if dinner didn't.
     for (const [type, perRecipe] of [['breakfast', days], ['dinner', 2], ['lunch', 2], ['snack', 2], ['evening', days]]) {
-      const pool = Object.values(RECIPE).filter(r => r.t === type);
+      const pool = Object.values(RECIPE).filter(r => r.t === type && recipeHits(r).lvl !== 'avoid');
       for (let d = 0; d < days && pool.length; d++) {
         const ranked = pool.map(r => {
           const used = plan[r.id] || 0;
@@ -1634,7 +1864,8 @@ var HH = (function(){
   // ---------- Render ----------
   function renderCounts() {
     document.getElementById('n-pantry').textContent = Object.keys(state.pantry).filter(id => ITEM[id]).length;
-    document.getElementById('n-ready').textContent = Object.values(RECIPE).filter(r => r.t !== 'batch').filter(r => { const nd = needs(r); return !nd.buy.size && !nd.cook.size; }).length;
+    // Meals you can make without buying anything, counting ones that need a batch cook from what you have.
+    document.getElementById('n-ready').textContent = Object.values(RECIPE).filter(r => r.t !== 'batch' && recipeHits(r).lvl !== 'avoid' && !hardBuy(needs(r)).length).length;
     document.getElementById('n-plan').textContent = planEntries().reduce((a, [, n]) => a + n, 0);
   }
   function render() {

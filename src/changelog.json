@@ -1,108 +1,119 @@
 {
- "note": "Newest first. MAJOR.MINOR.PATCH: MINOR for new features, PATCH for fixes. The top entry is the app's version.",
- "changes": [
-  {
-   "v": "0.11.0",
-   "date": "2026-10-23",
-   "items": [
-    "Pantry: an edit button on items you added, to fix the name or fill in what a label photo missed."
-   ]
-  },
-  {
-   "v": "0.10.2",
-   "date": "2026-10-23",
-   "items": [
-    "With the computer app and a second window or phone open, a change no longer gets lost after it says Saved. Changes from both are kept."
-   ]
-  },
-  {
-   "v": "0.10.1",
-   "date": "2026-10-22",
-   "items": [
-    "With the computer app, a change typed just before closing the window or switching away is no longer lost."
-   ]
-  },
-  {
-   "v": "0.10.0",
-   "date": "2026-10-22",
-   "items": [
-    "Backups: new Combine with a backup file, to bring a phone and a computer copy together without losing either.",
-    "With the computer app, an old open window can no longer save over newer changes from another window or phone.",
-    "Clearer warning: on an iPhone, removing the home-screen icon erases its data, so save a backup first."
-   ]
-  },
-  {
-   "v": "0.9.0",
-   "date": "2026-10-22",
-   "items": [
-    "Labs: paste a whole lab report (or copy it from a photo or PDF with Live Text) and save many results at once.",
-    "Pantry: items you add go into the right section (or pick one), and any item can be removed from your list.",
-    "Grocery mode opens reliably from More and the bottom bar.",
-    "Fiber: set the ramp start date on My rules; with no ramp, Today shows your fiber goal."
-   ]
-  },
-  {
-   "v": "0.8.0",
-   "date": "2026-10-22",
-   "items": [
-    "Fix a meal: type a meal's ingredients and the meal checker suggests swaps, trims and adds that follow your lists and limits."
-   ]
-  },
-  {
-   "v": "0.7.0",
-   "date": "2026-10-22",
-   "items": [
-    "A gentle check-in when a supplement or routine step hasn't been ticked off in a while: keep it, change how often, or pause it.",
-    "Version number and this What's new list."
-   ]
-  },
-  {
-   "v": "0.6.0",
-   "date": "2026-10-21",
-   "items": [
-    "Bottom bar on every page, so a home-screen app can always get around.",
-    "Quick view and phone tap shortcuts.",
-    "Installed copies now pick up new versions."
-   ]
-  },
-  {
-   "v": "0.5.0",
-   "date": "2026-10-21",
-   "items": [
-    "Tap to add water (sizes you choose) and a simpler home page.",
-    "Evening check-in: how did I feel today?",
-    "Look back over 7 to 30 days, and a For my visit summary; both print and download.",
-    "Grocery mode for the store.",
-    "Automatic daily backups."
-   ]
-  },
-  {
-   "v": "0.4.0",
-   "date": "2026-10-21",
-   "items": [
-    "Food breaks: take a break from a food until a date, with a low-arginine list for cold sores and HSV, common food groups, or any food you type. Planned meals can be swapped and come back after."
-   ]
-  },
-  {
-   "v": "0.3.0",
-   "date": "2026-10-21",
-   "items": [
-    "Daily rhythm settings: wake and bed times, fasting window, walks after meals, food order, water goal by weight."
-   ]
-  },
-  {
-   "v": "0.2.0",
-   "date": "2026-10-21",
-   "items": [
-    "Sources page; every food rule shows where it comes from."
-   ]
-  },
-  {
-   "v": "0.1.0",
-   "date": "2026-10-21",
-   "items": [
-    "Daily checklist, pantry planner and meal checker that work offline. Starter food lists (drafts)."
-   ]
-  }
- ]
+  "note": "Newest first. MAJOR.MINOR.PATCH: MINOR for new features, PATCH for fixes. The top entry is the app's version.",
+  "changes": [
+    {
+      "v": "0.12.0",
+      "date": "2026-10-23",
+      "items": [
+        "Meals: 34 more starter recipes, with stand-ins (any one of chicken, tofu, beef or pork, for example), so more meals fit what you have.",
+        "Pantry: things you type in now count for the meals that use them. Salmon counts as fish, kale as cooking greens, brown rice as a grain.",
+        "Meals I can make now counts meals you can make without buying anything, including ones that need a batch cook first.",
+        "A spice or oil you haven't ticked no longer stops a meal from counting as ready. You can turn this off in the pantry.",
+        "Meals that don't fit your food rules move to their own group and stay out of Fill. If one stand-in breaks a rule, another is used."
+      ]
+    },
+    {
+      "v": "0.11.0",
+      "date": "2026-10-23",
+      "items": [
+        "Pantry: an edit button on items you added, to fix the name or fill in what a label photo missed."
+      ]
+    },
+    {
+      "v": "0.10.2",
+      "date": "2026-10-23",
+      "items": [
+        "With the computer app and a second window or phone open, a change no longer gets lost after it says Saved. Changes from both are kept."
+      ]
+    },
+    {
+      "v": "0.10.1",
+      "date": "2026-10-22",
+      "items": [
+        "With the computer app, a change typed just before closing the window or switching away is no longer lost."
+      ]
+    },
+    {
+      "v": "0.10.0",
+      "date": "2026-10-22",
+      "items": [
+        "Backups: new Combine with a backup file, to bring a phone and a computer copy together without losing either.",
+        "With the computer app, an old open window can no longer save over newer changes from another window or phone.",
+        "Clearer warning: on an iPhone, removing the home-screen icon erases its data, so save a backup first."
+      ]
+    },
+    {
+      "v": "0.9.0",
+      "date": "2026-10-22",
+      "items": [
+        "Labs: paste a whole lab report (or copy it from a photo or PDF with Live Text) and save many results at once.",
+        "Pantry: items you add go into the right section (or pick one), and any item can be removed from your list.",
+        "Grocery mode opens reliably from More and the bottom bar.",
+        "Fiber: set the ramp start date on My rules; with no ramp, Today shows your fiber goal."
+      ]
+    },
+    {
+      "v": "0.8.0",
+      "date": "2026-10-22",
+      "items": [
+        "Fix a meal: type a meal's ingredients and the meal checker suggests swaps, trims and adds that follow your lists and limits."
+      ]
+    },
+    {
+      "v": "0.7.0",
+      "date": "2026-10-22",
+      "items": [
+        "A gentle check-in when a supplement or routine step hasn't been ticked off in a while: keep it, change how often, or pause it.",
+        "Version number and this What's new list."
+      ]
+    },
+    {
+      "v": "0.6.0",
+      "date": "2026-10-21",
+      "items": [
+        "Bottom bar on every page, so a home-screen app can always get around.",
+        "Quick view and phone tap shortcuts.",
+        "Installed copies now pick up new versions."
+      ]
+    },
+    {
+      "v": "0.5.0",
+      "date": "2026-10-21",
+      "items": [
+        "Tap to add water (sizes you choose) and a simpler home page.",
+        "Evening check-in: how did I feel today?",
+        "Look back over 7 to 30 days, and a For my visit summary; both print and download.",
+        "Grocery mode for the store.",
+        "Automatic daily backups."
+      ]
+    },
+    {
+      "v": "0.4.0",
+      "date": "2026-10-21",
+      "items": [
+        "Food breaks: take a break from a food until a date, with a low-arginine list for cold sores and HSV, common food groups, or any food you type. Planned meals can be swapped and come back after."
+      ]
+    },
+    {
+      "v": "0.3.0",
+      "date": "2026-10-21",
+      "items": [
+        "Daily rhythm settings: wake and bed times, fasting window, walks after meals, food order, water goal by weight."
+      ]
+    },
+    {
+      "v": "0.2.0",
+      "date": "2026-10-21",
+      "items": [
+        "Sources page; every food rule shows where it comes from."
+      ]
+    },
+    {
+      "v": "0.1.0",
+      "date": "2026-10-21",
+      "items": [
+        "Daily checklist, pantry planner and meal checker that work offline. Starter food lists (drafts)."
+      ]
+    }
+  ]
 }
