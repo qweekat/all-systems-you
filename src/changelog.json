@@ -2,6 +2,13 @@
  "note": "Newest first. MAJOR.MINOR.PATCH: MINOR for new features, PATCH for fixes. The top entry is the app's version.",
  "changes": [
   {
+   "v": "0.10.2",
+   "date": "2026-10-23",
+   "items": [
+    "With the computer app and a second window or phone open, a change no longer gets lost after it says Saved. Changes from both are kept."
+   ]
+  },
+  {
    "v": "0.10.1",
    "date": "2026-10-22",
    "items": [

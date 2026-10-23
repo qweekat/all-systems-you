@@ -417,7 +417,7 @@ async function load(){
     try{
       const r = await fetch("/api/state",{cache:"no-store"});
       const j = await r.json();
-      if(j && j.server){ SERVER = true; LAPTOP = !!j.laptop; SERVER_REV = j.rev ?? null; S = merge(j.state || local); return; }
+      if(j && j.server){ SERVER = true; LAPTOP = !!j.laptop; SERVER_REV = j.rev ?? null; S = merge(j.state || local); BASE = j.state ? copyOf(S) : null; return; }
     }catch(e){}
   }
   S = merge(local);
@@ -432,7 +432,34 @@ function rollCook(){
   return moved;
 }
 let saveTimer = null;
-let SERVER_REV = null;
+let SERVER_REV = null, BASE = null; /* BASE = the copy this window last got from or sent to the computer */
+const copyOf = x=>JSON.parse(JSON.stringify(x));
+/* Combine two sets of changes made since BASE: mine (this window) and theirs (another window or phone).
+   Where only one side changed something, keep that change. Where both did, this window wins.
+   Lists of things with ids (notes, supplements) keep additions from both sides. */
+function merge3(base, mine, theirs){
+  const same = (a,b)=>JSON.stringify(a)===JSON.stringify(b);
+  if(same(mine,base)) return theirs;
+  if(same(theirs,base) || mine===undefined || theirs===undefined) return mine;
+  const isObj = x=>x && typeof x==="object" && !Array.isArray(x);
+  if(isObj(mine) && isObj(theirs)){
+    const b = isObj(base)?base:{}, out = {};
+    for(const k of new Set([...Object.keys(mine),...Object.keys(theirs)])){
+      if(!(k in mine) && k in b) { if(!same(theirs[k],b[k])) out[k]=theirs[k]; continue; }   // I removed it, they didn't touch it
+      if(!(k in theirs) && k in b) { if(!same(mine[k],b[k])) out[k]=mine[k]; continue; }
+      const v = merge3(b[k], mine[k], theirs[k]); if(v!==undefined) out[k]=v; }
+    return out;
+  }
+  const ids = a=>Array.isArray(a) && a.every(x=>isObj(x) && x.id!=null);
+  if(ids(mine) && ids(theirs)){
+    const b = ids(base)?base:[], inBase = new Set(b.map(x=>x.id)), inMine = new Set(mine.map(x=>x.id));
+    const bById = Object.fromEntries(b.map(x=>[x.id,x])), tById = Object.fromEntries(theirs.map(x=>[x.id,x]));
+    const out = mine.map(x=> x.id in tById ? merge3(bById[x.id], x, tById[x.id]) : (inBase.has(x.id) ? null : x)).filter(Boolean);
+    for(const x of theirs) if(!inMine.has(x.id) && !inBase.has(x.id)) out.push(x);
+    return out;
+  }
+  return mine;
+}
 function save(){
   pruneLog();
   try{ const cd = nextCookDate(parseYmd(ymd(new Date()))); if(cd) S.cookNext = {date:ymd(cd), items:cookPlanFor(cd).map(x=>({id:x.id, batches:x.batches}))}; }catch(e){}
@@ -452,12 +479,12 @@ async function pushState(closing){
       const r = await fetch("/api/state",{method:"PUT",keepalive,headers:{"Content-Type":"application/json"},body});
       const j = await r.json().catch(()=>({}));
       if(r.status===409 && j.state){
-        // Another window or phone saved newer changes. Take theirs instead of writing over them.
-        SERVER_REV = j.rev; S = merge(j.state); lsSet(S); render();
-        toast("Updated with changes from your other window or phone. If your last change is missing, please make it again.");
+        // Another window or phone saved first. Keep both sets of changes, then send the combined copy.
+        const theirs = merge(copyOf(j.state));
+        S = merge(copyOf(merge3(BASE, S, theirs))); SERVER_REV = j.rev; BASE = copyOf(theirs); lsSet(S); render(); save();
         return;
       }
-      if(j.rev!=null) SERVER_REV = j.rev;
+      if(j.rev!=null){ SERVER_REV = j.rev; BASE = JSON.parse(body).state; }
       setSync();
     }catch(e){ setSync("Could not reach the reminder service. Changes are saved in this browser."); }
 }
@@ -1738,7 +1765,7 @@ document.addEventListener("visibilitychange", async ()=>{
   if(document.visibilityState==="hidden"){ flushNow(false); return; }
   if(document.visibilityState!=="visible" || !SERVER) return;
   if(view.contains(document.activeElement) && document.activeElement.matches("input[type=text],textarea")) return;
-  try{ const j = await (await fetch("/api/state",{cache:"no-store"})).json(); if(j && j.state){ S = merge(j.state); SERVER_REV = j.rev ?? SERVER_REV; render(); } }catch(e){}
+  try{ const j = await (await fetch("/api/state",{cache:"no-store"})).json(); if(j && j.state && j.rev!==SERVER_REV && !saveTimer){ const theirs = merge(copyOf(j.state)); S = merge(copyOf(merge3(BASE, S, theirs))); BASE = copyOf(theirs); SERVER_REV = j.rev ?? SERVER_REV; lsSet(S); if(JSON.stringify(S)!==JSON.stringify(BASE)) save(); render(); } }catch(e){}
 });
 let lastDay = ymd(new Date());
 setInterval(()=>{ if(sweepMissed()){ save(); if(TAB==="notes") return; } if(TAB==="today"||TAB==="tomorrow"){ if(ymd(new Date())!==lastDay){ lastDay=ymd(new Date()); dailyBackup(); } if(!view.contains(document.activeElement)||document.activeElement===document.body) render(); } }, 60000);
