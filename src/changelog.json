@@ -2,6 +2,13 @@
   "note": "Newest first. MAJOR.MINOR.PATCH: MINOR for new features, PATCH for fixes. The top entry is the app's version.",
   "changes": [
     {
+      "v": "0.15.1",
+      "date": "2026-10-23",
+      "items": [
+        "Setup guide: a tip on the food list and lab steps for getting the text out of a PDF or photo with an AI chat app, with a ready-made request to copy."
+      ]
+    },
+    {
       "v": "0.15.0",
       "date": "2026-10-23",
       "items": [

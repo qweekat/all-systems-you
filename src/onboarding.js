@@ -78,6 +78,7 @@ function setupBody(id){
     <p class="muted">Allergies, foods that bother you, or foods you just don't eat. Ticked ones get flagged as "avoid" everywhere in the app.</p>
     <details class="su-more" ${SU_LIST.length||!(R.extra||[]).length?"open":""}><summary>Already have a list? Add it all at once</summary>
       <p class="muted">Pick a text file, or paste your list. One food per line or separated by commas. Lines like <b>Avoid:</b>, <b>Limit:</b> or <b>OK:</b> sort the foods under them. For a PDF, photo or Word file, open it, select all the text, copy it and paste it here. On an iPhone, press and hold on the text in a photo and choose Copy All.</p>
+      ${setupAiHint("List every food in this file, one per line. Put them under the headings Avoid:, Limit: and OK:, the way the file sorts them. Leave out everything else.")}
       <label class="btn ghost" style="cursor:pointer;justify-self:start">Pick a file<input type="file" id="su-listfile" accept=".txt,.csv,.md,.text,text/plain,text/csv,text/markdown" hidden></label>
       <label>Or paste your list<textarea id="su-listtext" placeholder="Avoid: dairy, eggs, vinegar, mushrooms\nLimit: potatoes, dried fruit\nOK: coconut, cilantro"></textarea></label>
       <div><button class="btn ghost" id="su-listRead">Read my list</button></div>
@@ -113,6 +114,7 @@ function setupBody(id){
     <p class="muted">Optional. Saving recent labs lets you see trends and puts them on your visit summary. Pick a text file of your results, or copy the text from your lab report and paste it here. On an iPhone, open the photo or PDF, press and hold on the text and choose Copy All. On Android, use Google Lens or select the text and copy it.</p>
     ${names.length?`<div><b>Already saved:</b> ${esc(names.slice(0,12).join(", "))}${names.length>12?" and "+(names.length-12)+" more":""}</div>`:""}
     <label>Date of the labs<input type="date" id="lp-date" value="${ymd(new Date())}"></label>
+    ${setupAiHint("List every lab test in this report, one per line, as: test name, result, unit, low-high range. Leave out names, dates and everything else.")}
     <label class="btn ghost" style="cursor:pointer;justify-self:start">Pick a text file<input type="file" id="su-labfile" accept=".txt,.csv,.text,text/plain,text/csv" hidden></label>
     <label>Or paste the report<textarea id="lp-text" placeholder="Vitamin D, 25-Hydroxy  28  ng/mL  30-100\nFerritin 45 ng/mL 15-150"></textarea></label>
     <div><button class="btn ghost" id="lpRead">Read the results</button></div>
@@ -218,6 +220,12 @@ function setupBody(id){
     <small class="muted">Run this guide again any time from More, then Setup guide.</small>`;
 }
 
+/* A tip for a PDF or photo the app can't read: an AI chat can pull out the text in the shape this guide reads. */
+function setupAiHint(ask){
+  return `<div class="next"><b>Tip for a PDF or photo:</b> an AI chat app (like ChatGPT, Claude or Gemini) can pull the text out for you. Give it the file, ask it this, then paste its answer here:
+    <div style="margin:6px 0"><code style="white-space:normal">${esc(ask)}</code> <button class="linkbtn" data-su-copy="${esc(ask)}">Copy this</button></div>
+    <small class="muted">Your file goes to that company when you do this. Read what it gives back before you paste it.</small></div>`;
+}
 /* ---------- A food list someone already has (a file or pasted text) ----------
    No AI: each line or comma-separated item is one food. A heading such as "Avoid:", "Limit:" or "OK:" sets how the foods under it count.
    Food group names like "dairy" or "eggs" use the same group as the tick boxes above, so dishes made from them are caught too. */
@@ -347,6 +355,7 @@ view.addEventListener("click", e=>{
   if(d.suBack!==undefined){ setupKeepTyped(id); setupGo(setupStep()-1); return; }
   if(d.suGo!==undefined){ setupGo(+d.suGo); return; }
   if(d.suLeave!==undefined){ if(TAB==="setup") setupKeepTyped(id); setupLeave(d.suLeave); if(d.suLeave==="skipped") toast("Setup is waiting on Today, and under More"); return; }
+  if(d.suCopy!==undefined){ copyText(d.suCopy); return; }
   if(t.id==="su-listRead"){ SU_LIST = setupParseList((document.getElementById("su-listtext")||{}).value); renderSetup(); if(!SU_LIST.length) toast("No foods found. Put one per line or separate them with commas"); return; }
   if(t.id==="su-listSave"){ const n = setupListSave(); renderSetup(); toast(n+" food"+(n===1?"":"s")+" added"); return; }
   if(t.id==="su-foodsAdd"){ const n = setupAddFoods(); save(); renderSetup(); toast(n?"Added":"Type a food first"); return; }
