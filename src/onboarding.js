@@ -3,7 +3,7 @@
    Every answer is written straight into the normal settings, so it can be changed later on its own page,
    and running the guide again shows what's already set. Nothing here leaves the device. */
 const SETUP_STEPS = [
-  ["welcome","Welcome"],["about","What you're managing"],["foods","Foods to avoid"],["meds","Medicines and supplements"],
+  ["welcome","Welcome"],["about","What you're managing"],["foods","Foods to avoid"],["meds","Medicines and supplements"],["labs","Lab results"],
   ["day","Your day"],["household","Who you cook for"],["kitchen","Your kitchen"],["pantry","What's in your kitchen"],
   ["reminders","Reminders"],["done","All set"]];
 /* Health conditions offered, and the starter food list each one turns on. The lists are drafts until a clinician reviews them. */
@@ -20,6 +20,7 @@ const PANTRY_KEY = "pantryplanner.v1";
 
 function setupState(){ return S.setup = Object.assign({status:"new", step:0}, S.setup||{}); }
 function setupStep(){ const n = Number(setupState().step)||0; return Math.min(Math.max(n,0), SETUP_STEPS.length-1); }
+const setupIdx = id=>SETUP_STEPS.findIndex(x=>x[0]===id);
 function setupGo(n){ setupState().step = n; save(); render(); window.scrollTo(0,0); }
 function setupLeave(status){
   const st = setupState(); st.status = status; if(status==="done") st.done = ymd(new Date());
@@ -98,6 +99,18 @@ function setupBody(id){
     <div><button class="btn ghost" id="su-medAdd">Add it</button></div>
     ${suCk(`data-pack="medicines"`, packs.has("medicines"), "Warn me about foods that interact with common medicines", "Grapefruit, vitamin K greens, black licorice and tyramine. "+srcNote(...SETUP_MED_SRC))}
     <small class="muted">Edit times, doses and days under More, then Supplements &amp; routine.</small>`;
+  if(id==="labs"){
+    const labs = S.labs||[], names = [...new Set(labs.map(x=>x.name))];
+    return `
+    <h2>Lab results</h2>
+    <p class="muted">Optional. Saving recent labs lets you see trends and puts them on your visit summary. Copy the text from your lab report and paste it here. On an iPhone, open the photo or PDF, press and hold on the text and choose Copy All. On Android, use Google Lens or select the text and copy it.</p>
+    ${names.length?`<div><b>Already saved:</b> ${esc(names.slice(0,12).join(", "))}${names.length>12?" and "+(names.length-12)+" more":""}</div>`:""}
+    <label>Date of the labs<input type="date" id="lp-date" value="${ymd(new Date())}"></label>
+    <label>Pasted report<textarea id="lp-text" placeholder="Vitamin D, 25-Hydroxy  28  ng/mL  30-100\nFerritin 45 ng/mL 15-150"></textarea></label>
+    <div><button class="btn ghost" id="lpRead">Read the results</button></div>
+    <div id="lp-out" class="stack"></div>
+    <small class="muted">The app picks out each test, result, unit and range for you to check before saving. Type single results, fix numbers, and log visits under More, then Labs &amp; visits.</small>`;
+  }
   if(id==="day"){
     const T = S.times, Rh = S.rhythm, tf = (k,label)=>`<label>${label}<input type="time" id="su-t-${k}" data-t="${k}" value="${esc(parseTime(T[k])||"")}"></label>`;
     return `
@@ -171,19 +184,20 @@ function setupBody(id){
   const cond = SETUP_CONDITIONS.filter(c=>packs.has(c[2])).map(c=>c[1].split(":")[0]);
   const avoid = (R.extra||[]).filter(x=>x.level==="avoid").map(x=>x.label||x.word);
   const pk = (S.setup||{}).pantry, nPan = Object.keys(setupPantryHave()).length, hh = S.household = HH.fix(S.household);
-  const line = (label, v, step)=>`<li><b>${label}:</b> ${v?esc(v):`<span class="muted">not set</span>`} <button class="linkbtn" data-su-go="${step}">Change</button></li>`;
+  const line = (label, v, step)=>`<li><b>${label}:</b> ${v?esc(v):`<span class="muted">not set</span>`} <button class="linkbtn" data-su-go="${setupIdx(step)}">Change</button></li>`;
   return `
     <h2>You're set up</h2>
     <p>Here's what the app knows. Change any of it now, or later from More.</p>
     <ul class="su-list">
-      ${line("Managing", [...cond, (S.profile||{}).other].filter(Boolean).join(", "), 1)}
-      ${line("Avoiding", avoid.join(", "), 2)}
-      ${line("Medicines and supplements", S.supplements.map(s=>s.name).join(", "), 3)}
-      ${line("Your day", S.rhythm.wake||S.rhythm.bed ? "up "+(S.rhythm.wake?niceTime(S.rhythm.wake):"?")+", bed "+(S.rhythm.bed?niceTime(S.rhythm.bed):"?") : "", 4)}
-      ${line("Eating dinner", S.eaters+(S.eaters==1?" person":" people")+(hh.people.length?" ("+hh.people.map(p=>p.name).join(", ")+")":""), 5)}
-      ${line("Kitchen", S.burners+" burner"+(S.burners==1?"":"s")+(S.oven?", oven":", no oven")+(S.freezer===false?", no freezer":", freezer")+", cook day "+DAYS_LONG[Number(S.cookDay)||0], 6)}
-      ${line("Pantry", nPan||pk ? nPan+" item"+(nPan===1?"":"s")+" ticked" : "", 7)}
-      ${line("Reminders", Object.keys(S.on).filter(k=>S.on[k]).length+" kinds on", 8)}
+      ${line("Managing", [...cond, (S.profile||{}).other].filter(Boolean).join(", "), "about")}
+      ${line("Avoiding", avoid.join(", "), "foods")}
+      ${line("Medicines and supplements", S.supplements.map(s=>s.name).join(", "), "meds")}
+      ${line("Lab results", (S.labs||[]).length ? (S.labs.length+" saved") : "", "labs")}
+      ${line("Your day", S.rhythm.wake||S.rhythm.bed ? "up "+(S.rhythm.wake?niceTime(S.rhythm.wake):"?")+", bed "+(S.rhythm.bed?niceTime(S.rhythm.bed):"?") : "", "day")}
+      ${line("Eating dinner", S.eaters+(S.eaters==1?" person":" people")+(hh.people.length?" ("+hh.people.map(p=>p.name).join(", ")+")":""), "household")}
+      ${line("Kitchen", S.burners+" burner"+(S.burners==1?"":"s")+(S.oven?", oven":", no oven")+(S.freezer===false?", no freezer":", freezer")+", cook day "+DAYS_LONG[Number(S.cookDay)||0], "kitchen")}
+      ${line("Pantry", nPan||pk ? nPan+" item"+(nPan===1?"":"s")+" ticked" : "", "pantry")}
+      ${line("Reminders", Object.keys(S.on).filter(k=>S.on[k]).length+" kinds on", "reminders")}
     </ul>
     <div><button class="linkbtn" data-su-go="1">Go through every step again</button></div>
     <h3>Good next steps</h3>
@@ -263,6 +277,7 @@ function setupKeepTyped(id){
   if(id==="about"){ const v = (document.getElementById("su-other")||{}).value; if(v!=null) S.profile = Object.assign({}, S.profile, {other:v.trim()}); }
   if(id==="foods") setupAddFoods();
   if(id==="meds") setupAddMed();
+  if(id==="labs" && LAB_PASTE.some(r=>r.on)){ toast("Press Save to keep those results, or untick them"); return false; }
   if(id==="household" && setupAddPerson(true)===null) return false;
   return true;
 }

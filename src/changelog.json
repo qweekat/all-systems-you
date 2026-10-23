@@ -2,6 +2,13 @@
   "note": "Newest first. MAJOR.MINOR.PATCH: MINOR for new features, PATCH for fixes. The top entry is the app's version.",
   "changes": [
     {
+      "v": "0.14.0",
+      "date": "2026-10-23",
+      "items": [
+        "Setup guide: a new Lab results step. Paste the text of a lab report and the app picks out each test, result, unit and range for you to check before saving."
+      ]
+    },
+    {
       "v": "0.13.0",
       "date": "2026-10-23",
       "items": [

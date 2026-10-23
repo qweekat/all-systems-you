@@ -155,7 +155,7 @@ table.rep{width:100%;border-collapse:collapse;font-size:.92rem}table.rep th,tabl
     <button role="tab" data-tab="more" aria-selected="false">More</button>
   </nav>
   <main id="view"></main>
-  <footer class="muted" style="padding:16px 0 32px;font-size:.85rem;line-height:1.4"><b>all systems you</b>. Your health is complicated. Managing it shouldn't be.<br>all systems you helps you follow the plan you and your care team set. It is not medical advice and does not replace your doctor, dietitian or nurse. Check with them before changing your diet, medicines or supplements. Everything you enter stays on this device. Free and open source under the GNU AGPL 3.0. <a href="sources.html">Sources</a>. <span class="appver">Version 0.13.0.</span></footer>
+  <footer class="muted" style="padding:16px 0 32px;font-size:.85rem;line-height:1.4"><b>all systems you</b>. Your health is complicated. Managing it shouldn't be.<br>all systems you helps you follow the plan you and your care team set. It is not medical advice and does not replace your doctor, dietitian or nurse. Check with them before changing your diet, medicines or supplements. Everything you enter stays on this device. Free and open source under the GNU AGPL 3.0. <a href="sources.html">Sources</a>. <span class="appver">Version 0.14.0.</span></footer>
 </div>
 <div class="toast" id="toast" hidden></div>
 
@@ -2031,7 +2031,7 @@ function mountHousehold(){
 
 /* The bottom bar links here with #today or #more, so a home-screen app (no back button) can always get around. */
 /* Filled in at build time from changelog.json. APP_BUILD tells two builds of the same version apart. */
-const APP_VERSION = "0.13.0", APP_BUILD = "0.13.0-2026-10-23-031712c9", CHANGES = [{"v": "0.13.0", "date": "2026-10-23", "items": ["New setup guide: a brand-new copy of the app opens with a few quick questions about what you're managing, foods you avoid, medicines, your day, who you cook for, your kitchen, your pantry and reminders. Every step can be skipped.", "Run the setup guide again any time from More, or from Times & reminders. It shows what's already set, so you only change what you want.", "Today shows a Finish setting up card if you leave the guide part way.", "Allergy picks like milk or eggs now catch dishes made from them (cheese, omelets) in the checker and pantry, and leave things like coconut milk alone.", "My rules has a What I'm managing line, which also goes on your visit summary."]}, {"v": "0.12.0", "date": "2026-10-23", "items": ["Meals: 34 more starter recipes, with stand-ins (any one of chicken, tofu, beef or pork, for example), so more meals fit what you have.", "Pantry: things you type in now count for the meals that use them. Salmon counts as fish, kale as cooking greens, brown rice as a grain.", "Meals I can make now counts meals you can make without buying anything, including ones that need a batch cook first.", "A spice or oil you haven't ticked no longer stops a meal from counting as ready. You can turn this off in the pantry.", "Meals that don't fit your food rules move to their own group and stay out of Fill. If one stand-in breaks a rule, another is used."]}, {"v": "0.11.0", "date": "2026-10-23", "items": ["Pantry: an edit button on items you added, to fix the name or fill in what a label photo missed."]}, {"v": "0.10.2", "date": "2026-10-23", "items": ["With the computer app and a second window or phone open, a change no longer gets lost after it says Saved. Changes from both are kept."]}, {"v": "0.10.1", "date": "2026-10-22", "items": ["With the computer app, a change typed just before closing the window or switching away is no longer lost."]}, {"v": "0.10.0", "date": "2026-10-22", "items": ["Backups: new Combine with a backup file, to bring a phone and a computer copy together without losing either.", "With the computer app, an old open window can no longer save over newer changes from another window or phone.", "Clearer warning: on an iPhone, removing the home-screen icon erases its data, so save a backup first."]}, {"v": "0.9.0", "date": "2026-10-22", "items": ["Labs: paste a whole lab report (or copy it from a photo or PDF with Live Text) and save many results at once.", "Pantry: items you add go into the right section (or pick one), and any item can be removed from your list.", "Grocery mode opens reliably from More and the bottom bar.", "Fiber: set the ramp start date on My rules; with no ramp, Today shows your fiber goal."]}, {"v": "0.8.0", "date": "2026-10-22", "items": ["Fix a meal: type a meal's ingredients and the meal checker suggests swaps, trims and adds that follow your lists and limits."]}, {"v": "0.7.0", "date": "2026-10-22", "items": ["A gentle check-in when a supplement or routine step hasn't been ticked off in a while: keep it, change how often, or pause it.", "Version number and this What's new list."]}, {"v": "0.6.0", "date": "2026-10-21", "items": ["Bottom bar on every page, so a home-screen app can always get around.", "Quick view and phone tap shortcuts.", "Installed copies now pick up new versions."]}, {"v": "0.5.0", "date": "2026-10-21", "items": ["Tap to add water (sizes you choose) and a simpler home page.", "Evening check-in: how did I feel today?", "Look back over 7 to 30 days, and a For my visit summary; both print and download.", "Grocery mode for the store.", "Automatic daily backups."]}, {"v": "0.4.0", "date": "2026-10-21", "items": ["Food breaks: take a break from a food until a date, with a low-arginine list for cold sores and HSV, common food groups, or any food you type. Planned meals can be swapped and come back after."]}, {"v": "0.3.0", "date": "2026-10-21", "items": ["Daily rhythm settings: wake and bed times, fasting window, walks after meals, food order, water goal by weight."]}, {"v": "0.2.0", "date": "2026-10-21", "items": ["Sources page; every food rule shows where it comes from."]}, {"v": "0.1.0", "date": "2026-10-21", "items": ["Daily checklist, pantry planner and meal checker that work offline. Starter food lists (drafts)."]}];
+const APP_VERSION = "0.14.0", APP_BUILD = "0.14.0-2026-10-23-f022796e", CHANGES = [{"v": "0.14.0", "date": "2026-10-23", "items": ["Setup guide: a new Lab results step. Paste the text of a lab report and the app picks out each test, result, unit and range for you to check before saving."]}, {"v": "0.13.0", "date": "2026-10-23", "items": ["New setup guide: a brand-new copy of the app opens with a few quick questions about what you're managing, foods you avoid, medicines, your day, who you cook for, your kitchen, your pantry and reminders. Every step can be skipped.", "Run the setup guide again any time from More, or from Times & reminders. It shows what's already set, so you only change what you want.", "Today shows a Finish setting up card if you leave the guide part way.", "Allergy picks like milk or eggs now catch dishes made from them (cheese, omelets) in the checker and pantry, and leave things like coconut milk alone.", "My rules has a What I'm managing line, which also goes on your visit summary."]}, {"v": "0.12.0", "date": "2026-10-23", "items": ["Meals: 34 more starter recipes, with stand-ins (any one of chicken, tofu, beef or pork, for example), so more meals fit what you have.", "Pantry: things you type in now count for the meals that use them. Salmon counts as fish, kale as cooking greens, brown rice as a grain.", "Meals I can make now counts meals you can make without buying anything, including ones that need a batch cook first.", "A spice or oil you haven't ticked no longer stops a meal from counting as ready. You can turn this off in the pantry.", "Meals that don't fit your food rules move to their own group and stay out of Fill. If one stand-in breaks a rule, another is used."]}, {"v": "0.11.0", "date": "2026-10-23", "items": ["Pantry: an edit button on items you added, to fix the name or fill in what a label photo missed."]}, {"v": "0.10.2", "date": "2026-10-23", "items": ["With the computer app and a second window or phone open, a change no longer gets lost after it says Saved. Changes from both are kept."]}, {"v": "0.10.1", "date": "2026-10-22", "items": ["With the computer app, a change typed just before closing the window or switching away is no longer lost."]}, {"v": "0.10.0", "date": "2026-10-22", "items": ["Backups: new Combine with a backup file, to bring a phone and a computer copy together without losing either.", "With the computer app, an old open window can no longer save over newer changes from another window or phone.", "Clearer warning: on an iPhone, removing the home-screen icon erases its data, so save a backup first."]}, {"v": "0.9.0", "date": "2026-10-22", "items": ["Labs: paste a whole lab report (or copy it from a photo or PDF with Live Text) and save many results at once.", "Pantry: items you add go into the right section (or pick one), and any item can be removed from your list.", "Grocery mode opens reliably from More and the bottom bar.", "Fiber: set the ramp start date on My rules; with no ramp, Today shows your fiber goal."]}, {"v": "0.8.0", "date": "2026-10-22", "items": ["Fix a meal: type a meal's ingredients and the meal checker suggests swaps, trims and adds that follow your lists and limits."]}, {"v": "0.7.0", "date": "2026-10-22", "items": ["A gentle check-in when a supplement or routine step hasn't been ticked off in a while: keep it, change how often, or pause it.", "Version number and this What's new list."]}, {"v": "0.6.0", "date": "2026-10-21", "items": ["Bottom bar on every page, so a home-screen app can always get around.", "Quick view and phone tap shortcuts.", "Installed copies now pick up new versions."]}, {"v": "0.5.0", "date": "2026-10-21", "items": ["Tap to add water (sizes you choose) and a simpler home page.", "Evening check-in: how did I feel today?", "Look back over 7 to 30 days, and a For my visit summary; both print and download.", "Grocery mode for the store.", "Automatic daily backups."]}, {"v": "0.4.0", "date": "2026-10-21", "items": ["Food breaks: take a break from a food until a date, with a low-arginine list for cold sores and HSV, common food groups, or any food you type. Planned meals can be swapped and come back after."]}, {"v": "0.3.0", "date": "2026-10-21", "items": ["Daily rhythm settings: wake and bed times, fasting window, walks after meals, food order, water goal by weight."]}, {"v": "0.2.0", "date": "2026-10-21", "items": ["Sources page; every food rule shows where it comes from."]}, {"v": "0.1.0", "date": "2026-10-21", "items": ["Daily checklist, pantry planner and meal checker that work offline. Starter food lists (drafts)."]}];
 const TAB_IDS = ["today","quick","phone","tomorrow","more","supps","week","notes","labs","lookback","visit","rules","settings","household","setup"];
 /* A food card link opened while the app is already open. */
 window.addEventListener("hashchange", ()=>{ if(HHUI.takeHash()){ TAB = "household"; render(); window.scrollTo(0,0); } });
@@ -2098,7 +2098,7 @@ function icsText(){
    Every answer is written straight into the normal settings, so it can be changed later on its own page,
    and running the guide again shows what's already set. Nothing here leaves the device. */
 const SETUP_STEPS = [
-  ["welcome","Welcome"],["about","What you're managing"],["foods","Foods to avoid"],["meds","Medicines and supplements"],
+  ["welcome","Welcome"],["about","What you're managing"],["foods","Foods to avoid"],["meds","Medicines and supplements"],["labs","Lab results"],
   ["day","Your day"],["household","Who you cook for"],["kitchen","Your kitchen"],["pantry","What's in your kitchen"],
   ["reminders","Reminders"],["done","All set"]];
 /* Health conditions offered, and the starter food list each one turns on. The lists are drafts until a clinician reviews them. */
@@ -2115,6 +2115,7 @@ const PANTRY_KEY = "pantryplanner.v1";
 
 function setupState(){ return S.setup = Object.assign({status:"new", step:0}, S.setup||{}); }
 function setupStep(){ const n = Number(setupState().step)||0; return Math.min(Math.max(n,0), SETUP_STEPS.length-1); }
+const setupIdx = id=>SETUP_STEPS.findIndex(x=>x[0]===id);
 function setupGo(n){ setupState().step = n; save(); render(); window.scrollTo(0,0); }
 function setupLeave(status){
   const st = setupState(); st.status = status; if(status==="done") st.done = ymd(new Date());
@@ -2193,6 +2194,18 @@ function setupBody(id){
     <div><button class="btn ghost" id="su-medAdd">Add it</button></div>
     ${suCk(`data-pack="medicines"`, packs.has("medicines"), "Warn me about foods that interact with common medicines", "Grapefruit, vitamin K greens, black licorice and tyramine. "+srcNote(...SETUP_MED_SRC))}
     <small class="muted">Edit times, doses and days under More, then Supplements &amp; routine.</small>`;
+  if(id==="labs"){
+    const labs = S.labs||[], names = [...new Set(labs.map(x=>x.name))];
+    return `
+    <h2>Lab results</h2>
+    <p class="muted">Optional. Saving recent labs lets you see trends and puts them on your visit summary. Copy the text from your lab report and paste it here. On an iPhone, open the photo or PDF, press and hold on the text and choose Copy All. On Android, use Google Lens or select the text and copy it.</p>
+    ${names.length?`<div><b>Already saved:</b> ${esc(names.slice(0,12).join(", "))}${names.length>12?" and "+(names.length-12)+" more":""}</div>`:""}
+    <label>Date of the labs<input type="date" id="lp-date" value="${ymd(new Date())}"></label>
+    <label>Pasted report<textarea id="lp-text" placeholder="Vitamin D, 25-Hydroxy  28  ng/mL  30-100\nFerritin 45 ng/mL 15-150"></textarea></label>
+    <div><button class="btn ghost" id="lpRead">Read the results</button></div>
+    <div id="lp-out" class="stack"></div>
+    <small class="muted">The app picks out each test, result, unit and range for you to check before saving. Type single results, fix numbers, and log visits under More, then Labs &amp; visits.</small>`;
+  }
   if(id==="day"){
     const T = S.times, Rh = S.rhythm, tf = (k,label)=>`<label>${label}<input type="time" id="su-t-${k}" data-t="${k}" value="${esc(parseTime(T[k])||"")}"></label>`;
     return `
@@ -2266,19 +2279,20 @@ function setupBody(id){
   const cond = SETUP_CONDITIONS.filter(c=>packs.has(c[2])).map(c=>c[1].split(":")[0]);
   const avoid = (R.extra||[]).filter(x=>x.level==="avoid").map(x=>x.label||x.word);
   const pk = (S.setup||{}).pantry, nPan = Object.keys(setupPantryHave()).length, hh = S.household = HH.fix(S.household);
-  const line = (label, v, step)=>`<li><b>${label}:</b> ${v?esc(v):`<span class="muted">not set</span>`} <button class="linkbtn" data-su-go="${step}">Change</button></li>`;
+  const line = (label, v, step)=>`<li><b>${label}:</b> ${v?esc(v):`<span class="muted">not set</span>`} <button class="linkbtn" data-su-go="${setupIdx(step)}">Change</button></li>`;
   return `
     <h2>You're set up</h2>
     <p>Here's what the app knows. Change any of it now, or later from More.</p>
     <ul class="su-list">
-      ${line("Managing", [...cond, (S.profile||{}).other].filter(Boolean).join(", "), 1)}
-      ${line("Avoiding", avoid.join(", "), 2)}
-      ${line("Medicines and supplements", S.supplements.map(s=>s.name).join(", "), 3)}
-      ${line("Your day", S.rhythm.wake||S.rhythm.bed ? "up "+(S.rhythm.wake?niceTime(S.rhythm.wake):"?")+", bed "+(S.rhythm.bed?niceTime(S.rhythm.bed):"?") : "", 4)}
-      ${line("Eating dinner", S.eaters+(S.eaters==1?" person":" people")+(hh.people.length?" ("+hh.people.map(p=>p.name).join(", ")+")":""), 5)}
-      ${line("Kitchen", S.burners+" burner"+(S.burners==1?"":"s")+(S.oven?", oven":", no oven")+(S.freezer===false?", no freezer":", freezer")+", cook day "+DAYS_LONG[Number(S.cookDay)||0], 6)}
-      ${line("Pantry", nPan||pk ? nPan+" item"+(nPan===1?"":"s")+" ticked" : "", 7)}
-      ${line("Reminders", Object.keys(S.on).filter(k=>S.on[k]).length+" kinds on", 8)}
+      ${line("Managing", [...cond, (S.profile||{}).other].filter(Boolean).join(", "), "about")}
+      ${line("Avoiding", avoid.join(", "), "foods")}
+      ${line("Medicines and supplements", S.supplements.map(s=>s.name).join(", "), "meds")}
+      ${line("Lab results", (S.labs||[]).length ? (S.labs.length+" saved") : "", "labs")}
+      ${line("Your day", S.rhythm.wake||S.rhythm.bed ? "up "+(S.rhythm.wake?niceTime(S.rhythm.wake):"?")+", bed "+(S.rhythm.bed?niceTime(S.rhythm.bed):"?") : "", "day")}
+      ${line("Eating dinner", S.eaters+(S.eaters==1?" person":" people")+(hh.people.length?" ("+hh.people.map(p=>p.name).join(", ")+")":""), "household")}
+      ${line("Kitchen", S.burners+" burner"+(S.burners==1?"":"s")+(S.oven?", oven":", no oven")+(S.freezer===false?", no freezer":", freezer")+", cook day "+DAYS_LONG[Number(S.cookDay)||0], "kitchen")}
+      ${line("Pantry", nPan||pk ? nPan+" item"+(nPan===1?"":"s")+" ticked" : "", "pantry")}
+      ${line("Reminders", Object.keys(S.on).filter(k=>S.on[k]).length+" kinds on", "reminders")}
     </ul>
     <div><button class="linkbtn" data-su-go="1">Go through every step again</button></div>
     <h3>Good next steps</h3>
@@ -2358,6 +2372,7 @@ function setupKeepTyped(id){
   if(id==="about"){ const v = (document.getElementById("su-other")||{}).value; if(v!=null) S.profile = Object.assign({}, S.profile, {other:v.trim()}); }
   if(id==="foods") setupAddFoods();
   if(id==="meds") setupAddMed();
+  if(id==="labs" && LAB_PASTE.some(r=>r.on)){ toast("Press Save to keep those results, or untick them"); return false; }
   if(id==="household" && setupAddPerson(true)===null) return false;
   return true;
 }
@@ -2470,7 +2485,7 @@ view.addEventListener("click",async e=>{
   if(t.id==="lpSave"){ const date = document.getElementById("lp-date").value || ymd(new Date()); let n = 0;
     for(const r of LAB_PASTE) if(r.on && r.name && Number.isFinite(r.value)){ const prev = (S.labs||[]).filter(x=>x.name.toLowerCase()===r.name.toLowerCase()).sort((a,b)=>b.date.localeCompare(a.date))[0];
       (S.labs=S.labs||[]).push({id:"l"+Date.now()+"_"+n, name:prev?prev.name:r.name, value:r.value, unit:r.unit||(prev?prev.unit:""), low:r.low!=null?r.low:(prev?prev.low:null), high:r.high!=null?r.high:(prev?prev.high:null), date, check:true, note:"From pasted report"}); n++; }
-    LAB_PASTE = []; save(); renderLabs(); toast(n+" result"+(n===1?"":"s")+" saved"); return; }
+    LAB_PASTE = []; save(); render(); toast(n+" result"+(n===1?"":"s")+" saved"); return; }
   if(t.id==="labAdd"){
     const g=id=>document.getElementById(id).value.trim(), name=g("lb-name"), value=g("lb-value");
     if(!name||value===""){ toast("Add the test name and result"); return; }

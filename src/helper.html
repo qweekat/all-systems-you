@@ -1673,7 +1673,7 @@ view.addEventListener("click",async e=>{
   if(t.id==="lpSave"){ const date = document.getElementById("lp-date").value || ymd(new Date()); let n = 0;
     for(const r of LAB_PASTE) if(r.on && r.name && Number.isFinite(r.value)){ const prev = (S.labs||[]).filter(x=>x.name.toLowerCase()===r.name.toLowerCase()).sort((a,b)=>b.date.localeCompare(a.date))[0];
       (S.labs=S.labs||[]).push({id:"l"+Date.now()+"_"+n, name:prev?prev.name:r.name, value:r.value, unit:r.unit||(prev?prev.unit:""), low:r.low!=null?r.low:(prev?prev.low:null), high:r.high!=null?r.high:(prev?prev.high:null), date, check:true, note:"From pasted report"}); n++; }
-    LAB_PASTE = []; save(); renderLabs(); toast(n+" result"+(n===1?"":"s")+" saved"); return; }
+    LAB_PASTE = []; save(); render(); toast(n+" result"+(n===1?"":"s")+" saved"); return; }
   if(t.id==="labAdd"){
     const g=id=>document.getElementById(id).value.trim(), name=g("lb-name"), value=g("lb-value");
     if(!name||value===""){ toast("Add the test name and result"); return; }
