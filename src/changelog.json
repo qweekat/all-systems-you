@@ -2,6 +2,14 @@
   "note": "Newest first. MAJOR.MINOR.PATCH: MINOR for new features, PATCH for fixes. The top entry is the app's version.",
   "changes": [
     {
+      "v": "0.15.0",
+      "date": "2026-10-23",
+      "items": [
+        "Setup guide: already have a list of foods you avoid? Pick a text file or paste it, check what the app found, and add it all at once. Lines like Avoid:, Limit: and OK: sort the foods under them.",
+        "Setup guide: the Lab results step can also read a text file of results."
+      ]
+    },
+    {
       "v": "0.14.0",
       "date": "2026-10-23",
       "items": [

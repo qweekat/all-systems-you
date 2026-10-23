@@ -76,6 +76,13 @@ function setupBody(id){
     return `
     <h2>Foods you avoid</h2>
     <p class="muted">Allergies, foods that bother you, or foods you just don't eat. Ticked ones get flagged as "avoid" everywhere in the app.</p>
+    <details class="su-more" ${SU_LIST.length||!(R.extra||[]).length?"open":""}><summary>Already have a list? Add it all at once</summary>
+      <p class="muted">Pick a text file, or paste your list. One food per line or separated by commas. Lines like <b>Avoid:</b>, <b>Limit:</b> or <b>OK:</b> sort the foods under them. For a PDF, photo or Word file, open it, select all the text, copy it and paste it here. On an iPhone, press and hold on the text in a photo and choose Copy All.</p>
+      <label class="btn ghost" style="cursor:pointer;justify-self:start">Pick a file<input type="file" id="su-listfile" accept=".txt,.csv,.md,.text,text/plain,text/csv,text/markdown" hidden></label>
+      <label>Or paste your list<textarea id="su-listtext" placeholder="Avoid: dairy, eggs, vinegar, mushrooms\nLimit: potatoes, dried fruit\nOK: coconut, cilantro"></textarea></label>
+      <div><button class="btn ghost" id="su-listRead">Read my list</button></div>
+      ${setupListHtml()}
+    </details>
     <div class="su-grid">${HH.PRESETS.map(([pid,label,,src])=>suCk(`data-su-pre="${pid}"`, preset.has(pid), esc(label), src.length?srcNote(...src):"")).join("")}</div>
     ${typed.length?`<div><b>Also on your list</b><div class="chips" style="margin-top:6px">${typed.map(([x,i])=>`<span class="chip ${x.level==="avoid"?"pending":""}">${esc(x.label||x.word)} <button class="linkbtn" style="padding:0 0 0 6px" data-su-xdel="${i}" aria-label="Remove ${esc(x.label||x.word)}">✕</button></span>`).join("")}</div></div>`:""}
     <div class="grid2">
@@ -103,10 +110,11 @@ function setupBody(id){
     const labs = S.labs||[], names = [...new Set(labs.map(x=>x.name))];
     return `
     <h2>Lab results</h2>
-    <p class="muted">Optional. Saving recent labs lets you see trends and puts them on your visit summary. Copy the text from your lab report and paste it here. On an iPhone, open the photo or PDF, press and hold on the text and choose Copy All. On Android, use Google Lens or select the text and copy it.</p>
+    <p class="muted">Optional. Saving recent labs lets you see trends and puts them on your visit summary. Pick a text file of your results, or copy the text from your lab report and paste it here. On an iPhone, open the photo or PDF, press and hold on the text and choose Copy All. On Android, use Google Lens or select the text and copy it.</p>
     ${names.length?`<div><b>Already saved:</b> ${esc(names.slice(0,12).join(", "))}${names.length>12?" and "+(names.length-12)+" more":""}</div>`:""}
     <label>Date of the labs<input type="date" id="lp-date" value="${ymd(new Date())}"></label>
-    <label>Pasted report<textarea id="lp-text" placeholder="Vitamin D, 25-Hydroxy  28  ng/mL  30-100\nFerritin 45 ng/mL 15-150"></textarea></label>
+    <label class="btn ghost" style="cursor:pointer;justify-self:start">Pick a text file<input type="file" id="su-labfile" accept=".txt,.csv,.text,text/plain,text/csv" hidden></label>
+    <label>Or paste the report<textarea id="lp-text" placeholder="Vitamin D, 25-Hydroxy  28  ng/mL  30-100\nFerritin 45 ng/mL 15-150"></textarea></label>
     <div><button class="btn ghost" id="lpRead">Read the results</button></div>
     <div id="lp-out" class="stack"></div>
     <small class="muted">The app picks out each test, result, unit and range for you to check before saving. Type single results, fix numbers, and log visits under More, then Labs &amp; visits.</small>`;
@@ -210,6 +218,55 @@ function setupBody(id){
     <small class="muted">Run this guide again any time from More, then Setup guide.</small>`;
 }
 
+/* ---------- A food list someone already has (a file or pasted text) ----------
+   No AI: each line or comma-separated item is one food. A heading such as "Avoid:", "Limit:" or "OK:" sets how the foods under it count.
+   Food group names like "dairy" or "eggs" use the same group as the tick boxes above, so dishes made from them are caught too. */
+let SU_LIST = [];
+const SU_HEADS = [["ok",/^(?:ok|okay|fine|safe|tolerated|allowed|good|yes|can (?:eat|have)|foods? (?:that are |i can )?(?:ok|fine|safe|eat))\b/i],
+  ["limit",/^(?:limit|limited|small amounts?|in moderation|moderate|sometimes|occasionally|keep (?:it )?small|careful|caution|reduce)\b/i],
+  ["avoid",/^(?:avoid|no|never|don'?t eat|do not eat|not ok|allerg(?:y|ies|ic)|intoleran(?:ce|t)|sensitiv(?:e|ities|ity)|bothers? me|reactions?|foods? (?:to )?avoid|restricted|eliminate)\b/i]];
+function setupParseList(text){
+  const out = [], seen = new Set(); let level = "avoid";
+  for(let raw of String(text||"").split(/\r?\n/)){
+    let line = raw.replace(/^[\s>*•·▪◦‣–—-]+|^\s*\d+[.)]\s+/g,"").trim(); if(!line) continue;
+    const m = line.match(/^([^:]{1,40}):\s*(.*)$/);
+    const head = m ? SU_HEADS.find(([,re])=>re.test(m[1].trim())) : SU_HEADS.find(([,re])=>re.test(line) && line.length<40 && !/,/.test(line));
+    if(head){ level = head[0]; line = m ? m[2] : ""; if(!line) continue; }
+    else if(m && !m[2]) continue;   // some other heading, like "Grains:"
+    for(let item of line.split(/[,;|\t]+/)){
+      let why = ""; item = item.replace(/\(([^)]*)\)/g,(_,w)=>{ why = why ? why+"; "+w : w; return " "; }).replace(/\s+/g," ").trim().replace(/[.!]+$/,"");
+      if(!item || item.length>40 || !/[a-z]/i.test(item)) continue;
+      const key = item.toLowerCase(); if(seen.has(key)) continue; seen.add(key);
+      const g = groupFor(key) || groupFor(key.replace(/ (?:products?|foods?|allergy|intolerance)$/,""));
+      // A title line like "My food issues" comes through unticked.
+      out.push({on:!/\b(?:foods?|lists?|issues|diet|plan|notes|sensitivit(?:y|ies)|page)\b/i.test(item), word:item, level, why, preset: g && HH.PRESETS.some(x=>x[0]===g[0]) ? g[0] : ""});
+    }
+  }
+  return out;
+}
+function setupListHtml(){
+  if(!SU_LIST.length) return "";
+  const sel = (r,i)=>`<select data-su-li="${i}" data-su-lf="level">${[["avoid","Avoid"],["limit","Limit"],["ask","Check first"],["ok","Fine"]].map(([v,n])=>`<option value="${v}" ${r.level===v?"selected":""}>${n}</option>`).join("")}</select>`;
+  return `<div class="tablewrap"><table class="rep"><thead><tr><th>Add</th><th>Food</th><th>Counts as</th></tr></thead><tbody>
+    ${SU_LIST.map((r,i)=>`<tr><td><input type="checkbox" data-su-li="${i}" data-su-lf="on" ${r.on?"checked":""} aria-label="Add ${esc(r.word)}"></td>
+      <td><input type="text" data-su-li="${i}" data-su-lf="word" value="${esc(r.word)}" style="min-width:9em">${r.preset?`<small class="muted">Uses the ${esc((HH.PRESETS.find(x=>x[0]===r.preset)||[])[1])} group</small>`:""}${r.why?`<small class="muted">${esc(r.why)}</small>`:""}</td><td>${sel(r,i)}</td></tr>`).join("")}
+    </tbody></table></div><small class="muted">Check the list, untick anything that came through wrong, then add it.</small>
+    <div><button class="btn" id="su-listSave">Add ${SU_LIST.filter(r=>r.on).length} foods</button></div>`;
+}
+function setupListSave(){
+  const R = S.rules, cap = w=>w.charAt(0).toUpperCase()+w.slice(1); let n = 0;
+  for(const r of SU_LIST){
+    const w = String(r.word||"").trim(); if(!r.on || !w) continue;
+    const x = r.preset && r.level!=="ok" && HH.PRESETS.find(y=>y[0]===r.preset);
+    if(r.level==="ok"){ if(!(R.ok||[]).some(y=>y.word===w.toLowerCase())){ R.ok = [...(R.ok||[]), {word:w.toLowerCase(), label:cap(w)}]; n++; } continue; }
+    if(x){ R.extra = (R.extra||[]).filter(y=>y.preset!==x[0]); R.extra.push({word:x[1].toLowerCase(), label:x[1], level:r.level, why:r.why||"From my list", pat:x[2], src:x[3], preset:x[0]}); n++; continue; }
+    if((R.extra||[]).some(y=>!y.preset && y.word===w.toLowerCase())) continue;
+    R.extra = [...(R.extra||[]), {word:w.toLowerCase(), label:cap(w), level:r.level, why:r.why||"From my list"}]; n++;
+  }
+  if(n) logRule("Added "+n+" foods from a list");
+  SU_LIST = []; save(); return n;
+}
+
 function renderSetup(){
   const n = setupStep(), [id, name] = SETUP_STEPS[n], last = SETUP_STEPS.length-1;
   view.innerHTML = `<div class="stack su">
@@ -275,7 +332,7 @@ function setupAddPerson(quiet){
 function setupKeepTyped(id){
   if(id==="welcome"){ const v = (document.getElementById("su-name")||{}).value; if(v!=null){ S.household = HH.fix(S.household); S.household.me.name = v.trim(); } }
   if(id==="about"){ const v = (document.getElementById("su-other")||{}).value; if(v!=null) S.profile = Object.assign({}, S.profile, {other:v.trim()}); }
-  if(id==="foods") setupAddFoods();
+  if(id==="foods"){ if(SU_LIST.some(r=>r.on)){ toast("Press Add to keep the foods from your list, or untick them"); return false; } setupAddFoods(); }
   if(id==="meds") setupAddMed();
   if(id==="labs" && LAB_PASTE.some(r=>r.on)){ toast("Press Save to keep those results, or untick them"); return false; }
   if(id==="household" && setupAddPerson(true)===null) return false;
@@ -290,6 +347,8 @@ view.addEventListener("click", e=>{
   if(d.suBack!==undefined){ setupKeepTyped(id); setupGo(setupStep()-1); return; }
   if(d.suGo!==undefined){ setupGo(+d.suGo); return; }
   if(d.suLeave!==undefined){ if(TAB==="setup") setupKeepTyped(id); setupLeave(d.suLeave); if(d.suLeave==="skipped") toast("Setup is waiting on Today, and under More"); return; }
+  if(t.id==="su-listRead"){ SU_LIST = setupParseList((document.getElementById("su-listtext")||{}).value); renderSetup(); if(!SU_LIST.length) toast("No foods found. Put one per line or separate them with commas"); return; }
+  if(t.id==="su-listSave"){ const n = setupListSave(); renderSetup(); toast(n+" food"+(n===1?"":"s")+" added"); return; }
   if(t.id==="su-foodsAdd"){ const n = setupAddFoods(); save(); renderSetup(); toast(n?"Added":"Type a food first"); return; }
   if(t.id==="su-medAdd"){ if(setupAddMed()){ save(); renderSetup(); toast("Added"); } else toast("Type a name first"); return; }
   if(t.id==="su-personAdd"){ if(setupAddPerson(false)){ save(); renderSetup(); toast("Added"); } return; }
@@ -310,6 +369,14 @@ view.addEventListener("change", e=>{
     if(t.checked) R.extra.push({word:x[1].toLowerCase(), label:x[1], level:"avoid", why:"Added in setup", pat:x[2], src:x[3], preset:x[0]});
     logRule((t.checked?"Added ":"Removed ")+x[1]+(t.checked?" (avoid)":" from flagged foods")); save(); return; }
   if(d.suFreezer){ S.freezer = t.checked; S.on.pull = t.checked; save(); return; }
+  if(d.suLi!==undefined){ const r = SU_LIST[+d.suLi]; if(!r) return; r[d.suLf] = d.suLf==="on" ? t.checked : t.value;
+    if(d.suLf==="word"){ const g = groupFor(t.value); r.preset = g && HH.PRESETS.some(x=>x[0]===g[0]) ? g[0] : ""; }
+    if(d.suLf==="on"){ const btn = document.getElementById("su-listSave"); if(btn) btn.textContent = "Add "+SU_LIST.filter(x=>x.on).length+" foods"; } return; }
+  if((t.id==="su-listfile" || t.id==="su-labfile") && t.files && t.files[0]){ const f = t.files[0], r = new FileReader();
+    if(!/^text\/|\.(?:txt|csv|md|text)$/i.test(f.type+" "+f.name)){ toast("That file isn't plain text. Open it, copy the text and paste it instead"); t.value = ""; return; }
+    r.onload = ()=>{ if(t.id==="su-listfile"){ SU_LIST = setupParseList(r.result); renderSetup(); toast(SU_LIST.length ? SU_LIST.length+" foods found. Check them below" : "No foods found in that file"); }
+      else { document.getElementById("lp-text").value = r.result; document.getElementById("lpRead").click(); } };
+    r.readAsText(f); t.value = ""; return; }
   if(d.suPan){ setupPantrySet([d.suPan], t.checked); return; }
   if(t.id==="su-backup" && t.files && t.files[0]){ const r = new FileReader();
     r.onload = ()=>{ try{ const v = JSON.parse(r.result); if(!v || typeof v!=="object" || !v.supplements) throw 0;
