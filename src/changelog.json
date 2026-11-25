@@ -2,6 +2,13 @@
   "note": "Newest first. MAJOR.MINOR.PATCH: MINOR for new features, PATCH for fixes. The top entry is the app's version.",
   "changes": [
     {
+      "v": "0.17.2",
+      "date": "2026-11-24",
+      "items": [
+        "Supplements no longer ask Where. They go with you, so their reminders use the at-home lead times."
+      ]
+    },
+    {
       "v": "0.17.1",
       "date": "2026-11-24",
       "items": [

@@ -645,7 +645,7 @@ function itemsFor(d, plain){
     const dose = suppDose(s,d);
     const detail = [dose, s.how].filter(Boolean).join(". ");
     if(!ts.length){ const n=Math.max(1,Math.min(4,Number(s.perDay)||1)); for(let k=1;k<=n;k++) add({id:"supp:"+s.id+(n>1?":n"+k:""), time:null, kind:"supp", title:s.name+(n>1?" ("+k+" of "+n+")":""), detail, pending:s.pending}); continue; }
-    ts.forEach(t=>add({id:"supp:"+s.id+":"+t, time:t, kind:"supp", title:s.name, detail, pending:s.pending, suppId:s.id, binder:!!s.binder, where:s.where||"home"}));
+    ts.forEach(t=>add({id:"supp:"+s.id+":"+t, time:t, kind:"supp", title:s.name, detail, pending:s.pending, suppId:s.id, binder:!!s.binder, where:"home"}));
   }
   const wk = S.week[dow]||{ids:{}}, ids = wk.ids||{};
   const r = k=>recipe(ids[k]);
@@ -1112,7 +1112,6 @@ function renderSupps(){
         <label>Dose<input type="text" id="s-dose-${i}" data-s="${i}" data-f="dose" value="${esc(s.dose)}" placeholder="e.g. 500 mg"></label>
         <label>Times<input type="text" id="s-times-${i}" data-s="${i}" data-f="times" value="${esc(s.times)}" placeholder="Not set"></label>
         <label>How to take it<input type="text" id="s-how-${i}" data-s="${i}" data-f="how" value="${esc(s.how)}" placeholder="e.g. with breakfast"></label>
-        <label>Where<select id="s-where-${i}" data-s="${i}" data-f="where"><option value="home" ${(s.where||"home")==="home"?"selected":""}>At home</option><option value="town" ${s.where==="town"?"selected":""}>In town</option></select></label>
       </div>
       ${bad.length?`<div class="warnbox">Couldn't read: ${esc(bad.join(", "))}. Use a form like 8:00 or 6:30pm.</div>`:""}
       <label>Notes<input type="text" id="s-notes-${i}" data-s="${i}" data-f="notes" value="${esc(s.notes)}"></label>
