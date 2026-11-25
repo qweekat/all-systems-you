@@ -1126,7 +1126,7 @@ var HH = (function(){
           return `<label><input type="checkbox" data-item="${i.id}" ${state.pantry[i.id] ? 'checked' : ''}><span>${esc(i.n)}${localNow(i) ? ' <span class="loc">local now</span>' : ''}
             ${cov ? `<br><span class="small muted">Covered by ${esc(cov.join(', '))}</span>` : ''}${as.length ? `<br><span class="small muted">Counts as ${esc(as.join(', '))}</span>` : ''}
             ${labelLine(i.label)}${w ? `<br><span class="warn-line ${w.lvl}">${esc(w.text)}</span>` : ''}
-            ${i.custom ? `<button class="btn ghost sm" data-edit-custom="${i.id}" aria-label="Edit ${esc(i.n)}">edit</button> ` : ''}<button class="btn ghost sm" data-del-custom="${i.id}" aria-label="Remove ${esc(i.n)} from my list">remove</button></span></label>`;
+            ${i.custom ? `<select class="sm" data-move-custom="${i.id}" aria-label="Move ${esc(i.n)} to another section">${CATS.filter(([id]) => id !== 'cooked').map(([id, n]) => `<option value="${id}" ${id === i.c ? 'selected' : ''}>${esc(n)}</option>`).join('')}</select> <button class="btn ghost sm" data-edit-custom="${i.id}" aria-label="Edit ${esc(i.n)}">edit</button> ` : ''}<button class="btn ghost sm" data-del-custom="${i.id}" aria-label="Remove ${esc(i.n)} from my list">remove</button></span></label>`;
         }).join('')}</div></div>`);
     }
     const nh = Object.keys(state.hidden || {}).length;
@@ -1135,6 +1135,8 @@ var HH = (function(){
   }
   document.getElementById('pantry-search').addEventListener('input', renderPantry);
   document.getElementById('pantry-groups').addEventListener('change', e => {
+    const mv = e.target.dataset.moveCustom;
+    if (mv) { const c = state.custom.find(x => x.id === mv); if (c) { c.c = e.target.value; save(); rebuild(); render(); toast(`Moved ${c.n}`); } return; }
     const id = e.target.dataset.item;
     if (!id) return;
     if (e.target.checked) state.pantry[id] = 1; else delete state.pantry[id];
