@@ -949,9 +949,68 @@ function renderDay(offset){
 }
 
 /* ---------- More: everything that isn't today, as big tiles ---------- */
-const MORE_TILES = [["supps","Supplements & routine","What you take and when"],["week","Meals & freezer","The week's meals"],["notes","Notes","Notes and questions"],["labs","Labs & visits","Results and visits"],
+const MORE_TILES = [["diagnoses","My diagnoses","Add a diagnosis any time"],["supps","Supplements & routine","What you take and when"],["week","Meals & freezer","The week's meals"],["notes","Notes","Notes and questions"],["labs","Labs & visits","Results and visits"],
   ["lookback","Look back","Last 7 to 30 days, printable"],["visit","For my visit","Summary to print or send"],["household","Household","People you share meals with, food cards"],["rules","My rules","Limits, food lists, food breaks"],["settings","Times & reminders","Times, water, rhythm, backups"]];
 MORE_TILES.unshift(["setup","Setup guide","Answer a few questions to fit the app to you"]);
+const SOURCES_LINK = ' (see the <a href="sources.html">Sources page</a>)';
+/* ---------- My diagnoses ----------
+   Add a diagnosis any time. Each one adds a food list to Foods to flag (every item can be turned off here or removed there)
+   and questions for your doctor. Drafts until a clinician reviews them. */
+const DIAGNOSES = {
+  fatty_liver: {
+    name: "Fatty liver (MASLD, once called NAFLD)",
+    short: "fatty liver",
+    about: "A buildup of fat in the liver that isn't caused by heavy drinking. Diet is the main treatment.",
+    src: "NIDDK, the AASLD 2023 practice guidance, and the EASL-EASD-EASO 2024 guidelines",
+    srcIds: ["niddk-nafld-diet", "aasld-2023-masld", "easl-2024-masld"],
+    rules: [
+      ["alcohol", "avoid", "Alcohol", "alcohol|wine|beer|liquor|vodka|whiskey|whisky|rum|tequila|gin|cocktail|cocktails|hard cider|mead|sake|margarita|sangria|mimosa", "Alcohol adds to liver damage. The guidelines advise cutting it out or way down."],
+      ["drinks", "avoid", "Sugary drinks", "soda|sodas|soft drink|soft drinks|sweet tea|energy drink|energy drinks|sports drink|sports drinks|cola|lemonade|fruit punch|sweetened drink|sweetened drinks", "Sugar in drinks, especially fructose, builds liver fat. Water or unsweetened tea instead."],
+      ["fructose", "limit", "Juice and high-fructose sweeteners", "high fructose corn syrup|corn syrup|agave syrup|agave nectar|fruit juice|fruit juices|juice|juices|apple juice|orange juice", "Fructose without fiber goes straight to the liver. Whole fruit is fine."],
+      ["sugar", "limit", "Added sugar and sweets", "added sugar|white sugar|brown sugar|cane sugar|powdered sugar|table sugar|honey|maple syrup|syrup|candy|candies|dessert|desserts|cookie|cookies|cake|cakes|pastry|pastries|donut|donuts|doughnut|doughnuts|ice cream|frosting", "Added sugar raises liver fat. Keep sweets small and rare."],
+      ["refined", "limit", "Refined starches", "white bread|white rice|white flour|bagel|bagels|croissant|croissants|crackers|pretzels|instant oatmeal|corn flakes|sugary cereal", "Fast starches act like sugar. Whole grains, beans and vegetables instead."],
+      ["fried", "limit", "Fried food and processed meat", "fried|deep fried|deep-fried|french fries|fries|fried chicken|potato chips|bacon|sausage|sausages|hot dog|hot dogs|salami|pepperoni|bologna|lard|shortening", "High in saturated fat. The guidelines favor olive oil, fish and plants."],
+    ],
+    tips: ["More fiber: vegetables, beans, lentils, whole grains and whole fruit.", "Olive oil, fish, nuts and seeds over butter, fried food and processed meat.", "If your care team says weight loss would help, losing 5 to 10% of body weight lowers liver fat. Ask what's right for you."],
+    qs: ["I have fatty liver. What diet changes do you want me to make for it?", "Should we track my liver with labs or an ultrasound or FibroScan, and how often?", "Do any of my medicines or supplements affect my liver?", "Is weight loss a goal for me with fatty liver, and if so, how much?"],
+  },
+};
+function diagOn(id){ return (S.diagnoses||[]).includes(id); }
+function diagRuleEntry(id, r){ const [k, level, label, word, why] = r; return {word, level, label, why: why+" (Draft "+DIAGNOSES[id].short+" list.)", diag:id, dkey:k}; }
+function setDiag(id, on){
+  const D = DIAGNOSES[id]; if(!D) return;
+  S.diagnoses = (S.diagnoses||[]).filter(x=>x!==id);
+  S.rules.extra = (S.rules.extra||[]).filter(x=>x.diag!==id);
+  if(on){
+    S.diagnoses.push(id);
+    for(const r of D.rules) S.rules.extra.push(diagRuleEntry(id, r));
+    const have = new Set((S.doctor||[]).map(q=>q.text));
+    D.qs.forEach((q,i)=>{ if(!have.has(q)) (S.doctor=S.doctor||[]).push({id:"q"+Date.now()+i, text:q, status:"ask", answer:"", added:ymd(new Date())}); });
+  }
+  logRule(D.name+(on?" added":" removed")); save();
+}
+function setDiagRule(id, k, on){
+  S.rules.extra = (S.rules.extra||[]).filter(x=>!(x.diag===id && x.dkey===k));
+  const r = DIAGNOSES[id].rules.find(x=>x[0]===k);
+  if(on && r) S.rules.extra.push(diagRuleEntry(id, r));
+  logRule(DIAGNOSES[id].name+": "+(r?r[2]:k)+(on?" on":" off")); save();
+}
+function renderDiagnoses(){
+  const lv = {avoid:"Avoid", limit:"Limit", ask:"Check first", note:"Note"};
+  view.innerHTML = `<div class="stack">${typeof backToMore==="function"?backToMore():""}
+  <section class="panel"><h2>My diagnoses</h2>
+    <p class="muted" style="margin:0">Add a diagnosis any time. It turns on a food list that the meal checker, pantry and meals use, and adds questions to your doctor list. These lists are drafts until a clinician reviews them, so treat them as reminders. You can turn off any food below, or remove it under My rules.</p>
+    <div class="stack" style="gap:6px"><b>Conditions with a starter list</b>${SETUP_CONDITIONS.map(([cid,label,pack])=>`<label class="inline" style="font-weight:400"><input type="checkbox" data-pack="${pack}" ${(S.rules.packs||[]).includes(pack)?"checked":""}> ${esc(label)}</label>`).join("")}</div>
+  </section>
+  ${Object.entries(DIAGNOSES).map(([id,D])=>{ const on = diagOn(id), have = new Set((S.rules.extra||[]).filter(x=>x.diag===id).map(x=>x.dkey));
+    return `<section class="panel"><label class="inline" style="font-weight:700"><input type="checkbox" data-diag="${id}" ${on?"checked":""}> ${esc(D.name)}</label>
+      <small class="muted">${esc(D.about)}</small>
+      ${on?`<div class="stack" style="gap:6px"><b>Foods it flags</b>${D.rules.map(([k,level,label,word,why])=>`<label class="inline" style="font-weight:400;align-items:flex-start"><input type="checkbox" data-diagrule="${id}:${k}" ${have.has(k)?"checked":""}> <span><b>${esc(label)}</b> <span class="chip ${level==="avoid"?"pending":"dusk"}">${lv[level]}</span><br><small class="muted">${esc(why)}</small></span></label>`).join("")}
+        <b>Good to have more of</b><ul style="margin:0;padding-left:20px">${D.tips.map(t=>`<li>${esc(t)}</li>`).join("")}</ul>
+        <small class="muted">Questions added to your doctor list (Notes): ${D.qs.length}. Sources: ${esc(D.src)}${typeof SOURCES_LINK!=="undefined"?SOURCES_LINK:""}.</small></div>`:""}
+    </section>`; }).join("")}
+  </div>`;
+}
 function renderMore(){
   view.innerHTML = `<div class="stack"><section class="panel"><h2>More</h2><div class="tiles">
     ${MORE_TILES.map(([id,n,d])=>`<button class="tile" data-goto="${id}"><b>${esc(n)}</b><small>${esc(d)}</small></button>`).join("")}
@@ -1572,6 +1631,7 @@ function render(){
   else if(TAB==="supps") renderSupps();
   else if(TAB==="week") renderWeek();
   else if(TAB==="notes") renderNotes();
+  else if(TAB==="diagnoses") renderDiagnoses();
   else if(TAB==="more") renderMore();
   else if(TAB==="labs") renderLabs();
   else if(TAB==="lookback") renderLookback();
@@ -1626,6 +1686,8 @@ document.querySelector("nav.tabs").addEventListener("click",e=>{
 view.addEventListener("input",e=>{ if(e.target.id && e.target.id.startsWith("fb-")) fbPreview(); });
 view.addEventListener("change",e=>{
   const t = e.target;
+  if(t.dataset.diag){ setDiag(t.dataset.diag, t.checked); render(); toast(t.checked?"Added. Its questions are in your doctor list.":"Removed"); return; }
+  if(t.dataset.diagrule){ const [id,k] = t.dataset.diagrule.split(":"); setDiagRule(id, k, t.checked); render(); return; }
   if(t.dataset.done==="cook"){ const lg = dayLog(t.dataset.day);
     if(t.checked && !lg.cooked){ const items = cookPlanFor(parseYmd(t.dataset.day)); lg.cooked = items.map(x=>({id:x.id, n:BASES[x.id].yield*x.batches}));
       for(const x of lg.cooked) S.stock[x.id]=(Number(S.stock[x.id])||0)+x.n; }
@@ -1654,7 +1716,7 @@ view.addEventListener("change",e=>{
   if(t.dataset.lead){ S.leads[t.dataset.lead]=t.value; save(); return; }
   if(t.dataset.t){ S.times[t.dataset.t]=t.value; save(); return; }
   if(t.dataset.on){ S.on[t.dataset.on]=t.checked; save(); return; }
-  if(t.dataset.pack){ const id=t.dataset.pack, on=new Set(S.rules.packs||[]); if(t.checked) on.add(id); else on.delete(id); S.rules.packs=PACKS.map(x=>x[0]).filter(x=>on.has(x)); logRule("Starter list "+PACKS.find(x=>x[0]===id)[1]+(t.checked?" on":" off")); save(); return; }
+  if(t.dataset.pack){ const id=t.dataset.pack, on=new Set(S.rules.packs||[]); if(t.checked) on.add(id); else on.delete(id); S.rules.packs=PACKS.map(x=>x[0]).filter(x=>on.has(x)); logRule("Starter list "+PACKS.find(x=>x[0]===id)[1]+(t.checked?" on":" off")); save(); if(TAB==="diagnoses") render(); return; }
   if(t.id && t.id.startsWith("fb-")){ fbPreview(); return; }
   if(t.dataset.lp!==undefined){ const r = LAB_PASTE[+t.dataset.lp], f = t.dataset.lpf; if(!r) return; r[f] = f==="on" ? t.checked : (f==="name"||f==="unit") ? t.value : (t.value===""?null:Number(t.value)); if(f==="on"){ const b=document.getElementById("lpSave"); if(b) b.textContent="Save "+LAB_PASTE.filter(x=>x.on).length+" results"; } return; }
   if(t.dataset.feelnote){ const lg = dayLog(t.dataset.feelnote); lg.feel = Object.assign({}, lg.feel, {note:t.value}); lg.done.checkin = true; save(); return; }

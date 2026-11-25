@@ -2,6 +2,13 @@
   "note": "Newest first. MAJOR.MINOR.PATCH: MINOR for new features, PATCH for fixes. The top entry is the app's version.",
   "changes": [
     {
+      "v": "0.21.0",
+      "date": "2026-11-24",
+      "items": [
+        "New: My diagnoses, under More. Add or remove a diagnosis any time, not just in setup. Fatty liver (MASLD) is new: a draft food list (alcohol, sugary drinks, juice, added sugar, refined starches, fried and processed meat), each food can be turned off, plus questions for your doctor. Sources: NIDDK, AASLD 2023, EASL-EASD-EASO 2024."
+      ]
+    },
+    {
       "v": "0.20.1",
       "date": "2026-11-24",
       "items": [

@@ -394,6 +394,39 @@
     "Local season"
    ],
    "status": "cited"
+  },
+  {
+   "id": "niddk-nafld-diet",
+   "title": "Eating, Diet, & Nutrition for NAFLD & NASH",
+   "org": "National Institute of Diabetes and Digestive and Kidney Diseases (NIDDK)",
+   "kind": "Health information",
+   "url": "https://www.niddk.nih.gov/health-information/liver-disease/nafld-nash/eating-diet-nutrition",
+   "topics": [
+    "Fatty liver"
+   ],
+   "status": "cited"
+  },
+  {
+   "id": "aasld-2023-masld",
+   "title": "AASLD Practice Guidance on the clinical assessment and management of nonalcoholic fatty liver disease",
+   "org": "American Association for the Study of Liver Diseases (Hepatology, 2023)",
+   "kind": "Journal article",
+   "url": "https://doi.org/10.1097/HEP.0000000000000323",
+   "topics": [
+    "Fatty liver"
+   ],
+   "status": "cited"
+  },
+  {
+   "id": "easl-2024-masld",
+   "title": "EASL-EASD-EASO Clinical Practice Guidelines on the management of metabolic dysfunction-associated steatotic liver disease (MASLD)",
+   "org": "EASL, EASD and EASO (Obesity Facts, 2024)",
+   "kind": "Journal article",
+   "url": "https://karger.com/ofa/article/17/4/374/906475/EASL-EASD-EASO-Clinical-Practice-Guidelines-on-the",
+   "topics": [
+    "Fatty liver"
+   ],
+   "status": "cited"
   }
  ]
 }
