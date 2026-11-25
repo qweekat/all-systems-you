@@ -129,7 +129,8 @@ function setupBody(id){
   const R = S.rules, packs = new Set(R.packs||[]);
   if(id==="welcome") return `
     <h2>Welcome to all systems you</h2>
-    <p>This guide asks about your health, your food and your day, one step at a time. It takes about 10 minutes. You can skip any question, and change every answer later.</p>
+    <p class="su-time"><b>About 10 minutes</b> · ${SETUP_STEPS.length-2} short steps</p>
+    <p>This guide asks about your health, your food and your day, one step at a time. You can skip any question, and change every answer later.</p>
     <ul class="su-list">
       <li>Everything you enter stays on this device. There's no account.</li>
       <li>The app helps you follow the plan you and your care team set. It is not medical advice.</li>
@@ -303,6 +304,15 @@ function setupBody(id){
     <div class="grid2">
       <label>Alerts for things at home <small class="muted" style="font-weight:400">minutes before</small><input type="text" id="su-lhome" data-lead="home" value="${esc(S.leads.home)}" placeholder="10, 5"></label>
       <label>Alerts for trips into town <small class="muted" style="font-weight:400">minutes before, like a gym or sauna</small><input type="text" id="su-ltown" data-lead="town" value="${esc(S.leads.town)}" placeholder="40, 30"></label>
+    </div>
+    <small class="muted">Separate more than one with commas. For example, 10, 5 gives you an alert 10 minutes before and another 5 minutes before.</small>
+    <h3>Reminder times</h3>
+    <p class="muted">Meal times are on Your day. Supplement and routine times are on their own steps. These are the rest.</p>
+    <div class="grid2">
+      <label>Glasses of water <small class="muted" style="font-weight:400">times, separated by commas</small><input type="text" id="su-twater" data-t="water" value="${esc(S.times.water||"")}" placeholder="10:00, 13:00, 16:00"></label>
+      <label>Evening treat<input type="time" id="su-ttreat" data-t="treat" value="${esc(parseTime(S.times.treat)||"")}"></label>
+      <label>Move frozen meals to the fridge<input type="time" id="su-tpull" data-t="pull" value="${esc(parseTime(S.times.pull)||"")}"></label>
+      <label>Start cooking on cook day<input type="time" id="su-tcook" data-t="cook" value="${esc(parseTime(S.times.cook)||"")}"></label>
     </div>
     ${SERVER?`<p class="muted">The computer app shows desktop reminders even when this window is closed.</p>`
       :`<p class="muted">On a phone or in a browser, reminders only pop up while the app is open. For alerts when it's closed, save the calendar file under More, then Times &amp; reminders.</p>

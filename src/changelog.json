@@ -2,6 +2,13 @@
   "note": "Newest first. MAJOR.MINOR.PATCH: MINOR for new features, PATCH for fixes. The top entry is the app's version.",
   "changes": [
     {
+      "v": "0.25.0",
+      "date": "2026-11-25",
+      "items": [
+        "Setup guide: the first page shows how long it takes (about 10 minutes). The Reminders step now also sets times for water, the evening treat, moving frozen meals to the fridge, and cook day, and explains the minutes-before alerts."
+      ]
+    },
+    {
       "v": "0.24.0",
       "date": "2026-11-25",
       "items": [

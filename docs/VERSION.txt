@@ -1,2 +1,2 @@
-all systems you 0.24.0
-build 0.24.0-2026-11-25-4ef80d55
+all systems you 0.25.0
+build 0.25.0-2026-11-25-a8a14290
