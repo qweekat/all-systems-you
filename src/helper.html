@@ -61,6 +61,7 @@ li.freezer .t,li.cook .t{color:var(--dusk)}
 li.is-done .title,li.is-done .detail{color:var(--done);text-decoration:line-through}
 input[type="checkbox"]{width:22px;height:22px;accent-color:var(--juniper);margin:2px 0 0}
 .warnbox{background:var(--warn-soft);color:var(--warn);border-radius:8px;padding:8px 12px;font-size:.93rem}
+details.warnbox>summary{cursor:pointer;list-style-position:outside;margin-left:16px}
 label{display:grid;gap:4px;font-weight:700;font-size:.93rem}
 input[type="text"],input[type="time"],input[type="date"],input[type="number"],select,textarea{font:inherit;font-weight:400;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:7px 9px;width:100%;min-width:0}
 textarea{min-height:80px;resize:vertical}
@@ -919,7 +920,7 @@ function renderDay(offset){
   </section>`;
   let h = `<div class="stack">${offset===0?setupNudge()+waterPanel(lg, wg)+nudgePanel():""}${brkHtml}${simple?"":head}`;
   if(next) h += `<div class="next"><b>Next: ${niceTime(next.time)}</b> · ${esc(next.title)}</div>`;
-  if(warns.length) h += `<div class="warnbox"><b>Spacing check.</b> Your rule keeps fiber and binder supplements at least ${Math.round((Number(S.rules.spacingMin)||120)/6)/10} hours from medicines and other supplements. ${warns.map(esc).join(" ")}</div>`;
+  if(warns.length) h += `<details class="warnbox"><summary><b>Spacing check: ${warns.length} ${warns.length===1?"thing is":"things are"} too close together.</b> Tap for more.</summary><p style="margin:6px 0 0">Your rule keeps fiber and binder supplements at least ${Math.round((Number(S.rules.spacingMin)||120)/6)/10} hours from medicines and other supplements.</p><ul style="margin:6px 0 0;padding-left:20px">${warns.map(w=>`<li>${esc(w)}</li>`).join("")}</ul></details>`;
   h += `<section class="panel"><h2>${offset===0?"Today's checklist":"Tomorrow"}</h2><ol class="day">`;
   for(const it of timed){
     const done = !!lg.done[it.id], ms0 = (lg.missed||{})[it.id], ms = ms0 && !ms0.undone ? ms0 : null;
@@ -1116,7 +1117,7 @@ function renderVisit(){
 function renderSupps(){
   let h = `<div class="stack"><section class="panel"><h2>Supplements and medicine</h2>
   <p class="muted" style="margin:0">Add what you take. Type times like <b>8:00, 6:30pm</b>. Or leave Times blank and pick how many times a day.</p>
-  ${spacingWarnings().map(w=>`<div class="warnbox">${esc(w)}</div>`).join("")}`;
+  ${(w=>w.length?`<details class="warnbox"><summary><b>Spacing check: ${w.length} ${w.length===1?"thing is":"things are"} too close together.</b> Tap for more.</summary><ul style="margin:6px 0 0;padding-left:20px">${w.map(x=>`<li>${esc(x)}</li>`).join("")}</ul></details>`:"")(spacingWarnings())}`;
   S.supplements.forEach((s,i)=>{
     const bad = badTimes(s.times);
     h += `<div class="supp">

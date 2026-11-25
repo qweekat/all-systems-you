@@ -5,7 +5,8 @@ const TOUCH = matchMedia("(pointer: coarse)").matches;
 const STANDALONE = matchMedia("(display-mode: standalone)").matches || navigator.standalone === true;
 function whereHtml(){
   return STANDALONE
-    ? `<div class="warnbox"><b>You're in the home-screen app.</b> On iPhone it keeps its own copy of your data, separate from Safari, and the one-tap shortcuts write to Safari's copy. Pick one place to use: Safari is the one that works with shortcuts. Deleting this icon deletes this copy, so save a backup first.</div>`
+    ? `<details class="warnbox"><summary><b>Deleting this icon deletes your data.</b> Tap for more.</summary>
+      <ul style="margin:6px 0 0;padding-left:20px;display:grid;gap:4px"><li>Your data is saved only in this home-screen app, on this phone.</li><li>Save a backup before you delete the icon or switch phones: More, then Backups.</li><li>Safari keeps a separate copy. One-tap Shortcuts write to Safari, not here, so use the Quick tab instead.</li></ul></details>`
     : `<p class="muted" style="margin:0">You're in Safari. Shortcuts write here too. If you add a home-screen icon, turn off <b>Open as Web App</b> so it opens this same copy.</p>`;
 }
 let QUICK_FLASH = "";
