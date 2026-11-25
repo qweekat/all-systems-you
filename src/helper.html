@@ -626,7 +626,9 @@ function dueOn(x, d){
   return !(x.days && x.days.length) || x.days.includes(d.getDay());
 }
 function freqHtml(x, i, attr){
-  return `<div class="row">${DAYS.map((n,dw)=>`<label class="inline"><input type="checkbox" data-${attr}day="${i}" value="${dw}" ${!x.alt&&(x.days||[]).includes(dw)?"checked":""} ${x.alt?"disabled":""}> ${n}</label>`).join("")}
+  const every = !x.alt && !(x.days||[]).length;
+  return `<div class="row"><label class="inline"><input type="checkbox" data-${attr}every="${i}" ${every?"checked":""}> <b>Every day</b></label></div>
+    <div class="row">${DAYS.map((n,dw)=>`<label class="inline"><input type="checkbox" data-${attr}day="${i}" value="${dw}" ${!x.alt&&(x.days||[]).includes(dw)?"checked":""} ${x.alt?"disabled":""}> ${n}</label>`).join("")}
     <label class="inline"><input type="checkbox" data-${attr}alt="${i}" ${x.alt?"checked":""}> Every other day</label></div>
     <small class="muted">${x.alt?"Every other day.":(x.days||[]).length?x.days.length+" days a week.":"Every day."}</small>
     ${x.alt?`<label class="inline">First day to take it <input type="date" data-${attr}altfrom="${i}" value="${esc(x.altFrom||ymd(new Date()))}"></label><small class="muted">Pick a day you take it. The app counts every other day from there.</small>`:""}
@@ -1621,6 +1623,7 @@ view.addEventListener("change",e=>{
   if(t.dataset.r!==undefined){ const r=S.routine[+t.dataset.r]; r[t.dataset.f] = t.type==="checkbox"? t.checked : t.value; save(); if(t.type==="checkbox"||t.dataset.f==="times") renderSupps(); return; }
   for(const [attr,list] of [["r","routine"],["s","supplements"]]){
     if(t.dataset[attr+"day"]!==undefined){ const x=S[list][+t.dataset[attr+"day"]], dw=+t.value; x.days=(x.days||[]).filter(v=>v!==dw); if(t.checked) x.days.push(dw); x.days.sort(); save(); renderSupps(); return; }
+    if(t.dataset[attr+"every"]!==undefined){ const x=S[list][+t.dataset[attr+"every"]]; x.alt=false; x.days = t.checked ? [] : [0,1,2,3,4,5,6]; save(); renderSupps(); return; }
     if(t.dataset[attr+"alt"]!==undefined){ const x=S[list][+t.dataset[attr+"alt"]]; x.alt=t.checked; if(t.checked && !x.altFrom) x.altFrom=ymd(new Date()); save(); renderSupps(); return; }
     if(t.dataset[attr+"altfrom"]!==undefined){ const x=S[list][+t.dataset[attr+"altfrom"]]; if(parseYmd(t.value)) x.altFrom=t.value; save(); renderSupps(); return; }
     if(t.dataset[attr+"per"]!==undefined){ const x=S[list][+t.dataset[attr+"per"]]; x.perDay=Math.max(1,Math.min(4,Number(t.value)||1)); save(); renderSupps(); return; }
