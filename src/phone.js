@@ -59,10 +59,19 @@ function phoneAfterLoad(){
   const p = new URLSearchParams(location.search);
   if(p.get("do")){ QUICK_FLASH = runAction(p); TAB = "quick"; save(); }
   if(p.get("view")==="quick") TAB = "quick";
-  if(needsSetup()) TAB = "quick";
+  if(needsSetup() || pGet("dh.openOn")==="quick") TAB = "quick";
   if(location.search) history.replaceState(null, "", location.pathname + (TAB==="quick" ? "#quick" : ""));
   if(navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(()=>{});
   if("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(()=>{});
+  // Coming back to the app after a while: show Quick again if that's the chosen start page.
+  let hiddenAt = 0;
+  document.addEventListener("visibilitychange", ()=>{
+    if(document.hidden){ hiddenAt = Date.now(); return; }
+    if(pGet("dh.openOn")==="quick" && hiddenAt && Date.now()-hiddenAt > 5*60000 && TAB!=="quick" && !document.querySelector("input:focus,textarea:focus")){ TAB = "quick"; render(); window.scrollTo(0,0); }
+  });
+}
+function openOnHtml(){
+  return `<label class="inline"><input type="checkbox" data-openon="1" ${pGet("dh.openOn")==="quick"?"checked":""}> Always open the app on Quick</label>`;
 }
 
 function welcomeHtml(){
@@ -100,6 +109,7 @@ function renderQuick(){
       ${supps.length?`<div class="qlist">${supps.map(i=>qRow(i,key,lg)).join("")}</div>`:`<p class="muted" style="margin:0">No supplements on today's list.</p>`}</section>
     ${backupNudge()}
     <div><button class="linkbtn" data-goto="today">See the full day</button></div>
+    <div>${openOnHtml()}</div>
   </div>`;
   QUICK_FLASH = "";
 }
@@ -114,6 +124,7 @@ function renderPhone(){
   const n = daysSinceBackup();
   view.innerHTML = `<div class="stack">
   <section class="panel"><h2>Where your data lives</h2>${whereHtml()}</section>
+  <section class="panel"><h2>Start page</h2>${openOnHtml()}<small class="muted">Quick has one-tap buttons for water, meals and supplements. It's the closest thing to shortcuts in the home-screen app.</small></section>
   <section class="panel"><h2>One-tap buttons</h2>
     <p style="margin:0">Each link below does one thing, like adding 4 oz of water. Put them in the iPhone Shortcuts app and you get buttons on your home screen or lock screen. They work anywhere, with no computer.</p>
     <ol class="day">${SHORTCUTS.map(([n,q],i)=>`<li style="grid-template-columns:1fr auto"><span><b>${esc(n)}</b><br><code style="font-size:.8rem;word-break:break-all;color:var(--muted)">${esc(appUrl(q))}</code></span><button class="btn ghost" data-copylink="${i}">Copy</button></li>`).join("")}</ol>
@@ -162,5 +173,6 @@ view.addEventListener("click", e=>{
   if(t.dataset.copylink!==undefined){ const u = appUrl(SHORTCUTS[+t.dataset.copylink][1]);
     (navigator.clipboard ? navigator.clipboard.writeText(u) : Promise.reject()).then(()=>toast("Link copied"), ()=>{ prompt("Copy this link", u); }); return; }
 });
-view.addEventListener("change", e=>{ if(PHX.isRestore(e.target)) pSet("dh.welcomed","1"); });
+view.addEventListener("change", e=>{ if(PHX.isRestore(e.target)) pSet("dh.welcomed","1");
+  if(e.target.dataset.openon){ pSet("dh.openOn", e.target.checked?"quick":""); toast(e.target.checked?"The app will open on Quick":"The app will open where you left it"); } });
 
