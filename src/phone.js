@@ -62,7 +62,14 @@ function phoneAfterLoad(){
   if(needsSetup() || pGet("dh.openOn")==="quick") TAB = "quick";
   if(location.search) history.replaceState(null, "", location.pathname + (TAB==="quick" ? "#quick" : ""));
   if(navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(()=>{});
-  if("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(()=>{});
+  if("serviceWorker" in navigator){
+    // When an update finishes installing, reload once so the new version shows right away.
+    const had = !!navigator.serviceWorker.controller; let reloading = false;
+    navigator.serviceWorker.addEventListener("controllerchange", ()=>{ if(had && !reloading){ reloading = true; location.reload(); } });
+    navigator.serviceWorker.register("sw.js").then(reg=>{
+      document.addEventListener("visibilitychange", ()=>{ if(!document.hidden) reg.update().catch(()=>{}); });
+    }).catch(()=>{});
+  }
   // Coming back to the app after a while: show Quick again if that's the chosen start page.
   let hiddenAt = 0;
   document.addEventListener("visibilitychange", ()=>{

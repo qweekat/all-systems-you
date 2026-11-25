@@ -2,6 +2,13 @@
   "note": "Newest first. MAJOR.MINOR.PATCH: MINOR for new features, PATCH for fixes. The top entry is the app's version.",
   "changes": [
     {
+      "v": "0.17.1",
+      "date": "2026-11-24",
+      "items": [
+        "Phone: updates now show up the next time you open the app, instead of getting stuck on the old version."
+      ]
+    },
+    {
       "v": "0.17.0",
       "date": "2026-11-24",
       "items": [

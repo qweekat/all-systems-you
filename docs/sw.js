@@ -1,7 +1,7 @@
 // Keeps the app's own files on the device so it opens with no internet. Health data is never sent anywhere.
-const CACHE = "all-systems-you-0.17.0-2026-11-25-62a7627d";
+const CACHE = "all-systems-you-0.17.1-2026-11-25-6542de7e";
 const FILES = ["./", "index.html", "pantry.html", "checker.html", "sources.html", "manifest.webmanifest", "qrcode.js", "icons/icon-180.png", "icons/icon-512.png", "icons/daily-helper.svg"];
-self.addEventListener("install", e => e.waitUntil(caches.open(CACHE).then(c => c.addAll(FILES)).then(() => self.skipWaiting())));
+self.addEventListener("install", e => e.waitUntil(caches.open(CACHE).then(c => c.addAll(FILES.map(f => new Request(f, {cache: "reload"})))).then(() => self.skipWaiting())));
 self.addEventListener("activate", e => e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== CACHE).map(k => caches.delete(k)))).then(() => self.clients.claim())));
 self.addEventListener("fetch", e => {
   if (e.request.method !== "GET") return;
