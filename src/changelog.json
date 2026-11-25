@@ -2,6 +2,13 @@
   "note": "Newest first. MAJOR.MINOR.PATCH: MINOR for new features, PATCH for fixes. The top entry is the app's version.",
   "changes": [
     {
+      "v": "0.22.0",
+      "date": "2026-11-24",
+      "items": [
+        "My diagnoses: add your own diagnosis with its name, foods to avoid or limit, and questions for your doctor."
+      ]
+    },
+    {
       "v": "0.21.0",
       "date": "2026-11-24",
       "items": [

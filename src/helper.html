@@ -975,10 +975,16 @@ const DIAGNOSES = {
     qs: ["I have fatty liver. What diet changes do you want me to make for it?", "Should we track my liver with labs or an ultrasound or FibroScan, and how often?", "Do any of my medicines or supplements affect my liver?", "Is weight loss a goal for me with fatty liver, and if so, how much?"],
   },
 };
+/* Built-in diagnoses plus the ones you add yourself (S.myDiagnoses). */
+function allDiag(){
+  const out = Object.assign({}, DIAGNOSES);
+  for(const c of (S.myDiagnoses||[])) out[c.id] = {name:c.name, short:c.name, about:"You added this one.", src:"", custom:true, rules:c.rules||[], tips:[], qs:c.qs||[]};
+  return out;
+}
 function diagOn(id){ return (S.diagnoses||[]).includes(id); }
-function diagRuleEntry(id, r){ const [k, level, label, word, why] = r; return {word, level, label, why: why+" (Draft "+DIAGNOSES[id].short+" list.)", diag:id, dkey:k}; }
+function diagRuleEntry(id, r){ const [k, level, label, word, why] = r, D = allDiag()[id]; return {word, level, label, why: D.custom ? why : why+" (Draft "+D.short+" list.)", diag:id, dkey:k}; }
 function setDiag(id, on){
-  const D = DIAGNOSES[id]; if(!D) return;
+  const D = allDiag()[id]; if(!D) return;
   S.diagnoses = (S.diagnoses||[]).filter(x=>x!==id);
   S.rules.extra = (S.rules.extra||[]).filter(x=>x.diag!==id);
   if(on){
@@ -991,9 +997,9 @@ function setDiag(id, on){
 }
 function setDiagRule(id, k, on){
   S.rules.extra = (S.rules.extra||[]).filter(x=>!(x.diag===id && x.dkey===k));
-  const r = DIAGNOSES[id].rules.find(x=>x[0]===k);
+  const D = allDiag()[id], r = D.rules.find(x=>x[0]===k);
   if(on && r) S.rules.extra.push(diagRuleEntry(id, r));
-  logRule(DIAGNOSES[id].name+": "+(r?r[2]:k)+(on?" on":" off")); save();
+  logRule(D.name+": "+(r?r[2]:k)+(on?" on":" off")); save();
 }
 function renderDiagnoses(){
   const lv = {avoid:"Avoid", limit:"Limit", ask:"Check first", note:"Note"};
@@ -1002,13 +1008,22 @@ function renderDiagnoses(){
     <p class="muted" style="margin:0">Add a diagnosis any time. It turns on a food list that the meal checker, pantry and meals use, and adds questions to your doctor list. These lists are drafts until a clinician reviews them, so treat them as reminders. You can turn off any food below, or remove it under My rules.</p>
     <div class="stack" style="gap:6px"><b>Conditions with a starter list</b>${SETUP_CONDITIONS.map(([cid,label,pack])=>`<label class="inline" style="font-weight:400"><input type="checkbox" data-pack="${pack}" ${(S.rules.packs||[]).includes(pack)?"checked":""}> ${esc(label)}</label>`).join("")}</div>
   </section>
-  ${Object.entries(DIAGNOSES).map(([id,D])=>{ const on = diagOn(id), have = new Set((S.rules.extra||[]).filter(x=>x.diag===id).map(x=>x.dkey));
+  ${Object.entries(allDiag()).map(([id,D])=>{ const on = diagOn(id), have = new Set((S.rules.extra||[]).filter(x=>x.diag===id).map(x=>x.dkey));
     return `<section class="panel"><label class="inline" style="font-weight:700"><input type="checkbox" data-diag="${id}" ${on?"checked":""}> ${esc(D.name)}</label>
       <small class="muted">${esc(D.about)}</small>
       ${on?`<div class="stack" style="gap:6px"><b>Foods it flags</b>${D.rules.map(([k,level,label,word,why])=>`<label class="inline" style="font-weight:400;align-items:flex-start"><input type="checkbox" data-diagrule="${id}:${k}" ${have.has(k)?"checked":""}> <span><b>${esc(label)}</b> <span class="chip ${level==="avoid"?"pending":"dusk"}">${lv[level]}</span><br><small class="muted">${esc(why)}</small></span></label>`).join("")}
-        <b>Good to have more of</b><ul style="margin:0;padding-left:20px">${D.tips.map(t=>`<li>${esc(t)}</li>`).join("")}</ul>
-        <small class="muted">Questions added to your doctor list (Notes): ${D.qs.length}. Sources: ${esc(D.src)}${typeof SOURCES_LINK!=="undefined"?SOURCES_LINK:""}.</small></div>`:""}
+        ${D.tips.length?`<b>Good to have more of</b><ul style="margin:0;padding-left:20px">${D.tips.map(t=>`<li>${esc(t)}</li>`).join("")}</ul>`:""}
+        <small class="muted">Questions added to your doctor list (Notes): ${D.qs.length}.${D.src?` Sources: ${esc(D.src)}${typeof SOURCES_LINK!=="undefined"?SOURCES_LINK:""}.`:""}</small></div>`:""}
+      ${D.custom?`<div><button class="linkbtn" data-diagdel="${id}">Delete this diagnosis</button></div>`:""}
     </section>`; }).join("")}
+  <section class="panel"><h2>Add your own diagnosis</h2>
+    <p class="muted" style="margin:0">For anything not listed above. Type the foods to flag, separated by commas. The checker, pantry and meals will flag them, and you can turn each one off later.</p>
+    <label>Diagnosis<input type="text" id="dg-name" placeholder="e.g. Gout"></label>
+    <label>Foods to avoid<input type="text" id="dg-avoid" placeholder="e.g. organ meats, anchovies, beer"></label>
+    <label>Foods to limit<input type="text" id="dg-limit" placeholder="e.g. red meat, shellfish"></label>
+    <label>Questions for your doctor (one per line, optional)<textarea id="dg-qs" rows="3"></textarea></label>
+    <div><button class="btn" data-diagadd="1">Add it</button></div>
+  </section>
   </div>`;
 }
 function renderMore(){
@@ -1735,6 +1750,13 @@ view.addEventListener("change",e=>{
 });
 view.addEventListener("click",async e=>{
   const t = e.target;
+  if(t.dataset.diagadd){ const g = id=>((document.getElementById(id)||{}).value||"").trim(), name = g("dg-name");
+    if(!name){ toast("Type the diagnosis name"); return; }
+    const foods = (lvl, txt)=>txt.split(/[,\n;]+/).map(x=>x.trim()).filter(Boolean).map((f,i)=>[lvl[0]+i+"_"+Date.now().toString(36), lvl, f, f, "From your "+name+" diagnosis."]);
+    const id = "c_"+Date.now().toString(36), rules = [...foods("avoid", g("dg-avoid")), ...foods("limit", g("dg-limit"))];
+    (S.myDiagnoses = S.myDiagnoses||[]).push({id, name, rules, qs: g("dg-qs").split("\n").map(x=>x.trim()).filter(Boolean)});
+    setDiag(id, true); render(); toast("Added "+name); return; }
+  if(t.dataset.diagdel){ const id = t.dataset.diagdel; setDiag(id, false); S.diagnoses = (S.diagnoses||[]).filter(x=>x!==id); S.myDiagnoses = (S.myDiagnoses||[]).filter(x=>x.id!==id); save(); render(); toast("Deleted"); return; }
   if(t.dataset.prn){ const lg = dayLog(t.dataset.day), n = new Date(); (lg.prn = lg.prn||[]).push({id:t.dataset.prn, t:fromMins(n.getHours()*60+n.getMinutes())}); save(); render(); toast("Logged"); return; }
   if(t.dataset.prnundo){ const lg = dayLog(t.dataset.day), k = (lg.prn||[]).map(x=>x.id).lastIndexOf(t.dataset.prnundo); if(k>=0) lg.prn.splice(k,1); save(); render(); return; }
   if(t.dataset.miss){ const it = itemsFor(parseYmd(t.dataset.day)).timed.find(x=>x.id===t.dataset.miss); if(it && markMissed(it, t.dataset.day, false)){ save(); render(); const r=S.log[t.dataset.day].missed[it.id]; toast(r.day?"Moved to "+whenText(r.day,r.time):"Skipped"); } return; }
