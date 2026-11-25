@@ -39,6 +39,7 @@ a{color:var(--juniper);font-weight:700}
 [hidden]{display:none !important}
 .chips{display:flex;flex-wrap:wrap;gap:6px}
 .chip{font-size:.85rem;padding:2px 10px;border-radius:999px;background:var(--juniper-soft);color:var(--juniper);font-weight:700}
+.dgrow{border-top:1px solid var(--line,#ddd);padding:10px 0}.dgrow:first-child{border-top:0}.dgrow>summary{display:flex;gap:10px;align-items:center;cursor:pointer;list-style:none}.dgrow>summary::-webkit-details-marker{display:none}.dgrow .dgmore{margin-left:auto;font-size:.85rem}.dgrow>summary input{flex-shrink:0}
 .chip.pending{background:var(--warn-soft);color:var(--warn)}
 .chip.dusk{background:var(--dusk-soft);color:var(--dusk)}
 .facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
@@ -1001,31 +1002,40 @@ function setDiagRule(id, k, on){
   if(on && r) S.rules.extra.push(diagRuleEntry(id, r));
   logRule(D.name+": "+(r?r[2]:k)+(on?" on":" off")); save();
 }
+function condRows(){
+  return SETUP_CONDITIONS.map(([cid,label,pack])=>{ const P = PACKS.find(x=>x[0]===pack)||[], on = (S.rules.packs||[]).includes(pack);
+    return diagRow("p:"+pack, label, on, `data-pack="${pack}"`, `<small>Turns on the ${esc(P[1]||pack)} starter list (draft): ${esc(P[2]||"")}.</small><small class="muted">Turn single foods off under My rules. Sources are on the <a href="sources.html">Sources page</a>.</small>`); });
+}
+const DIAG_OPEN = new Set();
+function diagRow(key, name, on, toggleAttr, body){
+  return `<details class="dgrow" data-dgkey="${key}" ${DIAG_OPEN.has(key)?"open":""}><summary><input type="checkbox" ${toggleAttr} ${on?"checked":""} aria-label="I have this: ${esc(name)}"><b>${esc(name)}</b><span class="muted dgmore">${DIAG_OPEN.has(key)?"less":"more"}</span></summary><div class="stack" style="gap:6px;margin:8px 0 4px 30px">${body}</div></details>`;
+}
 function renderDiagnoses(){
   const lv = {avoid:"Avoid", limit:"Limit", ask:"Check first", note:"Note"};
-  view.innerHTML = `<div class="stack">${typeof backToMore==="function"?backToMore():""}
+  const rows = [...condRows(), ...Object.entries(allDiag()).map(([id,D])=>{ const on = diagOn(id), have = new Set((S.rules.extra||[]).filter(x=>x.diag===id).map(x=>x.dkey));
+    const body = `<small class="muted">${esc(D.about)}</small>
+      ${on?`<b>Foods it flags</b>${D.rules.map(([k,level,label,word,why])=>`<label class="inline" style="font-weight:400;align-items:flex-start"><input type="checkbox" data-diagrule="${id}:${k}" ${have.has(k)?"checked":""}> <span><b>${esc(label)}</b> <span class="chip ${level==="avoid"?"pending":"dusk"}">${lv[level]}</span><br><small class="muted">${esc(why)}</small></span></label>`).join("")}`
+        :`<small>Tick it to flag: ${esc(D.rules.map(r=>r[2]).join(", ")||"no foods yet")}.</small>`}
+      ${on&&D.tips.length?`<b>Good to have more of</b><ul style="margin:0;padding-left:20px">${D.tips.map(t=>`<li>${esc(t)}</li>`).join("")}</ul>`:""}
+      <small class="muted">${D.qs.length?`Adds ${D.qs.length} question${D.qs.length===1?"":"s"} to your doctor list.`:""}${D.src?` Sources: ${esc(D.src)}${typeof SOURCES_LINK!=="undefined"?SOURCES_LINK:""}.`:""}</small>
+      ${D.custom?`<div><button class="linkbtn" data-diagdel="${id}">Delete this diagnosis</button></div>`:""}`;
+    return diagRow("d:"+id, D.name, on, `data-diag="${id}"`, body); })];
+  view.innerHTML = `<div class="stack">
   <section class="panel"><h2>My diagnoses</h2>
-    <p class="muted" style="margin:0">Add a diagnosis any time. It turns on a food list that the meal checker, pantry and meals use, and adds questions to your doctor list. These lists are drafts until a clinician reviews them, so treat them as reminders. You can turn off any food below, or remove it under My rules.</p>
-    <div class="stack" style="gap:6px"><b>Conditions with a starter list</b>${SETUP_CONDITIONS.map(([cid,label,pack])=>`<label class="inline" style="font-weight:400"><input type="checkbox" data-pack="${pack}" ${(S.rules.packs||[]).includes(pack)?"checked":""}> ${esc(label)}</label>`).join("")}</div>
+    <p class="muted" style="margin:0">Tick the ones you have. Tap a name to see what it does. Food lists are drafts until a clinician reviews them, so treat them as reminders.</p>
+    <div>${rows.join("")}</div>
   </section>
-  ${Object.entries(allDiag()).map(([id,D])=>{ const on = diagOn(id), have = new Set((S.rules.extra||[]).filter(x=>x.diag===id).map(x=>x.dkey));
-    return `<section class="panel"><label class="inline" style="font-weight:700"><input type="checkbox" data-diag="${id}" ${on?"checked":""}> ${esc(D.name)}</label>
-      <small class="muted">${esc(D.about)}</small>
-      ${on?`<div class="stack" style="gap:6px"><b>Foods it flags</b>${D.rules.map(([k,level,label,word,why])=>`<label class="inline" style="font-weight:400;align-items:flex-start"><input type="checkbox" data-diagrule="${id}:${k}" ${have.has(k)?"checked":""}> <span><b>${esc(label)}</b> <span class="chip ${level==="avoid"?"pending":"dusk"}">${lv[level]}</span><br><small class="muted">${esc(why)}</small></span></label>`).join("")}
-        ${D.tips.length?`<b>Good to have more of</b><ul style="margin:0;padding-left:20px">${D.tips.map(t=>`<li>${esc(t)}</li>`).join("")}</ul>`:""}
-        <small class="muted">Questions added to your doctor list (Notes): ${D.qs.length}.${D.src?` Sources: ${esc(D.src)}${typeof SOURCES_LINK!=="undefined"?SOURCES_LINK:""}.`:""}</small></div>`:""}
-      ${D.custom?`<div><button class="linkbtn" data-diagdel="${id}">Delete this diagnosis</button></div>`:""}
-    </section>`; }).join("")}
-  <section class="panel"><h2>Add your own diagnosis</h2>
+  <details class="panel" data-dgkey="add" ${DIAG_OPEN.has("add")?"open":""}><summary><b>Add your own diagnosis</b></summary>
     <p class="muted" style="margin:0">For anything not listed above. Type the foods to flag, separated by commas. The checker, pantry and meals will flag them, and you can turn each one off later.</p>
     <label>Diagnosis<input type="text" id="dg-name" placeholder="e.g. Gout"></label>
     <label>Foods to avoid<input type="text" id="dg-avoid" placeholder="e.g. organ meats, anchovies, beer"></label>
     <label>Foods to limit<input type="text" id="dg-limit" placeholder="e.g. red meat, shellfish"></label>
     <label>Questions for your doctor (one per line, optional)<textarea id="dg-qs" rows="3"></textarea></label>
     <div><button class="btn" data-diagadd="1">Add it</button></div>
-  </section>
+  </details>
   </div>`;
 }
+view.addEventListener("toggle", e=>{ const d = e.target; if(!d.dataset || !d.dataset.dgkey) return; if(d.open) DIAG_OPEN.add(d.dataset.dgkey); else DIAG_OPEN.delete(d.dataset.dgkey); const m = d.querySelector(":scope > summary .dgmore"); if(m) m.textContent = d.open ? "less" : "more"; }, true);
 function renderMore(){
   view.innerHTML = `<div class="stack"><section class="panel"><h2>More</h2><div class="tiles">
     ${MORE_TILES.map(([id,n,d])=>`<button class="tile" data-goto="${id}"><b>${esc(n)}</b><small>${esc(d)}</small></button>`).join("")}
