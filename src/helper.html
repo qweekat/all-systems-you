@@ -913,7 +913,6 @@ function renderDay(offset){
     <div class="chips">
       ${f.on?`<span class="chip">${S.fiberStart?"Fiber week "+f.w:"Fiber goal"}: ${esc(f.target)}</span>`:""}
       ${sess?`<span class="chip dusk">Cook day</span>`:""}
-      ${pendingCount?`<span class="chip pending">${pendingCount} supplement times not confirmed</span>`:""}
     </div>
     ${limitsText()?`<div class="facts"><div class="fact"><small class="muted">Your limits</small><b>${esc(limitsText())}</b></div></div>`:""}
     ${f.on?`<small class="muted">Raise fiber slowly and drink extra water. Stop raising it if bloating or cramping gets worse.</small>`:""}
@@ -926,7 +925,7 @@ function renderDay(offset){
     const done = !!lg.done[it.id], ms0 = (lg.missed||{})[it.id], ms = ms0 && !ms0.undone ? ms0 : null;
     h += `<li class="${it.kind} ${done?"is-done":""} ${ms&&!done?"is-missed":""}"><span class="t">${niceTime(it.time)}</span>
       <input type="checkbox" id="c-${esc(it.id)}" data-done="${esc(it.id)}" data-day="${key}" ${done?"checked":""} aria-label="Done: ${esc(it.title)}">
-      <div class="item"><div class="title">${esc(it.title)} ${it.pending?`<span class="chip pending">${it.kind==="routine"?"how often: confirm":"time not confirmed"}</span>`:""}${it.moved?` <span class="chip dusk">from ${esc(whenText(it.from.slice(0,10), it.from.slice(11)))}</span>`:""}${ms&&!done?` <span class="chip pending">Missed</span>`:""}</div>
+      <div class="item"><div class="title">${esc(it.title)}${it.moved?` <span class="chip dusk">from ${esc(whenText(it.from.slice(0,10), it.from.slice(11)))}</span>`:""}${ms&&!done?` <span class="chip pending">Missed</span>`:""}</div>
       ${ms&&!done?`<div class="detail"><b>${ms.day?"Moved to "+esc(whenText(ms.day,ms.time))+".":"Skipped."}</b> ${esc(ms.day?ms.why+".":ms.why)} <button class="linkbtn" data-unmiss="${esc(it.id)}" data-day="${key}">Undo</button></div>`:""}
       ${it.detail?`<div class="detail">${esc(it.detail)}</div>`:""}
       ${it.list?`<ul class="detail">${it.list.map(x=>`<li>${esc(x)}</li>`).join("")}</ul>`:""}
@@ -1083,7 +1082,7 @@ function renderLookback(){
 function visitSections(){
   const secs = [], lb = lookbackSections(14);
   if((S.profile||{}).other) secs.push(["What I'm managing", [S.profile.other]]);
-  secs.push(["Medicines and supplements I take", S.supplements.filter(x=>x.active).map(x=>[x.name, x.dose, x.times&&("at "+x.times), x.how, x.pending&&"(time not confirmed)"].filter(Boolean).join(", "))]);
+  secs.push(["Medicines and supplements I take", S.supplements.filter(x=>x.active).map(x=>[x.name, x.dose, x.times&&("at "+x.times), x.how].filter(Boolean).join(", "))]);
   const PN = Object.fromEntries(PACKS.map(x=>[x[0],x[1]]));
   secs.push(["My food rules", [limitsText()||"No number limits set", "Starter lists on: "+((S.rules.packs||[]).map(id=>PN[id]||id).join(", ")||"none"),
     ...(S.rules.extra||[]).map(x=>"Flag ("+x.level+"): "+(x.label||x.word)+(x.why?" - "+x.why:"")), ...breaksOn().map(b=>"Food break: "+b.label+" until "+niceDate(b.until))]]);
@@ -1116,7 +1115,7 @@ function renderVisit(){
 
 function renderSupps(){
   let h = `<div class="stack"><section class="panel"><h2>Supplements and medicine</h2>
-  <p class="muted" style="margin:0">Add what you take. Type times like <b>8:00, 6:30pm</b>. Tick "Not confirmed yet" if you're still waiting on your care team for the time.</p>
+  <p class="muted" style="margin:0">Add what you take. Type times like <b>8:00, 6:30pm</b>. Or leave Times blank and pick how many times a day.</p>
   ${spacingWarnings().map(w=>`<div class="warnbox">${esc(w)}</div>`).join("")}`;
   S.supplements.forEach((s,i)=>{
     const bad = badTimes(s.times);
@@ -1131,7 +1130,6 @@ function renderSupps(){
       <label>Notes<input type="text" id="s-notes-${i}" data-s="${i}" data-f="notes" value="${esc(s.notes)}"></label>
       ${freqHtml(s,i,"s")}
       <div class="row">
-        <label class="inline"><input type="checkbox" data-s="${i}" data-f="pending" ${s.pending?"checked":""}> Not confirmed yet</label>
         <label class="inline"><input type="checkbox" data-s="${i}" data-f="asNeeded" ${s.asNeeded?"checked":""}> As needed (no reminders)</label>
         ${s.asNeeded?`<label class="inline">Most per day <input type="number" min="0" max="20" style="width:4.5em" data-s="${i}" data-f="maxPerDay" value="${esc(s.maxPerDay||"")}" placeholder="any"></label>`:""}
         <label class="inline"><input type="checkbox" data-s="${i}" data-f="binder" ${s.binder?"checked":""}> Fiber or binder (keep apart from others)</label>
@@ -1271,7 +1269,7 @@ function renderSettings(){
   </section>
   ${LAPTOP?`<section class="panel"><h2>Phones</h2><div id="phonesBody" class="stack"><p class="muted" style="margin:0">Checking…</p></div></section>`:""}
   <section class="panel"><h2>Google Calendar and phone</h2>
-    <p style="margin:0">Save one calendar file with every timed reminder as a repeating event. Items with no time yet, like pending supplements, are left out.</p>
+    <p style="margin:0">Save one calendar file with every timed reminder as a repeating event. Items with no time yet, like supplements with no time, are left out.</p>
     <div class="chips" style="gap:8px">${SERVER?`<button class="btn" id="icsBtn">Save calendar file</button>`:""}<button class="btn ghost" id="icsCopy">Show calendar text</button></div>
     <textarea id="icsText" hidden readonly></textarea>
     <ol style="margin:0;padding-left:20px;display:grid;gap:4px">
