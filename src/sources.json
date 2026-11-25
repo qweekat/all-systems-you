@@ -427,6 +427,17 @@
     "Fatty liver"
    ],
    "status": "cited"
+  },
+  {
+   "id": "fda-neti",
+   "title": "Is Rinsing Your Sinuses With Neti Pots Safe?",
+   "org": "U.S. Food and Drug Administration",
+   "kind": "Consumer update",
+   "url": "https://www.fda.gov/consumers/consumer-updates/rinsing-your-sinuses-neti-pots-safe",
+   "topics": [
+    "Health routine"
+   ],
+   "status": "cited"
   }
  ]
 }

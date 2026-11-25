@@ -604,6 +604,12 @@ footer { color: var(--muted); font-size: 0.85rem; display: flex; flex-direction:
       state.setupAt = pk.at;
       localStorage.setItem(KEY, JSON.stringify(state));
     }
+    // Frost months picked in the setup guide.
+    if (pk && pk.season && pk.seasonAt && pk.seasonAt !== state.seasonAt) {
+      state.season = Object.assign({}, state.season, { last: +pk.season.last || 4, fall: +pk.season.fall || 10, noFrost: !!pk.season.noFrost });
+      state.seasonAt = pk.seasonAt;
+      localStorage.setItem(KEY, JSON.stringify(state));
+    }
   } catch (e) {}
   let memo = null;   // what you have and how items sit with your rules, worked out again after each change
   const save = () => { memo = null; try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} };

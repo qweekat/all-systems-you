@@ -117,6 +117,8 @@ table.rep{width:100%;border-collapse:collapse;font-size:.92rem}table.rep th,tabl
 .su-ck:has(input:checked){border-color:var(--juniper);background:var(--juniper-soft)}
 .su-ck span{display:grid;gap:2px}.su-ck small{font-weight:400}
 .su-list{margin:0;padding-left:20px;display:grid;gap:6px}
+.su-rts{display:grid;gap:8px}
+.su-step .row{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center}.su-step label.inline{display:flex;gap:6px;align-items:center;font-weight:400}
 .su-cat{border:0;padding:0;margin:0;display:grid;gap:8px}.su-cat legend{padding:0 0 6px}
 .su-more summary{cursor:pointer;font-weight:700;color:var(--juniper)}.su-more[open]{display:grid;gap:10px}
 .su-nav{display:flex;flex-wrap:wrap;gap:10px;align-items:center}.su-nav .btn{min-height:48px;padding:10px 20px}
@@ -1287,7 +1289,7 @@ function renderWeek(){
 }
 
 /* "From: ..." with a link to that source on the Sources page. */
-const SRC_NAMES = {"ifm-detox-guide":"IFM Detox Food Plan guide","fast-like-a-girl":"Fast Like a Girl","glucose-goddess-hacks":"Glucose Goddess hacks","glucose-revolution":"Glucose Revolution","ifm-cardiometabolic":"IFM Cardiometabolic Food Plan","usda-fdc":"USDA FoodData Central","mailoo-2017":"Mailoo and Rampes 2017","griffith-1987":"Griffith and others 1987","fda-allergens":"FDA: Food Allergies","celiac-sources":"Celiac disease guidance","cdc-carbs":"CDC: Choosing Healthy Carbs","cdc-drinks":"CDC: Rethink Your Drink","nci-aflatoxin":"NCI: Aflatoxins","break-the-mold":"Break the Mold","fda-grapefruit":"FDA: Grapefruit and drugs","ods-vitamin-k":"NIH: Vitamin K","fda-licorice":"FDA: Black licorice","mayo-maoi":"Mayo Clinic: MAOIs and diet"};
+const SRC_NAMES = {"ifm-detox-guide":"IFM Detox Food Plan guide","fast-like-a-girl":"Fast Like a Girl","glucose-goddess-hacks":"Glucose Goddess hacks","glucose-revolution":"Glucose Revolution","ifm-cardiometabolic":"IFM Cardiometabolic Food Plan","usda-fdc":"USDA FoodData Central","mailoo-2017":"Mailoo and Rampes 2017","griffith-1987":"Griffith and others 1987","fda-allergens":"FDA: Food Allergies","celiac-sources":"Celiac disease guidance","cdc-carbs":"CDC: Choosing Healthy Carbs","cdc-drinks":"CDC: Rethink Your Drink","nci-aflatoxin":"NCI: Aflatoxins","break-the-mold":"Break the Mold","fda-grapefruit":"FDA: Grapefruit and drugs","ods-vitamin-k":"NIH: Vitamin K","fda-licorice":"FDA: Black licorice","mayo-maoi":"Mayo Clinic: MAOIs and diet","fda-neti":"FDA: Rinsing your sinuses safely","noaa-last-freeze":"NOAA Climate.gov: last freeze dates","psu-cool-warm":"Penn State Extension: cool and warm season crops"};
 function srcNote(...ids){ return "From: "+ids.map(id=>`<a href="sources.html#${id}" target="_blank" rel="noopener">${esc(SRC_NAMES[id]||id)}</a>`).join(", ")+"."; }
 function rhythmPanel(){
   const R = S.rhythm, ew = eatingWindow(new Date()), w = R.walkAfter||{};

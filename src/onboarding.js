@@ -4,7 +4,7 @@
    and running the guide again shows what's already set. Nothing here leaves the device. */
 const SETUP_STEPS = [
   ["welcome","Welcome"],["about","What you're managing"],["foods","Foods to avoid"],["meds","Medicines and supplements"],["labs","Lab results"],
-  ["day","Your day"],["household","Who you cook for"],["kitchen","Your kitchen"],["pantry","What's in your kitchen"],
+  ["day","Your day"],["routine","Your routine"],["household","Who you cook for"],["kitchen","Your kitchen"],["pantry","What's in your kitchen"],
   ["reminders","Reminders"],["done","All set"]];
 /* Health conditions offered, and the starter food list each one turns on. The lists are drafts until a clinician reviews them. */
 const SETUP_CONDITIONS = [
@@ -17,6 +17,20 @@ const SETUP_MED_SRC = ["fda-grapefruit","ods-vitamin-k","fda-licorice","mayo-mao
 const SETUP_PANTRY = /*PANTRYITEMS*/[];
 const SETUP_CATS = [["produce","Fruit and vegetables"],["meat","Meat, fish, eggs and tofu"],["pantry","Pantry shelf"],["dairy","Dairy and bread"],["spice","Spices, oils and staples"]];
 const PANTRY_KEY = "pantryplanner.v1";
+/* Common health routine steps to tick: [id, name, how, where, sources]. Ids match the starter examples, so ticking one turns that example on. */
+const SETUP_ROUTINE = [
+  ["walk","Walk","As your energy allows.","home"],
+  ["move","Exercise or movement","","home"],
+  ["stretch","Stretching or yoga","A few gentle minutes.","home"],
+  ["breath","Breath work","A few minutes of slow breathing.","home"],
+  ["quiet","Meditation or quiet time","","home"],
+  ["outside","Time outside or in daylight","","home"],
+  ["drybrush","Dry brushing","","home"],
+  ["sinus","Sinus rinse","Use distilled, sterile, or boiled and cooled water. Never water straight from the tap.","home",["fda-neti"]],
+  ["epsom","Epsom salt bath","","home"],
+  ["sauna","Sauna","","town"],
+  ["gym","Gym or class","","town"]];
+const SU_MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
 
 function setupState(){ return S.setup = Object.assign({status:"new", step:0}, S.setup||{}); }
 function setupStep(){ const n = Number(setupState().step)||0; return Math.min(Math.max(n,0), SETUP_STEPS.length-1); }
@@ -47,11 +61,75 @@ function setupPantrySet(ids, on){
   pk.at = Date.now(); save();
 }
 
+/* How often: one set of controls for a new medicine (key "new") or a routine step (key = its id).
+   Changes to a routine step save right away; a new medicine is read when you press Add. */
+function suFreqMode(x){ return x.asNeeded?"prn":x.alt?"alt":(x.days||[]).length?"days":"every"; }
+function suFreqHtml(key, x, prn){
+  const m = suFreqMode(x), show = on=>on?"":` style="display:none"`;
+  return `<div class="stack" data-su-fx="${esc(key)}" style="gap:6px">
+    <div class="grid2">
+      <label>How often<select data-su-f="mode">${[["every","Every day"],["days","Some days of the week"],["alt","Every other day"],...(prn?[["prn","Only as needed"]]:[])].map(([v,n])=>`<option value="${v}" ${m===v?"selected":""}>${n}</option>`).join("")}</select></label>
+      <label data-su-show="sched"${show(m!=="prn")}>Times a day<select data-su-f="perDay">${[1,2,3,4].map(n=>`<option value="${n}" ${(Number(x.perDay)||1)===n?"selected":""}>${n}</option>`).join("")}</select></label>
+      <label data-su-show="prn"${show(m==="prn")}>Most per day <small class="muted" style="font-weight:400">optional</small><input type="number" min="0" max="20" data-su-f="maxPerDay" value="${esc(x.maxPerDay||"")}" placeholder="any"></label>
+    </div>
+    <div class="row" data-su-show="days"${show(m==="days")}>${DAYS.map((n,dw)=>`<label class="inline"><input type="checkbox" data-su-f="day" value="${dw}" ${(x.days||[]).includes(dw)?"checked":""}> ${n}</label>`).join("")}</div>
+    <label class="inline" data-su-show="alt"${show(m==="alt")}>First day <input type="date" data-su-f="altFrom" value="${esc(x.altFrom||ymd(new Date()))}"></label>
+  </div>`;
+}
+function suFreqRead(box){
+  const v = f=>box.querySelector(`[data-su-f="${f}"]`), mode = v("mode").value;
+  const days = [...box.querySelectorAll('[data-su-f="day"]:checked')].map(x=>+x.value);
+  const out = {asNeeded:mode==="prn", alt:mode==="alt", days:mode==="days"?days:[], perDay:Number(v("perDay").value)||1};
+  if(mode==="alt") out.altFrom = (v("altFrom").value)||ymd(new Date());
+  if(mode==="prn") out.maxPerDay = v("maxPerDay").value;
+  return out;
+}
+function suFreqShow(box){
+  const m = box.querySelector('[data-su-f="mode"]').value;
+  box.querySelectorAll("[data-su-show]").forEach(el=>{ const k = el.dataset.suShow; el.style.display = (k==="sched" ? m!=="prn" : k===m) ? "" : "none"; });
+}
+function suFreqText(x){
+  const m = suFreqMode(x);
+  if(m==="prn") return "only as needed"+(x.maxPerDay?", up to "+x.maxPerDay+" a day":"");
+  const n = Number(x.perDay)||1;
+  return (m==="alt"?"every other day":m==="days"?x.days.map(d=>DAYS[d]).join(", "):"every day")+(n>1&&!parseTimes(x.times||"").length?", "+n+" times a day":"");
+}
+/* Re-draw the step but keep anything typed into a box that isn't saved yet. */
+function renderSetupKeep(){
+  const keep = {};
+  view.querySelectorAll("input[id],textarea[id]").forEach(el=>{ if(!/^(checkbox|radio|file)$/.test(el.type) && el.value) keep[el.id] = el.value; });
+  renderSetup();
+  for(const [k,v] of Object.entries(keep)){ const el = document.getElementById(k); if(el && !el.value) el.value = v; }
+}
+/* Frost months for "local now" on the pantry page. The pantry keeps its own saved data, so a choice here waits in
+   setup.pantry.season until the pantry page opens, the same way ticked pantry items do. */
+function setupSeason(){
+  let s = {}, appliedAt = 0;
+  try{ const p = JSON.parse(localStorage.getItem(PANTRY_KEY)||"null"); if(p){ s = Object.assign({}, p.season||{}); appliedAt = p.seasonAt||0; } }catch(_){}
+  const pk = (S.setup||{}).pantry;
+  if(pk && pk.season && pk.seasonAt !== appliedAt) Object.assign(s, pk.season);
+  return {last:Number(s.last)||4, fall:Number(s.fall)||10, noFrost:!!s.noFrost};
+}
+function setupSeasonSet(k, v){
+  const cur = setupSeason(), pk = setupState().pantry = Object.assign({on:[], off:[]}, S.setup.pantry||{});
+  pk.season = Object.assign(cur, {[k]:v}); pk.seasonAt = Date.now(); save();
+}
+function setupRoutineRow(r, id, label, hint){
+  const on = !!(r && r.active);
+  return `<div class="su-rt">${suCk(`data-su-rt="${esc(id)}"`, on, esc(r?r.name:label), hint)}
+    ${on?`<div class="stack" style="gap:6px;margin:6px 0 10px 30px">
+      ${suFreqHtml(r.id, r, false)}
+      <div class="grid2">
+        <label>Where<select data-su-rwhere="${esc(r.id)}"><option value="home" ${(r.where||"home")==="home"?"selected":""}>At home</option><option value="town" ${r.where==="town"?"selected":""}>In town (earlier alerts)</option></select></label>
+        <label>Time <small class="muted" style="font-weight:400">optional</small><input type="text" data-su-rtimes="${esc(r.id)}" value="${esc(r.times||"")}" placeholder="e.g. 7:30am"></label>
+      </div></div>`:""}</div>`;
+}
+
 function setupBody(id){
   const R = S.rules, packs = new Set(R.packs||[]);
   if(id==="welcome") return `
     <h2>Welcome to all systems you</h2>
-    <p>This guide asks about your health, your food and your day, one step at a time. It takes about 5 minutes. You can skip any question, and change every answer later.</p>
+    <p>This guide asks about your health, your food and your day, one step at a time. It takes about 10 minutes. You can skip any question, and change every answer later.</p>
     <ul class="su-list">
       <li>Everything you enter stays on this device. There's no account.</li>
       <li>The app helps you follow the plan you and your care team set. It is not medical advice.</li>
@@ -67,9 +145,21 @@ function setupBody(id){
     <h2>What are you managing?</h2>
     <p class="muted">Tick any that apply. Each one turns on a starter food list, so the meal checker, pantry and shopping list can flag foods for you. The lists are drafts until a clinician has reviewed them, so treat them as reminders.</p>
     <div class="su-grid">${SETUP_CONDITIONS.map(([cid,label,pack,src])=>suCk(`data-su-cond="${cid}"`, packs.has(pack), esc(label), "Turns on the "+esc((PACKS.find(p=>p[0]===pack)||[])[1]||pack)+" list. "+srcNote(...src))).join("")}</div>
+    ${(()=>{ const D = allDiag(), ids = Object.keys(D); return ids.length ? `<div class="su-grid">${ids.map(did=>suCk(`data-diag="${did}"`, diagOn(did), esc(D[did].name),
+      esc(D[did].about)+(D[did].qs.length?" Adds "+D[did].qs.length+" question"+(D[did].qs.length===1?"":"s")+" to your doctor list.":"")+(D[did].src?" Sources: "+esc(D[did].src)+".":""))).join("")}</div>` : ""; })()}
+    <details class="su-more"><summary>Add a diagnosis that isn't listed</summary>
+      <p class="muted">Type the foods it means you avoid or keep small, separated by commas. The meal checker, pantry and meals will flag them. You can turn each one off later.</p>
+      <label>Diagnosis<input type="text" id="dg-name" maxlength="80" placeholder="e.g. Gout"></label>
+      <div class="grid2">
+        <label>Foods to avoid<input type="text" id="dg-avoid" placeholder="e.g. organ meats, beer"></label>
+        <label>Foods to keep small<input type="text" id="dg-limit" placeholder="e.g. red meat, shellfish"></label>
+      </div>
+      <label>Questions for your doctor <small class="muted" style="font-weight:400">optional, one per line</small><textarea id="dg-qs" rows="2"></textarea></label>
+      <div><button class="btn ghost" data-diagadd="1">Add it</button></div>
+    </details>
     <label>Anything else you're managing? <small class="muted" style="font-weight:400">Optional. For your own notes and your visit summary. It doesn't change any food lists.</small>
       <input type="text" id="su-other" maxlength="200" value="${esc((S.profile||{}).other||"")}" placeholder="e.g. high blood pressure, IBS"></label>
-    <small class="muted">Change these any time under More, then My rules.</small>`;
+    <small class="muted">Change these any time under More, then My diagnoses.</small>`;
   if(id==="foods"){
     const preset = new Set((R.extra||[]).filter(x=>x.preset).map(x=>x.preset));
     const typed = (R.extra||[]).map((x,i)=>[x,i]).filter(([x])=>!x.preset);
@@ -97,16 +187,18 @@ function setupBody(id){
   if(id==="meds") return `
     <h2>Medicines and supplements</h2>
     <p class="muted">Add what you take, so the app can remind you. Not sure of the time yet? Leave it blank. You can add more detail later.</p>
-    ${S.supplements.length?`<ol class="su-list">${S.supplements.map(s=>`<li><b>${esc(s.name)}</b>${s.dose?", "+esc(s.dose):""}${s.times?" at "+esc(s.times):""}${s.how?" ("+esc(s.how)+")":""}</li>`).join("")}</ol>`:""}
+    ${S.supplements.length?`<ol class="su-list">${S.supplements.map((s,i)=>`<li><b>${esc(s.name)}</b>${s.dose?", "+esc(s.dose):""}${s.times?" at "+esc(s.times):""}, ${esc(suFreqText(s))}${s.how?" ("+esc(s.how)+")":""} <button class="linkbtn" data-su-mdel="${i}" aria-label="Remove ${esc(s.name)}">Remove</button></li>`).join("")}</ol>`:""}
     <div class="grid2">
       <label>Name<input type="text" id="su-mname" placeholder="e.g. Metformin, vitamin D"></label>
       <label>Dose <small class="muted" style="font-weight:400">optional</small><input type="text" id="su-mdose" placeholder="e.g. 500 mg"></label>
       <label>Times <small class="muted" style="font-weight:400">optional</small><input type="text" id="su-mtimes" placeholder="e.g. 8:00, 6:30pm"></label>
       <label>With food?<select id="su-mhow"><option value="">Not sure</option><option value="with a meal">With food</option><option value="without food">Without food</option></select></label>
     </div>
+    ${suFreqHtml("new", {}, true)}
+    <small class="muted">No times? It shows on your list that many times a day with no clock time, and you tick each one off. "Only as needed" never reminds you. You log each one when you take it.</small>
     <div><button class="btn ghost" id="su-medAdd">Add it</button></div>
     ${suCk(`data-pack="medicines"`, packs.has("medicines"), "Warn me about foods that interact with common medicines", "Grapefruit, vitamin K greens, black licorice and tyramine. "+srcNote(...SETUP_MED_SRC))}
-    <small class="muted">Edit times, doses and days under More, then Supplements &amp; routine.</small>`;
+    <small class="muted">Change any of this later under More, then Supplements &amp; routine. You can also mark one as a fiber or binder there, so it's kept apart from the others.</small>`;
   if(id==="labs"){
     const labs = S.labs||[], names = [...new Set(labs.map(x=>x.name))];
     return `
@@ -132,7 +224,25 @@ function setupBody(id){
     </div>
     <h3>Meals</h3>
     <div class="grid2">${tf("breakfast","Breakfast")}${tf("lunch","Lunch")}${tf("snack","Snack")}${tf("dinner","Dinner")}</div>
+    <h3>Through the day</h3>
+    <div class="su-grid">
+      ${suCk(`data-pbool="checkin"`, S.checkin, "Evening check-in", "A short \"how did today go\" about 30 minutes before bed. It helps you spot patterns.")}
+      ${[["b","breakfast"],["l","lunch"],["d","dinner"]].map(([k,n])=>suCk(`data-rhw="${k}"`, !!(Rh.walkAfter||{})[k], (Number(Rh.walkMin)||10)+"-minute walk after "+n)).join("")}
+    </div>
+    ${S.waterMode==="weight"?"":`<label style="max-width:16rem">Daily water goal <small class="muted" style="font-weight:400">ounces, optional</small><input type="number" id="su-water" min="0" max="300" data-p="waterGoal" value="${Number(S.waterGoal)?esc(S.waterGoal):""}" placeholder="Not set"></label>`}
     <small class="muted">Fasting windows, walks after meals and other daily rhythm options are under More, then Times &amp; reminders. Check fasting with your care team first, especially with diabetes medicines.</small>`;
+  }
+  if(id==="routine"){
+    const R = S.routine = S.routine||[], starter = new Set(SETUP_ROUTINE.map(x=>x[0]));
+    const own = R.filter(r=>!starter.has(r.id));
+    return `
+    <h2>Your routine</h2>
+    <p class="muted">Things you do for your health besides food. Tick what you do, or want to start. For each one, pick how often and where. A clock time is optional: without one, it shows on your list to tick off.</p>
+    <div class="su-rts">${SETUP_ROUTINE.map(([rid,name,how,,src])=>setupRoutineRow(R.find(r=>r.id===rid), rid, name, [how, src?srcNote(...src):""].filter(Boolean).join(" "))).join("")}</div>
+    ${own.length?`<h3>Your own</h3><div class="su-rts">${own.map(r=>setupRoutineRow(r, r.id, r.name, r.how?esc(r.how):"")).join("")}</div>`:""}
+    <div class="grid2"><label>Add your own<input type="text" id="su-rname" maxlength="60" placeholder="e.g. Castor oil pack, journaling"></label></div>
+    <div><button class="btn ghost" id="su-rAdd">Add it</button></div>
+    <small class="muted">"In town" steps, like a gym or sauna, get earlier alerts so you have time to get there. Change any of this later under More, then Supplements &amp; routine. Ask your care team before starting a sauna or hard exercise if you're unsure it's right for you.</small>`;
   }
   if(id==="household"){
     const h = HH.fix(S.household); S.household = h;
@@ -174,7 +284,15 @@ function setupBody(id){
     ${SETUP_CATS.map(([c,name])=>{ const its = SETUP_PANTRY.filter(x=>x[2]===c); if(!its.length) return "";
       return `<fieldset class="su-cat"><legend><b>${esc(name)}</b> <button class="linkbtn" data-su-pall="${c}">${its.every(x=>have[x[0]])?"Untick all":"Tick all"}</button></legend>
         <div class="su-grid tight">${its.map(([pid,n])=>suCk(`data-su-pan="${pid}"`, !!have[pid], esc(n))).join("")}</div></fieldset>`; }).join("")}
-    <small class="muted">Add anything else, or take a photo of a label, on the Pantry page.</small>`;
+    ${(c=>`<fieldset class="su-cat"><legend><b>Your growing season</b></legend>
+      <p class="muted" style="margin:0 0 6px">The pantry marks fruit and vegetables that are "local now". Pick your frost months so it follows your season.</p>
+      <div class="grid2">
+        <label>Last spring frost<select data-su-season="last">${SU_MONTHS.map((n,i)=>`<option value="${i+1}" ${c.last===i+1?"selected":""}>${n}</option>`).join("")}</select></label>
+        <label>First fall frost<select data-su-season="fall">${SU_MONTHS.map((n,i)=>`<option value="${i+1}" ${c.fall===i+1?"selected":""}>${n}</option>`).join("")}</select></label>
+      </div>
+      ${suCk(`data-su-season="noFrost"`, c.noFrost, "No frost where I live")}
+      <small class="muted">Not sure? Look up your town on <a href="https://www.climate.gov/LastFreeze" target="_blank" rel="noopener">NOAA Climate.gov</a> or ask your local extension office. ${srcNote("noaa-last-freeze","psu-cool-warm")}</small></fieldset>`)(setupSeason())}
+    <small class="muted">Add anything else, or take a photo of a label, on the Pantry page. You can pick which section a new item goes in.</small>`;
   }
   if(id==="reminders"){
     const on = S.on, ck = (k,label)=>suCk(`data-on="${k}"`, on[k], label);
@@ -188,10 +306,11 @@ function setupBody(id){
     </div>
     ${SERVER?`<p class="muted">The computer app shows desktop reminders even when this window is closed.</p>`
       :`<p class="muted">On a phone or in a browser, reminders only pop up while the app is open. For alerts when it's closed, save the calendar file under More, then Times &amp; reminders.</p>
-        <div><button class="btn ghost" id="notifyBtn">Allow reminders in this browser</button></div>`}`;
+        <div><button class="btn ghost" id="notifyBtn">Allow reminders in this browser</button></div>`}
+    ${typeof openOnHtml==="function"?`<h3>Start page</h3><div>${openOnHtml()}</div><small class="muted">Quick is one page of big buttons for water, supplements and meals. Handy on a phone.</small>`:""}`;
   }
   // done
-  const cond = SETUP_CONDITIONS.filter(c=>packs.has(c[2])).map(c=>c[1].split(":")[0]);
+  const cond = [...SETUP_CONDITIONS.filter(c=>packs.has(c[2])).map(c=>c[1].split(":")[0]), ...Object.entries(allDiag()).filter(([k])=>diagOn(k)).map(([,D])=>D.short||D.name)];
   const avoid = (R.extra||[]).filter(x=>x.level==="avoid").map(x=>x.label||x.word);
   const pk = (S.setup||{}).pantry, nPan = Object.keys(setupPantryHave()).length, hh = S.household = HH.fix(S.household);
   const line = (label, v, step)=>`<li><b>${label}:</b> ${v?esc(v):`<span class="muted">not set</span>`} <button class="linkbtn" data-su-go="${setupIdx(step)}">Change</button></li>`;
@@ -204,6 +323,7 @@ function setupBody(id){
       ${line("Medicines and supplements", S.supplements.map(s=>s.name).join(", "), "meds")}
       ${line("Lab results", (S.labs||[]).length ? (S.labs.length+" saved") : "", "labs")}
       ${line("Your day", S.rhythm.wake||S.rhythm.bed ? "up "+(S.rhythm.wake?niceTime(S.rhythm.wake):"?")+", bed "+(S.rhythm.bed?niceTime(S.rhythm.bed):"?") : "", "day")}
+      ${line("Routine", (S.routine||[]).filter(r=>r.active).map(r=>r.name).join(", "), "routine")}
       ${line("Eating dinner", S.eaters+(S.eaters==1?" person":" people")+(hh.people.length?" ("+hh.people.map(p=>p.name).join(", ")+")":""), "household")}
       ${line("Kitchen", S.burners+" burner"+(S.burners==1?"":"s")+(S.oven?", oven":", no oven")+(S.freezer===false?", no freezer":", freezer")+", cook day "+DAYS_LONG[Number(S.cookDay)||0], "kitchen")}
       ${line("Pantry", nPan||pk ? nPan+" item"+(nPan===1?"":"s")+" ticked" : "", "pantry")}
@@ -300,7 +420,7 @@ function setupNudge(){
   if(!st || (st.status!=="skipped" && st.status!=="new")) return "";
   const n = setupStep();
   return `<section class="panel"><h2>Finish setting up?</h2>
-    <p style="margin:0">${n>0?"You got to step "+n+". Pick up where you left off.":"A few quick questions so the app fits your health, food and day."} About 5 minutes.</p>
+    <p style="margin:0">${n>0?"You got to step "+n+". Pick up where you left off.":"A few quick questions so the app fits your health, food and day."} About 10 minutes.</p>
     <div class="chips" style="gap:8px"><button class="btn" data-goto="setup">${n>0?"Keep going":"Start setup"}</button><button class="btn ghost" data-su-leave="dismissed">Not now</button></div></section>`;
 }
 
@@ -320,9 +440,15 @@ function setupAddFoods(){
 function setupAddMed(){
   const g = id=>String((document.getElementById(id)||{}).value||"").trim(), name = g("su-mname");
   if(!name) return false;
-  const times = g("su-mtimes");
-  S.supplements.push({id:"s"+Date.now(), name, dose:g("su-mdose"), times, how:g("su-mhow"), binder:false, active:true, pending:!times, notes:"", where:"home"});
+  const times = g("su-mtimes"), box = view.querySelector('[data-su-fx="new"]'), f = box ? suFreqRead(box) : {};
+  S.supplements.push(Object.assign({id:"s"+Date.now(), name, dose:g("su-mdose"), times, how:g("su-mhow"), binder:false, active:true, pending:!times && !f.asNeeded, notes:"", where:"home"}, f));
   return true;
+}
+function setupAddRoutine(){
+  const el = document.getElementById("su-rname"), name = String((el||{}).value||"").trim();
+  if(!name) return false;
+  (S.routine = S.routine||[]).push({id:"r"+Date.now(), name, how:"", times:"", days:[], active:true, pending:false, notes:"", where:"home"});
+  S.on.routine = true; return true;
 }
 function setupAddPerson(quiet){
   const g = id=>String((document.getElementById(id)||{}).value||"").trim(), name = g("su-pname");
@@ -342,6 +468,8 @@ function setupKeepTyped(id){
   if(id==="about"){ const v = (document.getElementById("su-other")||{}).value; if(v!=null) S.profile = Object.assign({}, S.profile, {other:v.trim()}); }
   if(id==="foods"){ if(SU_LIST.some(r=>r.on)){ toast("Press Add to keep the foods from your list, or untick them"); return false; } setupAddFoods(); }
   if(id==="meds") setupAddMed();
+  if(id==="about"){ const b = view.querySelector("[data-diagadd]"), n = document.getElementById("dg-name"); if(b && n && n.value.trim()) b.click(); }
+  if(id==="routine") setupAddRoutine();
   if(id==="labs" && LAB_PASTE.some(r=>r.on)){ toast("Press Save to keep those results, or untick them"); return false; }
   if(id==="household" && setupAddPerson(true)===null) return false;
   return true;
@@ -359,6 +487,8 @@ view.addEventListener("click", e=>{
   if(t.id==="su-listRead"){ SU_LIST = setupParseList((document.getElementById("su-listtext")||{}).value); renderSetup(); if(!SU_LIST.length) toast("No foods found. Put one per line or separate them with commas"); return; }
   if(t.id==="su-listSave"){ const n = setupListSave(); renderSetup(); toast(n+" food"+(n===1?"":"s")+" added"); return; }
   if(t.id==="su-foodsAdd"){ const n = setupAddFoods(); save(); renderSetup(); toast(n?"Added":"Type a food first"); return; }
+  if(d.suMdel!==undefined){ const s = S.supplements[+d.suMdel]; if(s){ S.supplements.splice(+d.suMdel,1); save(); renderSetupKeep(); toast("Removed "+s.name); } return; }
+  if(t.id==="su-rAdd"){ if(setupAddRoutine()){ save(); renderSetup(); toast("Added"); } else toast("Type a name first"); return; }
   if(t.id==="su-medAdd"){ if(setupAddMed()){ save(); renderSetup(); toast("Added"); } else toast("Type a name first"); return; }
   if(t.id==="su-personAdd"){ if(setupAddPerson(false)){ save(); renderSetup(); toast("Added"); } return; }
   if(d.suXdel!==undefined){ const x = S.rules.extra[+d.suXdel]; if(x){ S.rules.extra = S.rules.extra.filter((_,j)=>j!==+d.suXdel); logRule("Removed "+(x.label||x.word)+" from flagged foods"); save(); renderSetup(); } return; }
@@ -387,6 +517,17 @@ view.addEventListener("change", e=>{
       else { document.getElementById("lp-text").value = r.result; document.getElementById("lpRead").click(); } };
     r.readAsText(f); t.value = ""; return; }
   if(d.suPan){ setupPantrySet([d.suPan], t.checked); return; }
+  if(d.suSeason){ setupSeasonSet(d.suSeason, d.suSeason==="noFrost" ? t.checked : +t.value); return; }
+  if(d.suF!==undefined){ const box = t.closest("[data-su-fx]"); if(!box) return; suFreqShow(box);
+    const r = box.dataset.suFx!=="new" && (S.routine||[]).find(x=>x.id===box.dataset.suFx);
+    if(r){ const f = suFreqRead(box); delete f.asNeeded; Object.assign(r, f); save(); } return; }
+  if(d.suRt){ const R = S.routine = S.routine||[], st = SETUP_ROUTINE.find(x=>x[0]===d.suRt); let r = R.find(x=>x.id===d.suRt);
+    if(!r && st && t.checked){ r = {id:st[0], name:st[1], how:st[2], times:"", days:[], active:true, pending:false, notes:"", where:st[3]}; R.push(r); }
+    if(r){ r.active = t.checked; if(t.checked) S.on.routine = true; logRule((t.checked?"Started ":"Paused ")+r.name); }
+    save(); renderSetupKeep(); return; }
+  if(d.suRwhere){ const r = (S.routine||[]).find(x=>x.id===d.suRwhere); if(r){ r.where = t.value; save(); } return; }
+  if(d.suRtimes){ const r = (S.routine||[]).find(x=>x.id===d.suRtimes); if(r){ r.times = t.value.trim(); r.pending = false; save();
+    const bad = badTimes(r.times); if(bad.length) toast("Couldn't read "+bad.join(", ")+". Use a form like 8:00 or 6:30pm"); } return; }
   if(t.id==="su-backup" && t.files && t.files[0]){ const r = new FileReader();
     r.onload = ()=>{ try{ const v = JSON.parse(r.result); if(!v || typeof v!=="object" || !v.supplements) throw 0;
       S = merge(v); S.setup = Object.assign({}, S.setup, {status:"done", done:ymd(new Date())}); save(); toast("Backup loaded"); TAB = "today"; render(); }

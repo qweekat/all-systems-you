@@ -126,6 +126,8 @@ table.rep{width:100%;border-collapse:collapse;font-size:.92rem}table.rep th,tabl
 .su-ck:has(input:checked){border-color:var(--juniper);background:var(--juniper-soft)}
 .su-ck span{display:grid;gap:2px}.su-ck small{font-weight:400}
 .su-list{margin:0;padding-left:20px;display:grid;gap:6px}
+.su-rts{display:grid;gap:8px}
+.su-step .row{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center}.su-step label.inline{display:flex;gap:6px;align-items:center;font-weight:400}
 .su-cat{border:0;padding:0;margin:0;display:grid;gap:8px}.su-cat legend{padding:0 0 6px}
 .su-more summary{cursor:pointer;font-weight:700;color:var(--juniper)}.su-more[open]{display:grid;gap:10px}
 .su-nav{display:flex;flex-wrap:wrap;gap:10px;align-items:center}.su-nav .btn{min-height:48px;padding:10px 20px}
@@ -157,7 +159,7 @@ table.rep{width:100%;border-collapse:collapse;font-size:.92rem}table.rep th,tabl
     <button role="tab" data-tab="more" aria-selected="false">More</button>
   </nav>
   <main id="view"></main>
-  <footer class="muted" style="padding:16px 0 32px;font-size:.85rem;line-height:1.4"><b>all systems you</b>. Your health is complicated. Managing it shouldn't be.<br>all systems you helps you follow the plan you and your care team set. It is not medical advice and does not replace your doctor, dietitian or nurse. Check with them before changing your diet, medicines or supplements. Everything you enter stays on this device. Free and open source under the GNU AGPL 3.0. <a href="sources.html">Sources</a>. <span class="appver">Version 0.23.0.</span></footer>
+  <footer class="muted" style="padding:16px 0 32px;font-size:.85rem;line-height:1.4"><b>all systems you</b>. Your health is complicated. Managing it shouldn't be.<br>all systems you helps you follow the plan you and your care team set. It is not medical advice and does not replace your doctor, dietitian or nurse. Check with them before changing your diet, medicines or supplements. Everything you enter stays on this device. Free and open source under the GNU AGPL 3.0. <a href="sources.html">Sources</a>. <span class="appver">Version 0.24.0.</span></footer>
 </div>
 <div class="toast" id="toast" hidden></div>
 
@@ -1778,7 +1780,7 @@ function renderWeek(){
 }
 
 /* "From: ..." with a link to that source on the Sources page. */
-const SRC_NAMES = {"ifm-detox-guide":"IFM Detox Food Plan guide","fast-like-a-girl":"Fast Like a Girl","glucose-goddess-hacks":"Glucose Goddess hacks","glucose-revolution":"Glucose Revolution","ifm-cardiometabolic":"IFM Cardiometabolic Food Plan","usda-fdc":"USDA FoodData Central","mailoo-2017":"Mailoo and Rampes 2017","griffith-1987":"Griffith and others 1987","fda-allergens":"FDA: Food Allergies","celiac-sources":"Celiac disease guidance","cdc-carbs":"CDC: Choosing Healthy Carbs","cdc-drinks":"CDC: Rethink Your Drink","nci-aflatoxin":"NCI: Aflatoxins","break-the-mold":"Break the Mold","fda-grapefruit":"FDA: Grapefruit and drugs","ods-vitamin-k":"NIH: Vitamin K","fda-licorice":"FDA: Black licorice","mayo-maoi":"Mayo Clinic: MAOIs and diet"};
+const SRC_NAMES = {"ifm-detox-guide":"IFM Detox Food Plan guide","fast-like-a-girl":"Fast Like a Girl","glucose-goddess-hacks":"Glucose Goddess hacks","glucose-revolution":"Glucose Revolution","ifm-cardiometabolic":"IFM Cardiometabolic Food Plan","usda-fdc":"USDA FoodData Central","mailoo-2017":"Mailoo and Rampes 2017","griffith-1987":"Griffith and others 1987","fda-allergens":"FDA: Food Allergies","celiac-sources":"Celiac disease guidance","cdc-carbs":"CDC: Choosing Healthy Carbs","cdc-drinks":"CDC: Rethink Your Drink","nci-aflatoxin":"NCI: Aflatoxins","break-the-mold":"Break the Mold","fda-grapefruit":"FDA: Grapefruit and drugs","ods-vitamin-k":"NIH: Vitamin K","fda-licorice":"FDA: Black licorice","mayo-maoi":"Mayo Clinic: MAOIs and diet","fda-neti":"FDA: Rinsing your sinuses safely","noaa-last-freeze":"NOAA Climate.gov: last freeze dates","psu-cool-warm":"Penn State Extension: cool and warm season crops"};
 function srcNote(...ids){ return "From: "+ids.map(id=>`<a href="sources.html#${id}" target="_blank" rel="noopener">${esc(SRC_NAMES[id]||id)}</a>`).join(", ")+"."; }
 function rhythmPanel(){
   const R = S.rhythm, ew = eatingWindow(new Date()), w = R.walkAfter||{};
@@ -2132,7 +2134,7 @@ function mountHousehold(){
 
 /* The bottom bar links here with #today or #more, so a home-screen app (no back button) can always get around. */
 /* Filled in at build time from changelog.json. APP_BUILD tells two builds of the same version apart. */
-const APP_VERSION = "0.23.0", APP_BUILD = "0.23.0-2026-11-25-9e665d7f", CHANGES = [{"v": "0.23.0", "date": "2026-11-24", "items": ["My diagnoses lists every condition, including blood sugar, mold, celiac and HSV, as single lines you tap to open. Ticking one there turns its starter list on or off."]}, {"v": "0.22.0", "date": "2026-11-24", "items": ["My diagnoses: add your own diagnosis with its name, foods to avoid or limit, and questions for your doctor."]}, {"v": "0.21.0", "date": "2026-11-24", "items": ["New: My diagnoses, under More. Add or remove a diagnosis any time, not just in setup. Fatty liver (MASLD) is new: a draft food list (alcohol, sugary drinks, juice, added sugar, refined starches, fried and processed meat), each food can be turned off, plus questions for your doctor. Sources: NIDDK, AASLD 2023, EASL-EASD-EASO 2024."]}, {"v": "0.20.1", "date": "2026-11-24", "items": ["Pantry: move an item you added to a different section with the menu next to it."]}, {"v": "0.20.0", "date": "2026-11-24", "items": ["Pantry: \"local now\" follows the season where you live. Set your last spring and first fall frost months (or no frost), and change when each item counts as local. Sources: NOAA Climate.gov and Penn State Extension."]}, {"v": "0.19.0", "date": "2026-11-24", "items": ["Warning boxes are now one line you can tap to open: the home-screen data warning and the spacing check."]}, {"v": "0.18.1", "date": "2026-11-24", "items": ["Removed the Not confirmed yet box and its labels from supplements and the checklist. Taking it now is what turns a supplement on or off."]}, {"v": "0.18.0", "date": "2026-11-24", "items": ["As needed supplements: tick As needed on a supplement and it leaves your checklist and reminders. Tap Took it on Today or Quick to log the time. You can set a most per day and get a warning when you reach it."]}, {"v": "0.17.3", "date": "2026-11-24", "items": ["Supplements and routine: one Every day box instead of ticking each day. Untick it to pick days."]}, {"v": "0.17.2", "date": "2026-11-24", "items": ["Supplements no longer ask Where. They go with you, so their reminders use the at-home lead times."]}, {"v": "0.17.1", "date": "2026-11-24", "items": ["Phone: updates now show up the next time you open the app, instead of getting stuck on the old version."]}, {"v": "0.17.0", "date": "2026-11-24", "items": ["Phone: new setting to always open the app on Quick, with its one-tap buttons. It's on the Quick tab and under Phone shortcuts. If you leave the app for 5 minutes or more, it goes back to Quick."]}, {"v": "0.16.0", "date": "2026-11-24", "items": ["Every other day: pick the first day you take it, instead of it always starting the day you turned it on.", "How many times a day: take something 2, 3 or 4 times a day without picking clock times. Leave Times blank and it shows up that many times on your list to tick off."]}, {"v": "0.15.1", "date": "2026-10-23", "items": ["Setup guide: a tip on the food list and lab steps for getting the text out of a PDF or photo with an AI chat app, with a ready-made request to copy."]}, {"v": "0.15.0", "date": "2026-10-23", "items": ["Setup guide: already have a list of foods you avoid? Pick a text file or paste it, check what the app found, and add it all at once. Lines like Avoid:, Limit: and OK: sort the foods under them.", "Setup guide: the Lab results step can also read a text file of results."]}, {"v": "0.14.0", "date": "2026-10-23", "items": ["Setup guide: a new Lab results step. Paste the text of a lab report and the app picks out each test, result, unit and range for you to check before saving."]}, {"v": "0.13.0", "date": "2026-10-23", "items": ["New setup guide: a brand-new copy of the app opens with a few quick questions about what you're managing, foods you avoid, medicines, your day, who you cook for, your kitchen, your pantry and reminders. Every step can be skipped.", "Run the setup guide again any time from More, or from Times & reminders. It shows what's already set, so you only change what you want.", "Today shows a Finish setting up card if you leave the guide part way.", "Allergy picks like milk or eggs now catch dishes made from them (cheese, omelets) in the checker and pantry, and leave things like coconut milk alone.", "My rules has a What I'm managing line, which also goes on your visit summary."]}, {"v": "0.12.0", "date": "2026-10-23", "items": ["Meals: 34 more starter recipes, with stand-ins (any one of chicken, tofu, beef or pork, for example), so more meals fit what you have.", "Pantry: things you type in now count for the meals that use them. Salmon counts as fish, kale as cooking greens, brown rice as a grain.", "Meals I can make now counts meals you can make without buying anything, including ones that need a batch cook first.", "A spice or oil you haven't ticked no longer stops a meal from counting as ready. You can turn this off in the pantry.", "Meals that don't fit your food rules move to their own group and stay out of Fill. If one stand-in breaks a rule, another is used."]}, {"v": "0.11.0", "date": "2026-10-23", "items": ["Pantry: an edit button on items you added, to fix the name or fill in what a label photo missed."]}, {"v": "0.10.2", "date": "2026-10-23", "items": ["With the computer app and a second window or phone open, a change no longer gets lost after it says Saved. Changes from both are kept."]}, {"v": "0.10.1", "date": "2026-10-22", "items": ["With the computer app, a change typed just before closing the window or switching away is no longer lost."]}, {"v": "0.10.0", "date": "2026-10-22", "items": ["Backups: new Combine with a backup file, to bring a phone and a computer copy together without losing either.", "With the computer app, an old open window can no longer save over newer changes from another window or phone.", "Clearer warning: on an iPhone, removing the home-screen icon erases its data, so save a backup first."]}, {"v": "0.9.0", "date": "2026-10-22", "items": ["Labs: paste a whole lab report (or copy it from a photo or PDF with Live Text) and save many results at once.", "Pantry: items you add go into the right section (or pick one), and any item can be removed from your list.", "Grocery mode opens reliably from More and the bottom bar.", "Fiber: set the ramp start date on My rules; with no ramp, Today shows your fiber goal."]}, {"v": "0.8.0", "date": "2026-10-22", "items": ["Fix a meal: type a meal's ingredients and the meal checker suggests swaps, trims and adds that follow your lists and limits."]}, {"v": "0.7.0", "date": "2026-10-22", "items": ["A gentle check-in when a supplement or routine step hasn't been ticked off in a while: keep it, change how often, or pause it.", "Version number and this What's new list."]}, {"v": "0.6.0", "date": "2026-10-21", "items": ["Bottom bar on every page, so a home-screen app can always get around.", "Quick view and phone tap shortcuts.", "Installed copies now pick up new versions."]}, {"v": "0.5.0", "date": "2026-10-21", "items": ["Tap to add water (sizes you choose) and a simpler home page.", "Evening check-in: how did I feel today?", "Look back over 7 to 30 days, and a For my visit summary; both print and download.", "Grocery mode for the store.", "Automatic daily backups."]}, {"v": "0.4.0", "date": "2026-10-21", "items": ["Food breaks: take a break from a food until a date, with a low-arginine list for cold sores and HSV, common food groups, or any food you type. Planned meals can be swapped and come back after."]}, {"v": "0.3.0", "date": "2026-10-21", "items": ["Daily rhythm settings: wake and bed times, fasting window, walks after meals, food order, water goal by weight."]}, {"v": "0.2.0", "date": "2026-10-21", "items": ["Sources page; every food rule shows where it comes from."]}, {"v": "0.1.0", "date": "2026-10-21", "items": ["Daily checklist, pantry planner and meal checker that work offline. Starter food lists (drafts)."]}];
+const APP_VERSION = "0.24.0", APP_BUILD = "0.24.0-2026-11-25-4ef80d55", CHANGES = [{"v": "0.24.0", "date": "2026-11-25", "items": ["Setup guide: new \"Your routine\" step. Tick common steps like walking, breath work, dry brushing, a sinus rinse or a sauna, or add your own. Each one gets how often (every day, some days or every other day), at home or in town, and times a day. A clock time is optional.", "Setup guide: medicines and supplements now ask how often, times a day, and \"only as needed\" with a most-per-day limit.", "Setup guide also covers: diagnoses like fatty liver plus your own, an evening check-in, walks after meals, a water goal, your frost months for \"local now\" in the pantry, and opening the app on Quick."]}, {"v": "0.23.0", "date": "2026-11-24", "items": ["My diagnoses lists every condition, including blood sugar, mold, celiac and HSV, as single lines you tap to open. Ticking one there turns its starter list on or off."]}, {"v": "0.22.0", "date": "2026-11-24", "items": ["My diagnoses: add your own diagnosis with its name, foods to avoid or limit, and questions for your doctor."]}, {"v": "0.21.0", "date": "2026-11-24", "items": ["New: My diagnoses, under More. Add or remove a diagnosis any time, not just in setup. Fatty liver (MASLD) is new: a draft food list (alcohol, sugary drinks, juice, added sugar, refined starches, fried and processed meat), each food can be turned off, plus questions for your doctor. Sources: NIDDK, AASLD 2023, EASL-EASD-EASO 2024."]}, {"v": "0.20.1", "date": "2026-11-24", "items": ["Pantry: move an item you added to a different section with the menu next to it."]}, {"v": "0.20.0", "date": "2026-11-24", "items": ["Pantry: \"local now\" follows the season where you live. Set your last spring and first fall frost months (or no frost), and change when each item counts as local. Sources: NOAA Climate.gov and Penn State Extension."]}, {"v": "0.19.0", "date": "2026-11-24", "items": ["Warning boxes are now one line you can tap to open: the home-screen data warning and the spacing check."]}, {"v": "0.18.1", "date": "2026-11-24", "items": ["Removed the Not confirmed yet box and its labels from supplements and the checklist. Taking it now is what turns a supplement on or off."]}, {"v": "0.18.0", "date": "2026-11-24", "items": ["As needed supplements: tick As needed on a supplement and it leaves your checklist and reminders. Tap Took it on Today or Quick to log the time. You can set a most per day and get a warning when you reach it."]}, {"v": "0.17.3", "date": "2026-11-24", "items": ["Supplements and routine: one Every day box instead of ticking each day. Untick it to pick days."]}, {"v": "0.17.2", "date": "2026-11-24", "items": ["Supplements no longer ask Where. They go with you, so their reminders use the at-home lead times."]}, {"v": "0.17.1", "date": "2026-11-24", "items": ["Phone: updates now show up the next time you open the app, instead of getting stuck on the old version."]}, {"v": "0.17.0", "date": "2026-11-24", "items": ["Phone: new setting to always open the app on Quick, with its one-tap buttons. It's on the Quick tab and under Phone shortcuts. If you leave the app for 5 minutes or more, it goes back to Quick."]}, {"v": "0.16.0", "date": "2026-11-24", "items": ["Every other day: pick the first day you take it, instead of it always starting the day you turned it on.", "How many times a day: take something 2, 3 or 4 times a day without picking clock times. Leave Times blank and it shows up that many times on your list to tick off."]}, {"v": "0.15.1", "date": "2026-10-23", "items": ["Setup guide: a tip on the food list and lab steps for getting the text out of a PDF or photo with an AI chat app, with a ready-made request to copy."]}, {"v": "0.15.0", "date": "2026-10-23", "items": ["Setup guide: already have a list of foods you avoid? Pick a text file or paste it, check what the app found, and add it all at once. Lines like Avoid:, Limit: and OK: sort the foods under them.", "Setup guide: the Lab results step can also read a text file of results."]}, {"v": "0.14.0", "date": "2026-10-23", "items": ["Setup guide: a new Lab results step. Paste the text of a lab report and the app picks out each test, result, unit and range for you to check before saving."]}, {"v": "0.13.0", "date": "2026-10-23", "items": ["New setup guide: a brand-new copy of the app opens with a few quick questions about what you're managing, foods you avoid, medicines, your day, who you cook for, your kitchen, your pantry and reminders. Every step can be skipped.", "Run the setup guide again any time from More, or from Times & reminders. It shows what's already set, so you only change what you want.", "Today shows a Finish setting up card if you leave the guide part way.", "Allergy picks like milk or eggs now catch dishes made from them (cheese, omelets) in the checker and pantry, and leave things like coconut milk alone.", "My rules has a What I'm managing line, which also goes on your visit summary."]}, {"v": "0.12.0", "date": "2026-10-23", "items": ["Meals: 34 more starter recipes, with stand-ins (any one of chicken, tofu, beef or pork, for example), so more meals fit what you have.", "Pantry: things you type in now count for the meals that use them. Salmon counts as fish, kale as cooking greens, brown rice as a grain.", "Meals I can make now counts meals you can make without buying anything, including ones that need a batch cook first.", "A spice or oil you haven't ticked no longer stops a meal from counting as ready. You can turn this off in the pantry.", "Meals that don't fit your food rules move to their own group and stay out of Fill. If one stand-in breaks a rule, another is used."]}, {"v": "0.11.0", "date": "2026-10-23", "items": ["Pantry: an edit button on items you added, to fix the name or fill in what a label photo missed."]}, {"v": "0.10.2", "date": "2026-10-23", "items": ["With the computer app and a second window or phone open, a change no longer gets lost after it says Saved. Changes from both are kept."]}, {"v": "0.10.1", "date": "2026-10-22", "items": ["With the computer app, a change typed just before closing the window or switching away is no longer lost."]}, {"v": "0.10.0", "date": "2026-10-22", "items": ["Backups: new Combine with a backup file, to bring a phone and a computer copy together without losing either.", "With the computer app, an old open window can no longer save over newer changes from another window or phone.", "Clearer warning: on an iPhone, removing the home-screen icon erases its data, so save a backup first."]}, {"v": "0.9.0", "date": "2026-10-22", "items": ["Labs: paste a whole lab report (or copy it from a photo or PDF with Live Text) and save many results at once.", "Pantry: items you add go into the right section (or pick one), and any item can be removed from your list.", "Grocery mode opens reliably from More and the bottom bar.", "Fiber: set the ramp start date on My rules; with no ramp, Today shows your fiber goal."]}, {"v": "0.8.0", "date": "2026-10-22", "items": ["Fix a meal: type a meal's ingredients and the meal checker suggests swaps, trims and adds that follow your lists and limits."]}, {"v": "0.7.0", "date": "2026-10-22", "items": ["A gentle check-in when a supplement or routine step hasn't been ticked off in a while: keep it, change how often, or pause it.", "Version number and this What's new list."]}, {"v": "0.6.0", "date": "2026-10-21", "items": ["Bottom bar on every page, so a home-screen app can always get around.", "Quick view and phone tap shortcuts.", "Installed copies now pick up new versions."]}, {"v": "0.5.0", "date": "2026-10-21", "items": ["Tap to add water (sizes you choose) and a simpler home page.", "Evening check-in: how did I feel today?", "Look back over 7 to 30 days, and a For my visit summary; both print and download.", "Grocery mode for the store.", "Automatic daily backups."]}, {"v": "0.4.0", "date": "2026-10-21", "items": ["Food breaks: take a break from a food until a date, with a low-arginine list for cold sores and HSV, common food groups, or any food you type. Planned meals can be swapped and come back after."]}, {"v": "0.3.0", "date": "2026-10-21", "items": ["Daily rhythm settings: wake and bed times, fasting window, walks after meals, food order, water goal by weight."]}, {"v": "0.2.0", "date": "2026-10-21", "items": ["Sources page; every food rule shows where it comes from."]}, {"v": "0.1.0", "date": "2026-10-21", "items": ["Daily checklist, pantry planner and meal checker that work offline. Starter food lists (drafts)."]}];
 const TAB_IDS = ["today","quick","phone","tomorrow","more","supps","week","notes","labs","lookback","visit","rules","settings","household","setup"];
 /* A food card link opened while the app is already open. */
 window.addEventListener("hashchange", ()=>{ if(HHUI.takeHash()){ TAB = "household"; render(); window.scrollTo(0,0); } });
@@ -2201,7 +2203,7 @@ function icsText(){
    and running the guide again shows what's already set. Nothing here leaves the device. */
 const SETUP_STEPS = [
   ["welcome","Welcome"],["about","What you're managing"],["foods","Foods to avoid"],["meds","Medicines and supplements"],["labs","Lab results"],
-  ["day","Your day"],["household","Who you cook for"],["kitchen","Your kitchen"],["pantry","What's in your kitchen"],
+  ["day","Your day"],["routine","Your routine"],["household","Who you cook for"],["kitchen","Your kitchen"],["pantry","What's in your kitchen"],
   ["reminders","Reminders"],["done","All set"]];
 /* Health conditions offered, and the starter food list each one turns on. The lists are drafts until a clinician reviews them. */
 const SETUP_CONDITIONS = [
@@ -2214,6 +2216,20 @@ const SETUP_MED_SRC = ["fda-grapefruit","ods-vitamin-k","fda-licorice","mayo-mao
 const SETUP_PANTRY = [["onion", "Onions", "produce"], ["garlic", "Garlic", "produce"], ["carrots", "Carrots", "produce"], ["celery", "Celery", "produce"], ["zucchini", "Zucchini", "produce"], ["spinach", "Spinach", "produce"], ["greens", "Cooking greens", "produce"], ["tomato", "Tomatoes", "produce"], ["cucumber", "Cucumbers", "produce"], ["sweetpotato", "Sweet potatoes", "produce"], ["butternut", "Winter squash", "produce"], ["lemon", "Lemons or limes", "produce"], ["herbs", "Fresh herbs", "produce"], ["apple", "Apples", "produce"], ["berries", "Berries, fresh or frozen", "produce"], ["broccoli", "Broccoli", "produce"], ["cauliflower", "Cauliflower", "produce"], ["cabbage", "Cabbage", "produce"], ["bellpepper", "Bell peppers", "produce"], ["mushrooms", "Mushrooms", "produce"], ["greenbeans", "Green beans", "produce"], ["lettuce", "Lettuce or salad greens", "produce"], ["potato", "Potatoes", "produce"], ["avocado", "Avocados", "produce"], ["banana", "Bananas", "produce"], ["frozenveg", "Frozen mixed vegetables", "produce"], ["peas", "Peas, frozen", "produce"], ["chicken", "Chicken breast or thigh", "meat"], ["turkey", "Ground turkey", "meat"], ["fish", "Fish fillets", "meat"], ["eggs", "Eggs", "meat"], ["beef", "Ground beef or bison", "meat"], ["pork", "Pork chops or tenderloin", "meat"], ["tofu", "Tofu or tempeh", "meat"], ["m_soup", "Chicken vegetable soup", "cooked"], ["m_chili", "Turkey and bean chili", "cooked"], ["m_shredded", "Shredded chicken", "cooked"], ["m_grain", "Cooked grain", "cooked"], ["m_roastveg", "Roasted vegetables", "cooked"], ["m_lentil", "Lentil soup", "cooked"], ["m_hbeggs", "Hard-boiled eggs", "cooked"], ["beans", "Canned beans", "pantry"], ["chickpeas", "Canned chickpeas", "pantry"], ["tomatocan", "Canned tomatoes", "pantry"], ["broth", "Chicken broth", "pantry"], ["grain", "Quinoa or brown rice (dry)", "pantry"], ["nutbutter", "Nut or seed butter", "pantry"], ["hummus", "Hummus", "pantry"], ["nuts", "Nuts", "pantry"], ["tea", "Herbal tea", "pantry"], ["lentils", "Lentils", "pantry"], ["oats", "Rolled oats", "pantry"], ["pasta", "Pasta or noodles", "pantry"], ["tuna", "Canned tuna or salmon", "pantry"], ["coconutmilk", "Canned coconut milk", "pantry"], ["salsa", "Salsa", "pantry"], ["seeds", "Seeds (chia, flax, pumpkin)", "pantry"], ["yogurt", "Plain yogurt", "dairy"], ["cheese", "Cheese", "dairy"], ["milk", "Milk or plant milk", "dairy"], ["butter", "Butter or ghee", "dairy"], ["tortillas", "Tortillas or wraps", "dairy"], ["salt", "Salt", "spice"], ["pepper", "Black pepper", "spice"], ["oliveoil", "Olive oil", "spice"], ["cumin", "Cumin", "spice"], ["oregano", "Oregano", "spice"], ["thyme", "Thyme", "spice"], ["bay", "Bay leaves", "spice"], ["paprika", "Paprika", "spice"], ["chilipowder", "Chili powder", "spice"], ["cinnamon", "Cinnamon", "spice"], ["soysauce", "Soy sauce or tamari", "spice"], ["vinegar", "Vinegar", "spice"], ["rice", "Rice", "others"], ["bread", "Bread", "others"]];
 const SETUP_CATS = [["produce","Fruit and vegetables"],["meat","Meat, fish, eggs and tofu"],["pantry","Pantry shelf"],["dairy","Dairy and bread"],["spice","Spices, oils and staples"]];
 const PANTRY_KEY = "pantryplanner.v1";
+/* Common health routine steps to tick: [id, name, how, where, sources]. Ids match the starter examples, so ticking one turns that example on. */
+const SETUP_ROUTINE = [
+  ["walk","Walk","As your energy allows.","home"],
+  ["move","Exercise or movement","","home"],
+  ["stretch","Stretching or yoga","A few gentle minutes.","home"],
+  ["breath","Breath work","A few minutes of slow breathing.","home"],
+  ["quiet","Meditation or quiet time","","home"],
+  ["outside","Time outside or in daylight","","home"],
+  ["drybrush","Dry brushing","","home"],
+  ["sinus","Sinus rinse","Use distilled, sterile, or boiled and cooled water. Never water straight from the tap.","home",["fda-neti"]],
+  ["epsom","Epsom salt bath","","home"],
+  ["sauna","Sauna","","town"],
+  ["gym","Gym or class","","town"]];
+const SU_MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
 
 function setupState(){ return S.setup = Object.assign({status:"new", step:0}, S.setup||{}); }
 function setupStep(){ const n = Number(setupState().step)||0; return Math.min(Math.max(n,0), SETUP_STEPS.length-1); }
@@ -2244,11 +2260,75 @@ function setupPantrySet(ids, on){
   pk.at = Date.now(); save();
 }
 
+/* How often: one set of controls for a new medicine (key "new") or a routine step (key = its id).
+   Changes to a routine step save right away; a new medicine is read when you press Add. */
+function suFreqMode(x){ return x.asNeeded?"prn":x.alt?"alt":(x.days||[]).length?"days":"every"; }
+function suFreqHtml(key, x, prn){
+  const m = suFreqMode(x), show = on=>on?"":` style="display:none"`;
+  return `<div class="stack" data-su-fx="${esc(key)}" style="gap:6px">
+    <div class="grid2">
+      <label>How often<select data-su-f="mode">${[["every","Every day"],["days","Some days of the week"],["alt","Every other day"],...(prn?[["prn","Only as needed"]]:[])].map(([v,n])=>`<option value="${v}" ${m===v?"selected":""}>${n}</option>`).join("")}</select></label>
+      <label data-su-show="sched"${show(m!=="prn")}>Times a day<select data-su-f="perDay">${[1,2,3,4].map(n=>`<option value="${n}" ${(Number(x.perDay)||1)===n?"selected":""}>${n}</option>`).join("")}</select></label>
+      <label data-su-show="prn"${show(m==="prn")}>Most per day <small class="muted" style="font-weight:400">optional</small><input type="number" min="0" max="20" data-su-f="maxPerDay" value="${esc(x.maxPerDay||"")}" placeholder="any"></label>
+    </div>
+    <div class="row" data-su-show="days"${show(m==="days")}>${DAYS.map((n,dw)=>`<label class="inline"><input type="checkbox" data-su-f="day" value="${dw}" ${(x.days||[]).includes(dw)?"checked":""}> ${n}</label>`).join("")}</div>
+    <label class="inline" data-su-show="alt"${show(m==="alt")}>First day <input type="date" data-su-f="altFrom" value="${esc(x.altFrom||ymd(new Date()))}"></label>
+  </div>`;
+}
+function suFreqRead(box){
+  const v = f=>box.querySelector(`[data-su-f="${f}"]`), mode = v("mode").value;
+  const days = [...box.querySelectorAll('[data-su-f="day"]:checked')].map(x=>+x.value);
+  const out = {asNeeded:mode==="prn", alt:mode==="alt", days:mode==="days"?days:[], perDay:Number(v("perDay").value)||1};
+  if(mode==="alt") out.altFrom = (v("altFrom").value)||ymd(new Date());
+  if(mode==="prn") out.maxPerDay = v("maxPerDay").value;
+  return out;
+}
+function suFreqShow(box){
+  const m = box.querySelector('[data-su-f="mode"]').value;
+  box.querySelectorAll("[data-su-show]").forEach(el=>{ const k = el.dataset.suShow; el.style.display = (k==="sched" ? m!=="prn" : k===m) ? "" : "none"; });
+}
+function suFreqText(x){
+  const m = suFreqMode(x);
+  if(m==="prn") return "only as needed"+(x.maxPerDay?", up to "+x.maxPerDay+" a day":"");
+  const n = Number(x.perDay)||1;
+  return (m==="alt"?"every other day":m==="days"?x.days.map(d=>DAYS[d]).join(", "):"every day")+(n>1&&!parseTimes(x.times||"").length?", "+n+" times a day":"");
+}
+/* Re-draw the step but keep anything typed into a box that isn't saved yet. */
+function renderSetupKeep(){
+  const keep = {};
+  view.querySelectorAll("input[id],textarea[id]").forEach(el=>{ if(!/^(checkbox|radio|file)$/.test(el.type) && el.value) keep[el.id] = el.value; });
+  renderSetup();
+  for(const [k,v] of Object.entries(keep)){ const el = document.getElementById(k); if(el && !el.value) el.value = v; }
+}
+/* Frost months for "local now" on the pantry page. The pantry keeps its own saved data, so a choice here waits in
+   setup.pantry.season until the pantry page opens, the same way ticked pantry items do. */
+function setupSeason(){
+  let s = {}, appliedAt = 0;
+  try{ const p = JSON.parse(localStorage.getItem(PANTRY_KEY)||"null"); if(p){ s = Object.assign({}, p.season||{}); appliedAt = p.seasonAt||0; } }catch(_){}
+  const pk = (S.setup||{}).pantry;
+  if(pk && pk.season && pk.seasonAt !== appliedAt) Object.assign(s, pk.season);
+  return {last:Number(s.last)||4, fall:Number(s.fall)||10, noFrost:!!s.noFrost};
+}
+function setupSeasonSet(k, v){
+  const cur = setupSeason(), pk = setupState().pantry = Object.assign({on:[], off:[]}, S.setup.pantry||{});
+  pk.season = Object.assign(cur, {[k]:v}); pk.seasonAt = Date.now(); save();
+}
+function setupRoutineRow(r, id, label, hint){
+  const on = !!(r && r.active);
+  return `<div class="su-rt">${suCk(`data-su-rt="${esc(id)}"`, on, esc(r?r.name:label), hint)}
+    ${on?`<div class="stack" style="gap:6px;margin:6px 0 10px 30px">
+      ${suFreqHtml(r.id, r, false)}
+      <div class="grid2">
+        <label>Where<select data-su-rwhere="${esc(r.id)}"><option value="home" ${(r.where||"home")==="home"?"selected":""}>At home</option><option value="town" ${r.where==="town"?"selected":""}>In town (earlier alerts)</option></select></label>
+        <label>Time <small class="muted" style="font-weight:400">optional</small><input type="text" data-su-rtimes="${esc(r.id)}" value="${esc(r.times||"")}" placeholder="e.g. 7:30am"></label>
+      </div></div>`:""}</div>`;
+}
+
 function setupBody(id){
   const R = S.rules, packs = new Set(R.packs||[]);
   if(id==="welcome") return `
     <h2>Welcome to all systems you</h2>
-    <p>This guide asks about your health, your food and your day, one step at a time. It takes about 5 minutes. You can skip any question, and change every answer later.</p>
+    <p>This guide asks about your health, your food and your day, one step at a time. It takes about 10 minutes. You can skip any question, and change every answer later.</p>
     <ul class="su-list">
       <li>Everything you enter stays on this device. There's no account.</li>
       <li>The app helps you follow the plan you and your care team set. It is not medical advice.</li>
@@ -2264,9 +2344,21 @@ function setupBody(id){
     <h2>What are you managing?</h2>
     <p class="muted">Tick any that apply. Each one turns on a starter food list, so the meal checker, pantry and shopping list can flag foods for you. The lists are drafts until a clinician has reviewed them, so treat them as reminders.</p>
     <div class="su-grid">${SETUP_CONDITIONS.map(([cid,label,pack,src])=>suCk(`data-su-cond="${cid}"`, packs.has(pack), esc(label), "Turns on the "+esc((PACKS.find(p=>p[0]===pack)||[])[1]||pack)+" list. "+srcNote(...src))).join("")}</div>
+    ${(()=>{ const D = allDiag(), ids = Object.keys(D); return ids.length ? `<div class="su-grid">${ids.map(did=>suCk(`data-diag="${did}"`, diagOn(did), esc(D[did].name),
+      esc(D[did].about)+(D[did].qs.length?" Adds "+D[did].qs.length+" question"+(D[did].qs.length===1?"":"s")+" to your doctor list.":"")+(D[did].src?" Sources: "+esc(D[did].src)+".":""))).join("")}</div>` : ""; })()}
+    <details class="su-more"><summary>Add a diagnosis that isn't listed</summary>
+      <p class="muted">Type the foods it means you avoid or keep small, separated by commas. The meal checker, pantry and meals will flag them. You can turn each one off later.</p>
+      <label>Diagnosis<input type="text" id="dg-name" maxlength="80" placeholder="e.g. Gout"></label>
+      <div class="grid2">
+        <label>Foods to avoid<input type="text" id="dg-avoid" placeholder="e.g. organ meats, beer"></label>
+        <label>Foods to keep small<input type="text" id="dg-limit" placeholder="e.g. red meat, shellfish"></label>
+      </div>
+      <label>Questions for your doctor <small class="muted" style="font-weight:400">optional, one per line</small><textarea id="dg-qs" rows="2"></textarea></label>
+      <div><button class="btn ghost" data-diagadd="1">Add it</button></div>
+    </details>
     <label>Anything else you're managing? <small class="muted" style="font-weight:400">Optional. For your own notes and your visit summary. It doesn't change any food lists.</small>
       <input type="text" id="su-other" maxlength="200" value="${esc((S.profile||{}).other||"")}" placeholder="e.g. high blood pressure, IBS"></label>
-    <small class="muted">Change these any time under More, then My rules.</small>`;
+    <small class="muted">Change these any time under More, then My diagnoses.</small>`;
   if(id==="foods"){
     const preset = new Set((R.extra||[]).filter(x=>x.preset).map(x=>x.preset));
     const typed = (R.extra||[]).map((x,i)=>[x,i]).filter(([x])=>!x.preset);
@@ -2294,16 +2386,18 @@ function setupBody(id){
   if(id==="meds") return `
     <h2>Medicines and supplements</h2>
     <p class="muted">Add what you take, so the app can remind you. Not sure of the time yet? Leave it blank. You can add more detail later.</p>
-    ${S.supplements.length?`<ol class="su-list">${S.supplements.map(s=>`<li><b>${esc(s.name)}</b>${s.dose?", "+esc(s.dose):""}${s.times?" at "+esc(s.times):""}${s.how?" ("+esc(s.how)+")":""}</li>`).join("")}</ol>`:""}
+    ${S.supplements.length?`<ol class="su-list">${S.supplements.map((s,i)=>`<li><b>${esc(s.name)}</b>${s.dose?", "+esc(s.dose):""}${s.times?" at "+esc(s.times):""}, ${esc(suFreqText(s))}${s.how?" ("+esc(s.how)+")":""} <button class="linkbtn" data-su-mdel="${i}" aria-label="Remove ${esc(s.name)}">Remove</button></li>`).join("")}</ol>`:""}
     <div class="grid2">
       <label>Name<input type="text" id="su-mname" placeholder="e.g. Metformin, vitamin D"></label>
       <label>Dose <small class="muted" style="font-weight:400">optional</small><input type="text" id="su-mdose" placeholder="e.g. 500 mg"></label>
       <label>Times <small class="muted" style="font-weight:400">optional</small><input type="text" id="su-mtimes" placeholder="e.g. 8:00, 6:30pm"></label>
       <label>With food?<select id="su-mhow"><option value="">Not sure</option><option value="with a meal">With food</option><option value="without food">Without food</option></select></label>
     </div>
+    ${suFreqHtml("new", {}, true)}
+    <small class="muted">No times? It shows on your list that many times a day with no clock time, and you tick each one off. "Only as needed" never reminds you. You log each one when you take it.</small>
     <div><button class="btn ghost" id="su-medAdd">Add it</button></div>
     ${suCk(`data-pack="medicines"`, packs.has("medicines"), "Warn me about foods that interact with common medicines", "Grapefruit, vitamin K greens, black licorice and tyramine. "+srcNote(...SETUP_MED_SRC))}
-    <small class="muted">Edit times, doses and days under More, then Supplements &amp; routine.</small>`;
+    <small class="muted">Change any of this later under More, then Supplements &amp; routine. You can also mark one as a fiber or binder there, so it's kept apart from the others.</small>`;
   if(id==="labs"){
     const labs = S.labs||[], names = [...new Set(labs.map(x=>x.name))];
     return `
@@ -2329,7 +2423,25 @@ function setupBody(id){
     </div>
     <h3>Meals</h3>
     <div class="grid2">${tf("breakfast","Breakfast")}${tf("lunch","Lunch")}${tf("snack","Snack")}${tf("dinner","Dinner")}</div>
+    <h3>Through the day</h3>
+    <div class="su-grid">
+      ${suCk(`data-pbool="checkin"`, S.checkin, "Evening check-in", "A short \"how did today go\" about 30 minutes before bed. It helps you spot patterns.")}
+      ${[["b","breakfast"],["l","lunch"],["d","dinner"]].map(([k,n])=>suCk(`data-rhw="${k}"`, !!(Rh.walkAfter||{})[k], (Number(Rh.walkMin)||10)+"-minute walk after "+n)).join("")}
+    </div>
+    ${S.waterMode==="weight"?"":`<label style="max-width:16rem">Daily water goal <small class="muted" style="font-weight:400">ounces, optional</small><input type="number" id="su-water" min="0" max="300" data-p="waterGoal" value="${Number(S.waterGoal)?esc(S.waterGoal):""}" placeholder="Not set"></label>`}
     <small class="muted">Fasting windows, walks after meals and other daily rhythm options are under More, then Times &amp; reminders. Check fasting with your care team first, especially with diabetes medicines.</small>`;
+  }
+  if(id==="routine"){
+    const R = S.routine = S.routine||[], starter = new Set(SETUP_ROUTINE.map(x=>x[0]));
+    const own = R.filter(r=>!starter.has(r.id));
+    return `
+    <h2>Your routine</h2>
+    <p class="muted">Things you do for your health besides food. Tick what you do, or want to start. For each one, pick how often and where. A clock time is optional: without one, it shows on your list to tick off.</p>
+    <div class="su-rts">${SETUP_ROUTINE.map(([rid,name,how,,src])=>setupRoutineRow(R.find(r=>r.id===rid), rid, name, [how, src?srcNote(...src):""].filter(Boolean).join(" "))).join("")}</div>
+    ${own.length?`<h3>Your own</h3><div class="su-rts">${own.map(r=>setupRoutineRow(r, r.id, r.name, r.how?esc(r.how):"")).join("")}</div>`:""}
+    <div class="grid2"><label>Add your own<input type="text" id="su-rname" maxlength="60" placeholder="e.g. Castor oil pack, journaling"></label></div>
+    <div><button class="btn ghost" id="su-rAdd">Add it</button></div>
+    <small class="muted">"In town" steps, like a gym or sauna, get earlier alerts so you have time to get there. Change any of this later under More, then Supplements &amp; routine. Ask your care team before starting a sauna or hard exercise if you're unsure it's right for you.</small>`;
   }
   if(id==="household"){
     const h = HH.fix(S.household); S.household = h;
@@ -2371,7 +2483,15 @@ function setupBody(id){
     ${SETUP_CATS.map(([c,name])=>{ const its = SETUP_PANTRY.filter(x=>x[2]===c); if(!its.length) return "";
       return `<fieldset class="su-cat"><legend><b>${esc(name)}</b> <button class="linkbtn" data-su-pall="${c}">${its.every(x=>have[x[0]])?"Untick all":"Tick all"}</button></legend>
         <div class="su-grid tight">${its.map(([pid,n])=>suCk(`data-su-pan="${pid}"`, !!have[pid], esc(n))).join("")}</div></fieldset>`; }).join("")}
-    <small class="muted">Add anything else, or take a photo of a label, on the Pantry page.</small>`;
+    ${(c=>`<fieldset class="su-cat"><legend><b>Your growing season</b></legend>
+      <p class="muted" style="margin:0 0 6px">The pantry marks fruit and vegetables that are "local now". Pick your frost months so it follows your season.</p>
+      <div class="grid2">
+        <label>Last spring frost<select data-su-season="last">${SU_MONTHS.map((n,i)=>`<option value="${i+1}" ${c.last===i+1?"selected":""}>${n}</option>`).join("")}</select></label>
+        <label>First fall frost<select data-su-season="fall">${SU_MONTHS.map((n,i)=>`<option value="${i+1}" ${c.fall===i+1?"selected":""}>${n}</option>`).join("")}</select></label>
+      </div>
+      ${suCk(`data-su-season="noFrost"`, c.noFrost, "No frost where I live")}
+      <small class="muted">Not sure? Look up your town on <a href="https://www.climate.gov/LastFreeze" target="_blank" rel="noopener">NOAA Climate.gov</a> or ask your local extension office. ${srcNote("noaa-last-freeze","psu-cool-warm")}</small></fieldset>`)(setupSeason())}
+    <small class="muted">Add anything else, or take a photo of a label, on the Pantry page. You can pick which section a new item goes in.</small>`;
   }
   if(id==="reminders"){
     const on = S.on, ck = (k,label)=>suCk(`data-on="${k}"`, on[k], label);
@@ -2385,10 +2505,11 @@ function setupBody(id){
     </div>
     ${SERVER?`<p class="muted">The computer app shows desktop reminders even when this window is closed.</p>`
       :`<p class="muted">On a phone or in a browser, reminders only pop up while the app is open. For alerts when it's closed, save the calendar file under More, then Times &amp; reminders.</p>
-        <div><button class="btn ghost" id="notifyBtn">Allow reminders in this browser</button></div>`}`;
+        <div><button class="btn ghost" id="notifyBtn">Allow reminders in this browser</button></div>`}
+    ${typeof openOnHtml==="function"?`<h3>Start page</h3><div>${openOnHtml()}</div><small class="muted">Quick is one page of big buttons for water, supplements and meals. Handy on a phone.</small>`:""}`;
   }
   // done
-  const cond = SETUP_CONDITIONS.filter(c=>packs.has(c[2])).map(c=>c[1].split(":")[0]);
+  const cond = [...SETUP_CONDITIONS.filter(c=>packs.has(c[2])).map(c=>c[1].split(":")[0]), ...Object.entries(allDiag()).filter(([k])=>diagOn(k)).map(([,D])=>D.short||D.name)];
   const avoid = (R.extra||[]).filter(x=>x.level==="avoid").map(x=>x.label||x.word);
   const pk = (S.setup||{}).pantry, nPan = Object.keys(setupPantryHave()).length, hh = S.household = HH.fix(S.household);
   const line = (label, v, step)=>`<li><b>${label}:</b> ${v?esc(v):`<span class="muted">not set</span>`} <button class="linkbtn" data-su-go="${setupIdx(step)}">Change</button></li>`;
@@ -2401,6 +2522,7 @@ function setupBody(id){
       ${line("Medicines and supplements", S.supplements.map(s=>s.name).join(", "), "meds")}
       ${line("Lab results", (S.labs||[]).length ? (S.labs.length+" saved") : "", "labs")}
       ${line("Your day", S.rhythm.wake||S.rhythm.bed ? "up "+(S.rhythm.wake?niceTime(S.rhythm.wake):"?")+", bed "+(S.rhythm.bed?niceTime(S.rhythm.bed):"?") : "", "day")}
+      ${line("Routine", (S.routine||[]).filter(r=>r.active).map(r=>r.name).join(", "), "routine")}
       ${line("Eating dinner", S.eaters+(S.eaters==1?" person":" people")+(hh.people.length?" ("+hh.people.map(p=>p.name).join(", ")+")":""), "household")}
       ${line("Kitchen", S.burners+" burner"+(S.burners==1?"":"s")+(S.oven?", oven":", no oven")+(S.freezer===false?", no freezer":", freezer")+", cook day "+DAYS_LONG[Number(S.cookDay)||0], "kitchen")}
       ${line("Pantry", nPan||pk ? nPan+" item"+(nPan===1?"":"s")+" ticked" : "", "pantry")}
@@ -2497,7 +2619,7 @@ function setupNudge(){
   if(!st || (st.status!=="skipped" && st.status!=="new")) return "";
   const n = setupStep();
   return `<section class="panel"><h2>Finish setting up?</h2>
-    <p style="margin:0">${n>0?"You got to step "+n+". Pick up where you left off.":"A few quick questions so the app fits your health, food and day."} About 5 minutes.</p>
+    <p style="margin:0">${n>0?"You got to step "+n+". Pick up where you left off.":"A few quick questions so the app fits your health, food and day."} About 10 minutes.</p>
     <div class="chips" style="gap:8px"><button class="btn" data-goto="setup">${n>0?"Keep going":"Start setup"}</button><button class="btn ghost" data-su-leave="dismissed">Not now</button></div></section>`;
 }
 
@@ -2517,9 +2639,15 @@ function setupAddFoods(){
 function setupAddMed(){
   const g = id=>String((document.getElementById(id)||{}).value||"").trim(), name = g("su-mname");
   if(!name) return false;
-  const times = g("su-mtimes");
-  S.supplements.push({id:"s"+Date.now(), name, dose:g("su-mdose"), times, how:g("su-mhow"), binder:false, active:true, pending:!times, notes:"", where:"home"});
+  const times = g("su-mtimes"), box = view.querySelector('[data-su-fx="new"]'), f = box ? suFreqRead(box) : {};
+  S.supplements.push(Object.assign({id:"s"+Date.now(), name, dose:g("su-mdose"), times, how:g("su-mhow"), binder:false, active:true, pending:!times && !f.asNeeded, notes:"", where:"home"}, f));
   return true;
+}
+function setupAddRoutine(){
+  const el = document.getElementById("su-rname"), name = String((el||{}).value||"").trim();
+  if(!name) return false;
+  (S.routine = S.routine||[]).push({id:"r"+Date.now(), name, how:"", times:"", days:[], active:true, pending:false, notes:"", where:"home"});
+  S.on.routine = true; return true;
 }
 function setupAddPerson(quiet){
   const g = id=>String((document.getElementById(id)||{}).value||"").trim(), name = g("su-pname");
@@ -2539,6 +2667,8 @@ function setupKeepTyped(id){
   if(id==="about"){ const v = (document.getElementById("su-other")||{}).value; if(v!=null) S.profile = Object.assign({}, S.profile, {other:v.trim()}); }
   if(id==="foods"){ if(SU_LIST.some(r=>r.on)){ toast("Press Add to keep the foods from your list, or untick them"); return false; } setupAddFoods(); }
   if(id==="meds") setupAddMed();
+  if(id==="about"){ const b = view.querySelector("[data-diagadd]"), n = document.getElementById("dg-name"); if(b && n && n.value.trim()) b.click(); }
+  if(id==="routine") setupAddRoutine();
   if(id==="labs" && LAB_PASTE.some(r=>r.on)){ toast("Press Save to keep those results, or untick them"); return false; }
   if(id==="household" && setupAddPerson(true)===null) return false;
   return true;
@@ -2556,6 +2686,8 @@ view.addEventListener("click", e=>{
   if(t.id==="su-listRead"){ SU_LIST = setupParseList((document.getElementById("su-listtext")||{}).value); renderSetup(); if(!SU_LIST.length) toast("No foods found. Put one per line or separate them with commas"); return; }
   if(t.id==="su-listSave"){ const n = setupListSave(); renderSetup(); toast(n+" food"+(n===1?"":"s")+" added"); return; }
   if(t.id==="su-foodsAdd"){ const n = setupAddFoods(); save(); renderSetup(); toast(n?"Added":"Type a food first"); return; }
+  if(d.suMdel!==undefined){ const s = S.supplements[+d.suMdel]; if(s){ S.supplements.splice(+d.suMdel,1); save(); renderSetupKeep(); toast("Removed "+s.name); } return; }
+  if(t.id==="su-rAdd"){ if(setupAddRoutine()){ save(); renderSetup(); toast("Added"); } else toast("Type a name first"); return; }
   if(t.id==="su-medAdd"){ if(setupAddMed()){ save(); renderSetup(); toast("Added"); } else toast("Type a name first"); return; }
   if(t.id==="su-personAdd"){ if(setupAddPerson(false)){ save(); renderSetup(); toast("Added"); } return; }
   if(d.suXdel!==undefined){ const x = S.rules.extra[+d.suXdel]; if(x){ S.rules.extra = S.rules.extra.filter((_,j)=>j!==+d.suXdel); logRule("Removed "+(x.label||x.word)+" from flagged foods"); save(); renderSetup(); } return; }
@@ -2584,6 +2716,17 @@ view.addEventListener("change", e=>{
       else { document.getElementById("lp-text").value = r.result; document.getElementById("lpRead").click(); } };
     r.readAsText(f); t.value = ""; return; }
   if(d.suPan){ setupPantrySet([d.suPan], t.checked); return; }
+  if(d.suSeason){ setupSeasonSet(d.suSeason, d.suSeason==="noFrost" ? t.checked : +t.value); return; }
+  if(d.suF!==undefined){ const box = t.closest("[data-su-fx]"); if(!box) return; suFreqShow(box);
+    const r = box.dataset.suFx!=="new" && (S.routine||[]).find(x=>x.id===box.dataset.suFx);
+    if(r){ const f = suFreqRead(box); delete f.asNeeded; Object.assign(r, f); save(); } return; }
+  if(d.suRt){ const R = S.routine = S.routine||[], st = SETUP_ROUTINE.find(x=>x[0]===d.suRt); let r = R.find(x=>x.id===d.suRt);
+    if(!r && st && t.checked){ r = {id:st[0], name:st[1], how:st[2], times:"", days:[], active:true, pending:false, notes:"", where:st[3]}; R.push(r); }
+    if(r){ r.active = t.checked; if(t.checked) S.on.routine = true; logRule((t.checked?"Started ":"Paused ")+r.name); }
+    save(); renderSetupKeep(); return; }
+  if(d.suRwhere){ const r = (S.routine||[]).find(x=>x.id===d.suRwhere); if(r){ r.where = t.value; save(); } return; }
+  if(d.suRtimes){ const r = (S.routine||[]).find(x=>x.id===d.suRtimes); if(r){ r.times = t.value.trim(); r.pending = false; save();
+    const bad = badTimes(r.times); if(bad.length) toast("Couldn't read "+bad.join(", ")+". Use a form like 8:00 or 6:30pm"); } return; }
   if(t.id==="su-backup" && t.files && t.files[0]){ const r = new FileReader();
     r.onload = ()=>{ try{ const v = JSON.parse(r.result); if(!v || typeof v!=="object" || !v.supplements) throw 0;
       S = merge(v); S.setup = Object.assign({}, S.setup, {status:"done", done:ymd(new Date())}); save(); toast("Backup loaded"); TAB = "today"; render(); }

@@ -2,6 +2,15 @@
   "note": "Newest first. MAJOR.MINOR.PATCH: MINOR for new features, PATCH for fixes. The top entry is the app's version.",
   "changes": [
     {
+      "v": "0.24.0",
+      "date": "2026-11-25",
+      "items": [
+        "Setup guide: new \"Your routine\" step. Tick common steps like walking, breath work, dry brushing, a sinus rinse or a sauna, or add your own. Each one gets how often (every day, some days or every other day), at home or in town, and times a day. A clock time is optional.",
+        "Setup guide: medicines and supplements now ask how often, times a day, and \"only as needed\" with a most-per-day limit.",
+        "Setup guide also covers: diagnoses like fatty liver plus your own, an evening check-in, walks after meals, a water goal, your frost months for \"local now\" in the pantry, and opening the app on Quick."
+      ]
+    },
+    {
       "v": "0.23.0",
       "date": "2026-11-24",
       "items": [
