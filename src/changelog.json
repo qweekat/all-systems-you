@@ -2,6 +2,13 @@
   "note": "Newest first. MAJOR.MINOR.PATCH: MINOR for new features, PATCH for fixes. The top entry is the app's version.",
   "changes": [
     {
+      "v": "0.20.0",
+      "date": "2026-11-24",
+      "items": [
+        "Pantry: \"local now\" follows the season where you live. Set your last spring and first fall frost months (or no frost), and change when each item counts as local. Sources: NOAA Climate.gov and Penn State Extension."
+      ]
+    },
+    {
       "v": "0.19.0",
       "date": "2026-11-24",
       "items": [

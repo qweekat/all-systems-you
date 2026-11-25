@@ -148,6 +148,7 @@ footer { color: var(--muted); font-size: 0.85rem; display: flex; flex-direction:
         <button class="btn sm ghost" id="btn-clear-pantry">Clear pantry</button>
       </div>
       <label class="small"><input type="checkbox" id="staples-soft"> Count a meal as ready even if a spice or oil isn't ticked</label>
+      <details class="small" id="season-box"></details>
       <div class="row">
         <input type="text" id="custom-name" placeholder="Something else you have, like &quot;frozen peas&quot;" aria-label="Add another item">
         <select id="custom-cat" aria-label="Which section"><option value="">Section: guess for me</option></select>
@@ -325,7 +326,7 @@ footer { color: var(--muted); font-size: 0.85rem; display: flex; flex-direction:
     try { return [{ level: 'avoid', re: new RegExp('(?<![\\p{L}\\p{N}])(?:' + b.pat + ')(?![\\p{L}\\p{N}])', 'giu'), label: 'Food break: ' + b.label, why: 'You are taking a break from this until ' + untilText(b) + '.', src: b.src || [] }]; } catch (e) { return []; }
   });
   // Filled in at build time from sources.json.
-  const SOURCES = {"fda-grapefruit": {"short": "U.S. Food and Drug Administration", "url": "https://www.fda.gov/consumers/consumer-updates/grapefruit-juice-and-some-drugs-dont-mix", "status": "cited"}, "ods-vitamin-k": {"short": "NIH Office of Dietary Supplements", "url": "https://ods.od.nih.gov/factsheets/VitaminK-HealthProfessional/", "status": "cited"}, "fda-licorice": {"short": "U.S. Food and Drug Administration", "url": "https://www.drugs.com/fda-consumer/black-licorice-trick-or-treat-198.html", "status": "cited"}, "mayo-maoi": {"short": "Mayo Clinic", "url": "https://www.mayoclinic.org/diseases-conditions/depression/expert-answers/maois/faq-20058035", "status": "cited"}, "cdc-carbs": {"short": "U.S. Centers for Disease Control and Prevention", "url": "https://www.cdc.gov/diabetes/healthy-eating/choosing-healthy-carbs.html", "status": "cited"}, "cdc-drinks": {"short": "U.S. Centers for Disease Control and Prevention", "url": "https://www.cdc.gov/healthy-weight-growth/rethink-your-drink/index.html", "status": "cited"}, "atkinson-2008": {"short": "International Tables of Glycemic Index and Glycemic Load Values", "url": "https://doi.org/10.2337/dc08-1239", "status": "cited"}, "usda-fdc": {"short": "U.S. Department of Agriculture", "url": "https://fdc.nal.usda.gov/", "status": "cited"}, "celiac-sources": {"short": "Celiac Disease Foundation", "url": "https://celiac.org/gluten-free-living/what-is-gluten/sources-of-gluten/", "status": "cited"}, "nci-aflatoxin": {"short": "National Cancer Institute", "url": "https://www.cancer.gov/about-cancer/causes-prevention/risk/substances/aflatoxins", "status": "cited"}, "break-the-mold": {"short": "Break the Mold", "url": "", "status": "cited"}, "glucose-revolution": {"short": "Glucose Revolution", "url": "https://www.simonandschuster.com/books/Glucose-Revolution/Jessie-Inchauspe/9781982179410", "status": "cited"}, "glucose-goddess-hacks": {"short": "Jessie Inchausp\u00e9, glucosegoddess.com", "url": "https://www.glucosegoddess.com/", "status": "cited"}, "fast-like-a-girl": {"short": "Fast Like a Girl", "url": "https://www.penguinrandomhouse.com/books/710817/fast-like-a-girl-by-dr-mindy-pelz/", "status": "cited"}, "ifm-detox-guide": {"short": "The Institute for Functional Medicine, 2017", "url": "", "status": "cited"}, "ifm-detox-planner": {"short": "The Institute for Functional Medicine, 2015", "url": "", "status": "reference"}, "ifm-cardiometabolic": {"short": "The Institute for Functional Medicine, 2022", "url": "", "status": "reference"}, "ifm-gi-gl": {"short": "The Institute for Functional Medicine, 2022", "url": "", "status": "reference"}, "ifm-micronutrients": {"short": "The Institute for Functional Medicine, 2022", "url": "", "status": "reference"}, "ifm-histamine": {"short": "The Institute for Functional Medicine, 2022", "url": "", "status": "reference"}, "ifm-lean-protein": {"short": "The Institute for Functional Medicine, 2022", "url": "", "status": "reference"}, "ifm-smoothie": {"short": "The Institute for Functional Medicine, 2022", "url": "", "status": "reference"}, "ifm-anti-candida": {"short": "The Institute for Functional Medicine, 2023", "url": "", "status": "reference"}, "safm-fiber": {"short": "Purpose Inc., The School of Applied Functional Medicine", "url": "", "status": "reference"}, "mailoo-2017": {"short": "Lysine for Herpes Simplex Prophylaxis", "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC6419779", "status": "cited"}, "griffith-1987": {"short": "Success of L-Lysine Therapy in Frequently Recurrent Herpes simplex Infection", "url": "https://doi.org/10.1159/000248823", "status": "cited"}, "fda-allergens": {"short": "U.S. Food and Drug Administration", "url": "https://www.fda.gov/food/buy-store-serve-safe-food/food-allergies-what-you-need-know", "status": "cited"}, "household": {"short": "U.S. Federal Trade Commission", "url": "https://www.ftc.gov/business-guidance/resources/mobile-health-app-developers-ftc-best-practices", "status": "cited"}, "owasp-password-storage": {"short": "OWASP Foundation", "url": "https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html", "status": "cited"}, "nist-sp-800-132": {"short": "National Institute of Standards and Technology", "url": "https://doi.org/10.6028/NIST.SP.800-132", "status": "cited"}, "nist-sp-800-108": {"short": "National Institute of Standards and Technology", "url": "https://doi.org/10.6028/NIST.SP.800-108r1-upd1", "status": "cited"}, "rfc-2104": {"short": "Internet Engineering Task Force", "url": "https://www.rfc-editor.org/rfc/rfc2104", "status": "cited"}};
+  const SOURCES = {"fda-grapefruit": {"short": "U.S. Food and Drug Administration", "url": "https://www.fda.gov/consumers/consumer-updates/grapefruit-juice-and-some-drugs-dont-mix", "status": "cited"}, "ods-vitamin-k": {"short": "NIH Office of Dietary Supplements", "url": "https://ods.od.nih.gov/factsheets/VitaminK-HealthProfessional/", "status": "cited"}, "fda-licorice": {"short": "U.S. Food and Drug Administration", "url": "https://www.drugs.com/fda-consumer/black-licorice-trick-or-treat-198.html", "status": "cited"}, "mayo-maoi": {"short": "Mayo Clinic", "url": "https://www.mayoclinic.org/diseases-conditions/depression/expert-answers/maois/faq-20058035", "status": "cited"}, "cdc-carbs": {"short": "U.S. Centers for Disease Control and Prevention", "url": "https://www.cdc.gov/diabetes/healthy-eating/choosing-healthy-carbs.html", "status": "cited"}, "cdc-drinks": {"short": "U.S. Centers for Disease Control and Prevention", "url": "https://www.cdc.gov/healthy-weight-growth/rethink-your-drink/index.html", "status": "cited"}, "atkinson-2008": {"short": "International Tables of Glycemic Index and Glycemic Load Values", "url": "https://doi.org/10.2337/dc08-1239", "status": "cited"}, "usda-fdc": {"short": "U.S. Department of Agriculture", "url": "https://fdc.nal.usda.gov/", "status": "cited"}, "celiac-sources": {"short": "Celiac Disease Foundation", "url": "https://celiac.org/gluten-free-living/what-is-gluten/sources-of-gluten/", "status": "cited"}, "nci-aflatoxin": {"short": "National Cancer Institute", "url": "https://www.cancer.gov/about-cancer/causes-prevention/risk/substances/aflatoxins", "status": "cited"}, "break-the-mold": {"short": "Break the Mold", "url": "", "status": "cited"}, "glucose-revolution": {"short": "Glucose Revolution", "url": "https://www.simonandschuster.com/books/Glucose-Revolution/Jessie-Inchauspe/9781982179410", "status": "cited"}, "glucose-goddess-hacks": {"short": "Jessie Inchausp\u00e9, glucosegoddess.com", "url": "https://www.glucosegoddess.com/", "status": "cited"}, "fast-like-a-girl": {"short": "Fast Like a Girl", "url": "https://www.penguinrandomhouse.com/books/710817/fast-like-a-girl-by-dr-mindy-pelz/", "status": "cited"}, "ifm-detox-guide": {"short": "The Institute for Functional Medicine, 2017", "url": "", "status": "cited"}, "ifm-detox-planner": {"short": "The Institute for Functional Medicine, 2015", "url": "", "status": "reference"}, "ifm-cardiometabolic": {"short": "The Institute for Functional Medicine, 2022", "url": "", "status": "reference"}, "ifm-gi-gl": {"short": "The Institute for Functional Medicine, 2022", "url": "", "status": "reference"}, "ifm-micronutrients": {"short": "The Institute for Functional Medicine, 2022", "url": "", "status": "reference"}, "ifm-histamine": {"short": "The Institute for Functional Medicine, 2022", "url": "", "status": "reference"}, "ifm-lean-protein": {"short": "The Institute for Functional Medicine, 2022", "url": "", "status": "reference"}, "ifm-smoothie": {"short": "The Institute for Functional Medicine, 2022", "url": "", "status": "reference"}, "ifm-anti-candida": {"short": "The Institute for Functional Medicine, 2023", "url": "", "status": "reference"}, "safm-fiber": {"short": "Purpose Inc., The School of Applied Functional Medicine", "url": "", "status": "reference"}, "mailoo-2017": {"short": "Lysine for Herpes Simplex Prophylaxis", "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC6419779", "status": "cited"}, "griffith-1987": {"short": "Success of L-Lysine Therapy in Frequently Recurrent Herpes simplex Infection", "url": "https://doi.org/10.1159/000248823", "status": "cited"}, "fda-allergens": {"short": "U.S. Food and Drug Administration", "url": "https://www.fda.gov/food/buy-store-serve-safe-food/food-allergies-what-you-need-know", "status": "cited"}, "household": {"short": "U.S. Federal Trade Commission", "url": "https://www.ftc.gov/business-guidance/resources/mobile-health-app-developers-ftc-best-practices", "status": "cited"}, "owasp-password-storage": {"short": "OWASP Foundation", "url": "https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html", "status": "cited"}, "nist-sp-800-132": {"short": "National Institute of Standards and Technology", "url": "https://doi.org/10.6028/NIST.SP.800-132", "status": "cited"}, "nist-sp-800-108": {"short": "National Institute of Standards and Technology", "url": "https://doi.org/10.6028/NIST.SP.800-108r1-upd1", "status": "cited"}, "rfc-2104": {"short": "Internet Engineering Task Force", "url": "https://www.rfc-editor.org/rfc/rfc2104", "status": "cited"}, "noaa-last-freeze": {"short": "NOAA Climate.gov", "url": "https://www.climate.gov/LastFreeze", "status": "cited"}, "psu-cool-warm": {"short": "Penn State Extension", "url": "https://extension.psu.edu/cool-season-vs-warm-season-vegetables", "status": "cited"}};
   const RULES_SOURCE = 'Starter lists on: ' + (Object.entries(STARTER_PACKS).filter(([id]) => PACKS_ON.includes(id)).map(([, p]) => p.name).join(', ') || 'none') + '.' + (BREAKS_ON.length ? ' Food breaks on: ' + BREAKS_ON.map(b => b.label + ' until ' + untilText(b)).join(', ') + '.' : '') + ' Change them on My rules in all systems you.';
   // Your own rules go first: "never flag" words, then words you added, then the built-in list.
   const RULES = [...BREAK_RULES, ...USER_OK, ...USER_EXTRA, ...BUILTIN_RULES.map(r => ({ ...r, why: r.why.replace('2 hours', spacingText) }))];
@@ -1122,7 +1123,7 @@ var HH = (function(){
         <div class="checks">${items.map(i => {
           const w = i.custom ? warnFor(i.n + ' ' + (i.label?.ingredients || '')) : null;
           const cov = coveredBy(i.id), as = i.custom ? matchIds(i.n).map(id => ITEM[id] && ITEM[id].n).filter(Boolean) : [];
-          return `<label><input type="checkbox" data-item="${i.id}" ${state.pantry[i.id] ? 'checked' : ''}><span>${esc(i.n)}${i.local ? ' <span class="loc">local now</span>' : ''}
+          return `<label><input type="checkbox" data-item="${i.id}" ${state.pantry[i.id] ? 'checked' : ''}><span>${esc(i.n)}${localNow(i) ? ' <span class="loc">local now</span>' : ''}
             ${cov ? `<br><span class="small muted">Covered by ${esc(cov.join(', '))}</span>` : ''}${as.length ? `<br><span class="small muted">Counts as ${esc(as.join(', '))}</span>` : ''}
             ${labelLine(i.label)}${w ? `<br><span class="warn-line ${w.lvl}">${esc(w.text)}</span>` : ''}
             ${i.custom ? `<button class="btn ghost sm" data-edit-custom="${i.id}" aria-label="Edit ${esc(i.n)}">edit</button> ` : ''}<button class="btn ghost sm" data-del-custom="${i.id}" aria-label="Remove ${esc(i.n)} from my list">remove</button></span></label>`;
@@ -1170,6 +1171,63 @@ var HH = (function(){
   const softEl = document.getElementById('staples-soft');
   softEl.checked = softStaples();
   softEl.addEventListener('change', () => { state.staplesSoft = softEl.checked; save(); render(); });
+  // ---------- Local season ----------
+  // "local now" follows the month and your own frost months. Each fresh item has a season type you can change.
+  // Cool- and warm-season groups follow Penn State Extension; frost months come from your local freeze dates (NOAA Climate.gov).
+  const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  const SEASON_TYPES = [['', 'No tag'], ['spring', 'Spring only'], ['cool', 'Spring and fall (cool season)'], ['warm', 'Summer (warm season)'], ['store', 'Fall harvest that keeps into spring'], ['year', 'Local all year'], ['none', 'Not local where I live']];
+  const SEASON_DEF = {
+    butternut: 'store', acorn: 'store', piepumpkin: 'store', beets: 'store', leeks: 'cool', onion: 'store', garlic: 'store', chard: 'cool', spinach: 'cool',
+    zucchini: 'warm', sweetpotato: 'store', cucumber: 'warm', lime: 'none', lemon: 'none', snappeas: 'cool', ginger: 'none', jalapeno: 'warm', cilantro: 'cool',
+    basil: 'warm', herbs: 'warm', persimmon: 'none', kiwi: 'none', raspberries: 'none', berries: 'warm', asparagus: 'spring', carrots: 'store', celery: 'cool',
+    greens: 'cool', tomato: 'warm', apple: 'store', broccoli: 'cool', cauliflower: 'cool', cabbage: 'store', bellpepper: 'warm', mushrooms: 'year', greenbeans: 'warm',
+    lettuce: 'cool', potato: 'store', potatoes: 'store', avocado: 'none', banana: 'none', chicken: 'year', turkey: 'year', beef: 'year', bison: 'year', lamb: 'year',
+    pork: 'year', eggs: 'year', trout: 'year', fish: 'none', sablefish: 'none', driedbeans: 'year',
+  };
+  const SEASON_START = {last: 4, fall: 10, type: {}};
+  function seasonCfg() {
+    const s = state.season || {};
+    return { last: Number(s.last) || SEASON_START.last, fall: Number(s.fall) || SEASON_START.fall, noFrost: !!s.noFrost, type: Object.assign({}, SEASON_START.type, s.type || {}), set: !!s.last };
+  }
+  const inMonths = (m, a, b) => { a = ((a - 1) % 12 + 12) % 12 + 1; b = ((b - 1) % 12 + 12) % 12 + 1; return a <= b ? m >= a && m <= b : m >= a || m <= b; };
+  function seasonType(i) { const c = seasonCfg(); return (i.id in c.type) ? c.type[i.id] : (SEASON_DEF[i.id] || ''); }
+  function localNow(i, m) {
+    if (!i) return false;
+    m = m || new Date().getMonth() + 1;
+    const t = seasonType(i), c = seasonCfg(), L = c.last, F = c.fall;
+    if (!t || t === 'none') return false;
+    if (t === 'year') return true;
+    if (c.noFrost) return t === 'warm' || t === 'store' ? true : inMonths(m, 11, 4);
+    if (t === 'spring') return inMonths(m, L - 1, L + 1);
+    if (t === 'cool') return inMonths(m, L - 1, L + 1) || inMonths(m, F - 1, F + 1);
+    if (t === 'warm') return inMonths(m, L + 1, F);
+    if (t === 'store') return inMonths(m, F - 1, L - 2);
+    return false;
+  }
+  function renderSeason() {
+    const box = document.getElementById('season-box'); if (!box) return;
+    const c = seasonCfg(), open = box.open, monthSel = (k, v) => `<select data-season="${k}">${MONTHS.map((n, i) => `<option value="${i + 1}" ${i + 1 === v ? 'selected' : ''}>${n}</option>`).join('')}</select>`;
+    const fresh = ITEMS.filter(i => i.c === 'produce' || i.c === 'meat' || (i.id in SEASON_DEF));
+    box.innerHTML = `<summary><b>"Local now" follows your season.</b> ${c.set ? '' : 'Set your frost months. '}Tap to change.</summary>
+      <div style="display:grid;gap:8px;margin-top:8px">
+        <label>Last spring frost ${monthSel('last', c.last)}</label>
+        <label>First fall frost ${monthSel('fall', c.fall)}</label>
+        <label><input type="checkbox" data-season="noFrost" ${c.noFrost ? 'checked' : ''}> No frost where I live</label>
+        <span class="muted">Look up your frost dates on <a href="https://www.climate.gov/LastFreeze" target="_blank" rel="noopener">NOAA Climate.gov</a> or from your local extension office. High places like mountain towns frost later in spring and earlier in fall. Nothing about where you live leaves this device.</span>
+        <details><summary>When each item is local (${fresh.length} items)</summary><div style="display:grid;gap:4px;margin-top:6px">${fresh.map(i => `<label>${esc(i.n)} <select data-seasontype="${i.id}">${SEASON_TYPES.map(([v, n]) => `<option value="${v}" ${seasonType(i) === v ? 'selected' : ''}>${n}</option>`).join('')}</select>${localNow(i) ? ' <span class="loc">local now</span>' : ''}</label>`).join('')}</div></details>
+      </div>`;
+    box.open = open;
+  }
+  document.addEventListener('change', e => {
+    const t = e.target; if (!t.dataset || (t.dataset.season === undefined && t.dataset.seasontype === undefined)) return;
+    const s = state.season = state.season || {};
+    if (t.dataset.seasontype !== undefined) { s.type = s.type || {}; s.type[t.dataset.seasontype] = t.value; }
+    else if (t.dataset.season === 'noFrost') s.noFrost = t.checked;
+    else { s[t.dataset.season] = +t.value; const c = seasonCfg(); s.last = c.last; s.fall = c.fall; }
+    save(); render(); renderSeason();
+  });
+  renderSeason();
+
   document.getElementById('btn-clear-pantry').addEventListener('click', () => {
     if (!confirm('Untick everything in your pantry?')) return;
     state.pantry = {}; save(); render();
@@ -1444,7 +1502,7 @@ var HH = (function(){
       if (!ids.length) continue;
       out.push(`<div class="shop-group"><h3>${esc(cname)}</h3>${ids.map(id => {
         const amts = [...buy.get(id).entries()].map(([from, x]) => `${x.amt}${x.n > 1 ? ' ×' + x.n : ''} (${from})`).join('; ');
-        return `<label class="shop-item ${state.got[id] ? 'got' : ''}"><input type="checkbox" data-got="${id}" ${state.got[id] ? 'checked' : ''}><span><span class="nm">${esc(ITEM[id]?.n || id)}</span>${ITEM[id]?.local ? ' <span class="pill ok">local now</span>' : ''}<br><span class="amt">${esc(amts)}</span></span></label>`;
+        return `<label class="shop-item ${state.got[id] ? 'got' : ''}"><input type="checkbox" data-got="${id}" ${state.got[id] ? 'checked' : ''}><span><span class="nm">${esc(ITEM[id]?.n || id)}</span>${localNow(ITEM[id]) ? ' <span class="pill ok">local now</span>' : ''}<br><span class="amt">${esc(amts)}</span></span></label>`;
       }).join('')}</div>`);
     }
     if (others.size) out.push(`<div class="shop-group"><h3>For others</h3>${[...others.keys()].map(id =>

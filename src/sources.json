@@ -372,6 +372,28 @@
    ],
    "status": "cited",
    "note": "The seal that catches a wrong passcode or a changed card."
+  },
+  {
+   "id": "noaa-last-freeze",
+   "title": "When to expect your last spring freeze",
+   "org": "NOAA Climate.gov",
+   "kind": "Map and lookup",
+   "url": "https://www.climate.gov/LastFreeze",
+   "topics": [
+    "Local season"
+   ],
+   "status": "cited"
+  },
+  {
+   "id": "psu-cool-warm",
+   "title": "Cool-Season vs. Warm-Season Vegetables",
+   "org": "Penn State Extension",
+   "kind": "Article",
+   "url": "https://extension.psu.edu/cool-season-vs-warm-season-vegetables",
+   "topics": [
+    "Local season"
+   ],
+   "status": "cited"
   }
  ]
 }
