@@ -642,7 +642,7 @@ function itemsFor(d, plain){
   const dow = d.getDay(), T = S.times, items = [];
   const add = o=>items.push(o);
   if(S.on.supps) for(const s of S.supplements){
-    if(!s.active || !dueOn(s,d)) continue;
+    if(!s.active || s.asNeeded || !dueOn(s,d)) continue;
     const ts = parseTimes(s.times);
     const dose = suppDose(s,d);
     const detail = [dose, s.how].filter(Boolean).join(". ");
@@ -883,6 +883,17 @@ function eatingWindow(d){
   const warn = wake && ((first - mins(wake) + 1440) % 1440) > 12*60 ? "Your first meal would come long after you wake. Shorten the fast or move bedtime." : "";
   return {first:fromMins(first), last:fromMins(last), lunch:fromMins(Math.round(first + ((last - first + 1440) % 1440)/2) % 1440), hours:fh, warn};
 }
+/* As-needed supplements: no reminders and not on the checklist. Tap "Took it" to log the time; an optional most-per-day shows a warning. */
+function prnHtml(key, lg){
+  const list = S.supplements.filter(s=>s.active && s.asNeeded); if(!list.length) return "";
+  const taken = lg.prn||[];
+  return `<section class="panel"><h2>As needed</h2><div class="stack" style="gap:10px">${list.map(s=>{
+    const mine = taken.filter(x=>x.id===s.id), max = Number(s.maxPerDay)||0, full = max>0 && mine.length>=max;
+    return `<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap"><div><b>${esc(s.name)}</b>${s.dose?` <small class="muted">${esc(s.dose)}</small>`:""}<br>
+      <small class="muted">${mine.length?"Taken "+mine.length+(max?" of "+max:"")+" today: "+mine.map(x=>niceTime(x.t)).join(", "):(max?"Up to "+max+" a day. Not taken today.":"Not taken today.")}</small>
+      ${full?`<br><small style="color:var(--rust,#a4462e)"><b>That's your most for today.</b></small>`:""}</div>
+      <div class="chips" style="gap:8px"><button class="btn ${full?"ghost":""}" data-prn="${esc(s.id)}" data-day="${key}">${full?"Took another":"Took it"}</button>${mine.length?`<button class="linkbtn" data-prnundo="${esc(s.id)}" data-day="${key}">Undo</button>`:""}</div></div>`; }).join("")}</div></section>`;
+}
 function renderDay(offset){
   const d = addDays(new Date(), offset), key = ymd(d), lg = S.log[key]||{done:{},water:0};
   const {timed, untimed} = itemsFor(d);
@@ -922,6 +933,7 @@ function renderDay(offset){
       ${offset===0&&!done&&!ms&&missable(it)?`<button class="linkbtn" data-miss="${esc(it.id)}" data-day="${key}" style="margin-right:14px">Missed it</button>`:""}${it.kind==="supp"||it.kind==="routine"||it.kind==="meal"?`<button class="linkbtn" data-noteabout="${esc(it.kind==="meal"?it.title.replace(/^[^:]+: /,""):it.title)}">Add a note</button>`:""}</div></li>`;
   }
   h += `</ol></section>`;
+  if(offset===0) h += prnHtml(key, lg);
   if(untimed.length){
     h += `<section class="panel"><h2>No time set yet</h2><small class="muted">These won't remind you until they have a time. Add times on the Supplements &amp; routine tab.</small><ol class="day">`;
     for(const it of untimed){
@@ -1120,6 +1132,8 @@ function renderSupps(){
       ${freqHtml(s,i,"s")}
       <div class="row">
         <label class="inline"><input type="checkbox" data-s="${i}" data-f="pending" ${s.pending?"checked":""}> Not confirmed yet</label>
+        <label class="inline"><input type="checkbox" data-s="${i}" data-f="asNeeded" ${s.asNeeded?"checked":""}> As needed (no reminders)</label>
+        ${s.asNeeded?`<label class="inline">Most per day <input type="number" min="0" max="20" style="width:4.5em" data-s="${i}" data-f="maxPerDay" value="${esc(s.maxPerDay||"")}" placeholder="any"></label>`:""}
         <label class="inline"><input type="checkbox" data-s="${i}" data-f="binder" ${s.binder?"checked":""}> Fiber or binder (keep apart from others)</label>
         <label class="inline"><input type="checkbox" data-s="${i}" data-f="active" ${s.active?"checked":""}> Taking it now</label>
         <button class="btn ghost" data-del="${i}">Remove</button>
@@ -1660,6 +1674,8 @@ view.addEventListener("change",e=>{
 });
 view.addEventListener("click",async e=>{
   const t = e.target;
+  if(t.dataset.prn){ const lg = dayLog(t.dataset.day), n = new Date(); (lg.prn = lg.prn||[]).push({id:t.dataset.prn, t:fromMins(n.getHours()*60+n.getMinutes())}); save(); render(); toast("Logged"); return; }
+  if(t.dataset.prnundo){ const lg = dayLog(t.dataset.day), k = (lg.prn||[]).map(x=>x.id).lastIndexOf(t.dataset.prnundo); if(k>=0) lg.prn.splice(k,1); save(); render(); return; }
   if(t.dataset.miss){ const it = itemsFor(parseYmd(t.dataset.day)).timed.find(x=>x.id===t.dataset.miss); if(it && markMissed(it, t.dataset.day, false)){ save(); render(); const r=S.log[t.dataset.day].missed[it.id]; toast(r.day?"Moved to "+whenText(r.day,r.time):"Skipped"); } return; }
   if(t.dataset.unmiss){ undoMissed(t.dataset.day, t.dataset.unmiss); save(); render(); return; }
   if(t.dataset.tododel){ S.todo=(S.todo||[]).filter(x=>x.id!==t.dataset.tododel); save(); renderRules(); return; }

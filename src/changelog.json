@@ -2,6 +2,13 @@
   "note": "Newest first. MAJOR.MINOR.PATCH: MINOR for new features, PATCH for fixes. The top entry is the app's version.",
   "changes": [
     {
+      "v": "0.18.0",
+      "date": "2026-11-24",
+      "items": [
+        "As needed supplements: tick As needed on a supplement and it leaves your checklist and reminders. Tap Took it on Today or Quick to log the time. You can set a most per day and get a warning when you reach it."
+      ]
+    },
+    {
       "v": "0.17.3",
       "date": "2026-11-24",
       "items": [
