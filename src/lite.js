@@ -123,12 +123,17 @@ function liteRow(x, key, btn){
   return `<div class="lrow"><div><b>${esc(x.s.name)}</b>${suppDose(x.s,new Date())?` <small class="muted">${esc(suppDose(x.s,new Date()))}</small>`:""}<br><small class="muted">${esc(liteWhy(x))}${x.due!=null&&x.due>liteNowM()?" · "+liteIn(x.due):""}</small></div>${btn?`<button class="btn" data-litedone="${esc(x.k)}" data-sid="${esc(x.s.id)}" data-day="${key}">Done</button>`:""}</div>`;
 }
 /* The same "when" settings on Lite, Today and Quick. Full edits and removing live on Supplements & routine. */
+const LITE_ROW_OPEN = new Set();
+function liteWhenSummary(s){ const ws = s.whens||[]; if(!ws.length) return "not set (any time)"; const h = Number(s.afterH)||0;
+  return ws.map(a=>liteName(a)).join(", ") + (h ? " · "+((LITE_AFTER.find(v=>v[0]===h)||[0,""])[1]) : ""); }
+document.addEventListener("toggle", e=>{ const d = e.target; if(d && d.dataset && d.dataset.sw){ if(d.open) LITE_ROW_OPEN.add(d.dataset.sw); else LITE_ROW_OPEN.delete(d.dataset.sw); } }, true);
+function liteSumRefresh(sid){ const s = S.supplements.find(x=>x.id===sid), el = document.querySelector(`[data-swsum="${CSS.escape(sid)}"]`); if(s && el) el.textContent = liteWhenSummary(s); }
 function liteSetWhenHtml(){
   return `<details class="panel" ${LITE_SET_OPEN?"open":""}><summary><b>Set when you take each one</b></summary>
       <small class="muted">Pick the moments for each supplement. "After" waits that long after you tap the moment, for things like psyllium. "Before" a meal or bedtime counts down from the time planned for it in the full app, and moves up if you eat early.</small>
-      ${S.supplements.filter(s=>s.active&&!s.asNeeded).map(s=>`<div class="stack" style="gap:4px;border-top:1px solid var(--line,#ddd);padding-top:8px"><b>${esc(s.name)}</b>
+      ${S.supplements.filter(s=>s.active&&!s.asNeeded).map(s=>`<details data-sw="${esc(s.id)}" ${LITE_ROW_OPEN.has(s.id)?"open":""} style="border-top:1px solid var(--line,#ddd);padding-top:8px"><summary><b>${esc(s.name)}</b> <small class="muted" data-swsum="${esc(s.id)}">${esc(liteWhenSummary(s))}</small></summary><div class="stack" style="gap:4px;margin-top:6px">
         <div class="chips" style="gap:4px 12px">${LITE_ANCHORS.map(([a,n])=>`<label class="inline" style="font-weight:400"><input type="checkbox" data-litewhen="${esc(s.id)}:${a}" ${(s.whens||[]).includes(a)?"checked":""}> ${n}</label>`).join("")}</div>
-        <label class="inline" style="font-weight:400">Take it <select data-liteafter="${esc(s.id)}">${LITE_AFTER.map(([v,n])=>`<option value="${v}" ${(Number(s.afterH)||0)===v?"selected":""}>${n}</option>`).join("")}</select></label></div>`).join("")}
+        <label class="inline" style="font-weight:400">Take it <select data-liteafter="${esc(s.id)}">${LITE_AFTER.map(([v,n])=>`<option value="${v}" ${(Number(s.afterH)||0)===v?"selected":""}>${n}</option>`).join("")}</select></label></div></details>`).join("")}
       <div class="stack" style="gap:6px;border-top:1px solid var(--line,#ddd);padding-top:8px"><b>Add a supplement or powder</b>
         <small class="muted">For something you take every day, like a fiber powder with lunch. Add it here, then tick when you take it.</small>
         <label>Name<input type="text" id="lite-sname" placeholder="e.g. Fiber powder"></label>
@@ -227,7 +232,7 @@ function liteClick(t){
     const prn = !!(document.getElementById("lite-sprn")||{}).checked, mx = Number(g("lite-smax"))||0;
     S.supplements.push(Object.assign({id:"s"+Date.now(), name, dose:g("lite-sdose"), times:"", how:"", binder:false, active:true, pending:false, notes:"", where:"home", whens:[]}, prn?{asNeeded:true, maxPerDay:mx||""}:{}));
     if(prn){ save(); render(); toast("Added. Tap Took it under As needed when you take it."); return true; }
-    LITE_SET_OPEN = true; save(); render(); LITE_SET_OPEN = false;
+    LITE_ROW_OPEN.add(S.supplements[S.supplements.length-1].id); LITE_SET_OPEN = true; save(); render(); LITE_SET_OPEN = false;
     const row = [...document.querySelectorAll("[data-litewhen]")].pop(); if(row) row.scrollIntoView({block:"center"});
     toast("Added. Now tick when you take it."); return true; }
   if(t.dataset.liteadd){ if(liteAddFood()){ render(); toast("Added"); } else toast("Type a food first"); return true; }
@@ -261,8 +266,8 @@ function liteChange(t){
   if(t.dataset.alert){ S[t.dataset.alert] = t.checked; save(); return true; }
   if(t.dataset.liteq){ const v = Number(t.value); if(v>0) LITE.pick[t.dataset.liteq] = v; LITE.other = (document.getElementById("lite-other")||{}).value||""; render(); return true; }
   if(t.dataset.litewhen){ const [sid,a] = t.dataset.litewhen.split(":"), s = S.supplements.find(x=>x.id===sid); if(!s) return true;
-    s.whens = (s.whens||[]).filter(x=>x!==a); if(t.checked) s.whens.push(a); s.whens.sort((x,y)=>LITE_ANCHORS.findIndex(v=>v[0]===x)-LITE_ANCHORS.findIndex(v=>v[0]===y)); save(); return true; }
-  if(t.dataset.liteafter){ const s = S.supplements.find(x=>x.id===t.dataset.liteafter); if(s){ s.afterH = Number(t.value)||0; save(); } return true; }
+    s.whens = (s.whens||[]).filter(x=>x!==a); if(t.checked) s.whens.push(a); s.whens.sort((x,y)=>LITE_ANCHORS.findIndex(v=>v[0]===x)-LITE_ANCHORS.findIndex(v=>v[0]===y)); save(); liteSumRefresh(sid); return true; }
+  if(t.dataset.liteafter){ const s = S.supplements.find(x=>x.id===t.dataset.liteafter); if(s){ s.afterH = Number(t.value)||0; save(); liteSumRefresh(s.id); } return true; }
   return false;
 }
 view.addEventListener("keydown", e=>{ if(e.target.id==="lite-other" && e.key==="Enter"){ e.preventDefault(); if(liteAddFood()){ render(); const o = document.getElementById("lite-other"); if(o) o.focus(); } } });

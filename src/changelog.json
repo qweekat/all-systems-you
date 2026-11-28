@@ -2,6 +2,13 @@
  "note": "Newest first. MAJOR.MINOR.PATCH: MINOR for new features, PATCH for fixes. The top entry is the app's version.",
  "changes": [
   {
+   "v": "0.27.1",
+   "date": "2026-11-28",
+   "items": [
+    "Set when you take each one: each supplement is its own folded row showing what it's set to."
+   ]
+  },
+  {
    "v": "0.27.0",
    "date": "2026-11-28",
    "items": [
