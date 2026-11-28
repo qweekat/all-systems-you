@@ -133,6 +133,7 @@ table.rep{width:100%;border-collapse:collapse;font-size:.92rem}table.rep th,tabl
 .su-more summary{cursor:pointer;font-weight:700;color:var(--juniper)}.su-more[open]{display:grid;gap:10px}
 .su-nav{display:flex;flex-wrap:wrap;gap:10px;align-items:center}.su-nav .btn{min-height:48px;padding:10px 20px}
 @media (prefers-reduced-motion:no-preference){.glass{transition:background .15s}}
+.lrow{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:6px 0}.lbig{display:grid;gap:10px}.lbig .btn{font-size:1.15rem;padding:14px}.lpick{text-align:left;padding:10px 12px;border:1px solid var(--line,#ddd);border-radius:10px;background:none;font:inherit;color:inherit}.lpick.on{border-color:var(--juniper,#2f6b57);background:var(--juniper-soft,#e6f0ec)}
 
 .qlist{display:grid;gap:8px}
 .qrow{font:inherit;display:grid;grid-template-columns:32px 72px 1fr;align-items:center;gap:8px;text-align:left;min-height:56px;padding:8px 12px;border:1px solid var(--line);border-radius:12px;background:var(--surface);color:var(--ink);cursor:pointer;touch-action:manipulation}
@@ -156,11 +157,12 @@ table.rep{width:100%;border-collapse:collapse;font-size:.92rem}table.rep th,tabl
   <nav class="tabs" role="tablist">
     <button role="tab" data-tab="today" aria-selected="true">Today</button>
     <button role="tab" data-tab="quick" aria-selected="false">Quick</button>
+    <button role="tab" data-tab="lite" aria-selected="false">Lite</button>
     <button role="tab" data-tab="tomorrow" aria-selected="false">Tomorrow</button>
     <button role="tab" data-tab="more" aria-selected="false">More</button>
   </nav>
   <main id="view"></main>
-  <footer class="muted" style="padding:16px 0 32px;font-size:.85rem;line-height:1.4"><b>all systems you</b>. Your health is complicated. Managing it shouldn't be.<br>all systems you helps you follow the plan you and your care team set. It is not medical advice and does not replace your doctor, dietitian or nurse. Check with them before changing your diet, medicines or supplements. Everything you enter stays on this device. Free and open source under the GNU AGPL 3.0. <a href="sources.html">Sources</a>. <span class="appver">Version 0.25.0.</span></footer>
+  <footer class="muted" style="padding:16px 0 32px;font-size:.85rem;line-height:1.4"><b>all systems you</b>. Your health is complicated. Managing it shouldn't be.<br>all systems you helps you follow the plan you and your care team set. It is not medical advice and does not replace your doctor, dietitian or nurse. Check with them before changing your diet, medicines or supplements. Everything you enter stays on this device. Free and open source under the GNU AGPL 3.0. <a href="sources.html">Sources</a>. <span class="appver">Version 0.26.0.</span></footer>
 </div>
 <div class="toast" id="toast" hidden></div>
 
@@ -1428,6 +1430,7 @@ function renderDay(offset){
       ${offset===0&&!done&&!ms&&missable(it)?`<button class="linkbtn" data-miss="${esc(it.id)}" data-day="${key}" style="margin-right:14px">Missed it</button>`:""}${it.kind==="supp"||it.kind==="routine"||it.kind==="meal"?`<button class="linkbtn" data-noteabout="${esc(it.kind==="meal"?it.title.replace(/^[^:]+: /,""):it.title)}">Add a note</button>`:""}</div></li>`;
   }
   h += `</ol></section>`;
+  if(offset===0) h += `<section class="panel stack" style="gap:8px">${ateListHtml(key)||"<b>Meals eaten</b><small class=\"muted\">Nothing logged yet today.</small>"}<div><button class="btn" data-liteeat="1">Log what I ate</button></div></section>`;
   if(offset===0) h += prnHtml(key, lg);
   if(untimed.length){
     h += `<section class="panel"><h2>No time set yet</h2><small class="muted">These won't remind you until they have a time. Add times on the Supplements &amp; routine tab.</small><ol class="day">`;
@@ -1530,6 +1533,269 @@ function renderDiagnoses(){
   </div>`;
 }
 view.addEventListener("toggle", e=>{ const d = e.target; if(!d.dataset || !d.dataset.dgkey) return; if(d.open) DIAG_OPEN.add(d.dataset.dgkey); else DIAG_OPEN.delete(d.dataset.dgkey); const m = d.querySelector(":scope > summary .dgmore"); if(m) m.textContent = d.open ? "less" : "more"; }, true);
+/* ---- Lite view: just what's next, by what you're doing (ported from the personal app). ---- */
+const QM_DONE = {b:"meal:b", l:"meal:l", d:"meal:d", s:"snack"};
+/* Meals you save from Lite, so you can pick them again. */
+function myMeals(){ return S.myMeals = S.myMeals||[]; }
+function addMyMeal(slot, name){
+  name = String(name||"").trim(); if(!name) return "";
+  const ex = myMeals().find(m=>m.t===slot && m.n.toLowerCase()===name.toLowerCase()); if(ex) return ex.id;
+  const id = "my_"+Date.now().toString(36); myMeals().push({id, t:slot, n:name}); return id;
+}
+function liteRecipe(id){ const mm = (S.myMeals||[]).find(r=>r.id===id); return mm ? {n:mm.n} : recipe(id); }
+/* A tick on Today or Quick updates Lite too: meals start their countdowns, Kitchen closes shows as closed, and unticking a supplement puts it back. */
+function syncFromTick(key, id, on){
+  const lg = dayLog(key), ev = lg.ev = lg.ev||{}, now = fromMins(new Date().getHours()*60+new Date().getMinutes());
+  const slot = id==="snack" ? "s" : /^meal:[bld]$/.test(id) ? id.slice(5) : "";
+  if(slot){ if(on){ if(!ev[slot]) ev[slot] = now; } else if(!(lg.ate||[]).some(a=>a.m===slot)) delete ev[slot]; }
+  if(id==="fastclose"){ if(on){ if(!ev.closed) ev.closed = now; } else delete ev.closed; }
+  if(id.startsWith("supp:") && !on && lg.lite){ const sid = id.split(":")[1], ks = Object.keys(lg.lite).filter(x=>x.split("@")[0]===sid);
+    const order = x=>{ const a = x.split("@")[1]; const i = LITE_ANCHORS.findIndex(v=>v[0]===a); return i<0?99:i; };
+    ks.sort((a,b)=>order(a)-order(b)); if(ks.length) delete lg.lite[ks[ks.length-1]]; }
+}
+/* An alert while the app is open: a banner, a chime, a buzz where allowed, and a notification if you allowed them. */
+let AUDIO = null;
+document.addEventListener("pointerdown", ()=>{ try{ if(!AUDIO){ const C = window.AudioContext||window.webkitAudioContext; if(C) AUDIO = new C(); } if(AUDIO && AUDIO.state==="suspended") AUDIO.resume(); }catch(_){} }, true);
+function chime(){
+  if(S.alertSound===false || !AUDIO) return;
+  try{ const t0 = AUDIO.currentTime; [[880,0],[1175,0.18],[880,0.36]].forEach(([f,d])=>{ const o = AUDIO.createOscillator(), g = AUDIO.createGain(); o.type = "sine"; o.frequency.value = f; g.gain.setValueAtTime(0.0001, t0+d); g.gain.exponentialRampToValueAtTime(0.35, t0+d+0.02); g.gain.exponentialRampToValueAtTime(0.0001, t0+d+0.16); o.connect(g); g.connect(AUDIO.destination); o.start(t0+d); o.stop(t0+d+0.18); }); }catch(_){}
+}
+function alertNow(title, body){
+  if(S.alertsOn===false) return;
+  let bar = document.getElementById("dueBanner");
+  if(!bar){ bar = document.createElement("div"); bar.id = "dueBanner"; bar.setAttribute("role","alert");
+    bar.style.cssText = "position:fixed;left:12px;right:12px;top:calc(env(safe-area-inset-top,0px) + 10px);z-index:9999;background:var(--juniper,#2f6b57);color:#fff;border-radius:14px;padding:14px 16px;box-shadow:0 8px 24px rgba(0,0,0,.25);display:flex;gap:12px;align-items:center;justify-content:space-between;font-weight:600";
+    document.body.appendChild(bar); }
+  const prev = bar.dataset.lines ? JSON.parse(bar.dataset.lines) : [];
+  prev.push(title + (body ? " · " + body : "")); bar.dataset.lines = JSON.stringify(prev.slice(-4));
+  bar.innerHTML = `<div>${prev.slice(-4).map(x=>`<div>${esc(x)}</div>`).join("")}</div><button type="button" style="background:#fff;color:#1d3b31;border:0;border-radius:10px;padding:8px 14px;font:inherit;font-weight:700">OK</button>`;
+  bar.querySelector("button").onclick = ()=>bar.remove();
+  chime(); try{ if(navigator.vibrate) navigator.vibrate([200,100,200]); }catch(_){}
+  if("Notification" in window && Notification.permission==="granted"){
+    const opts = {body: body||"", tag: "dh-"+title};
+    if(navigator.serviceWorker && navigator.serviceWorker.getRegistration) navigator.serviceWorker.getRegistration().then(r=>{ if(r && r.showNotification) r.showNotification(title, opts); else { try{ new Notification(title, opts); }catch(_){} } }).catch(()=>{});
+    else { try{ new Notification(title, opts); }catch(_){} }
+  }
+}
+/* Quick tab: what you've eaten today, and a button to log more. */
+function quickMealHtml(key){ return `${ateListHtml(key)}<div><button class="btn" data-liteeat="1">Log what I ate</button></div>`; }
+const LITE_ANCHORS = [["wake","On waking"],["b","Breakfast"],["l","Lunch"],["s","Snack"],["d","Dinner"],["bed","Bedtime"]];
+const LITE_MEALS = [["b","Breakfast"],["l","Lunch"],["s","Snack"],["d","Dinner"]];
+const LITE_AFTER = [[-1,"1 h before"],[-0.5,"30 min before"],[0,"with it"],[0.5,"30 min after"],[1,"1 h after"],[2,"2 h after"],[3,"3 h after"]];
+/* "Before" can't wait for you to tap Eating now, so it counts down from the planned time of that meal (or bedtime) on the full app's schedule. */
+function litePlanned(a, d){ const t = a==="bed" ? parseTime((S.rhythm||{}).bed||"") : parseTime((S.times||{})[{b:"breakfast", l:"lunch", s:"snack", d:"dinner"}[a]]||""); return t ? mins(t) : null; }
+const PANTRY_NAMES = Object.fromEntries(([["onion", "Onions", "produce"], ["garlic", "Garlic", "produce"], ["carrots", "Carrots", "produce"], ["celery", "Celery", "produce"], ["zucchini", "Zucchini", "produce"], ["spinach", "Spinach", "produce"], ["greens", "Cooking greens", "produce"], ["tomato", "Tomatoes", "produce"], ["cucumber", "Cucumbers", "produce"], ["sweetpotato", "Sweet potatoes", "produce"], ["butternut", "Winter squash", "produce"], ["lemon", "Lemons or limes", "produce"], ["herbs", "Fresh herbs", "produce"], ["apple", "Apples", "produce"], ["berries", "Berries, fresh or frozen", "produce"], ["broccoli", "Broccoli", "produce"], ["cauliflower", "Cauliflower", "produce"], ["cabbage", "Cabbage", "produce"], ["bellpepper", "Bell peppers", "produce"], ["mushrooms", "Mushrooms", "produce"], ["greenbeans", "Green beans", "produce"], ["lettuce", "Lettuce or salad greens", "produce"], ["potato", "Potatoes", "produce"], ["avocado", "Avocados", "produce"], ["banana", "Bananas", "produce"], ["frozenveg", "Frozen mixed vegetables", "produce"], ["peas", "Peas, frozen", "produce"], ["chicken", "Chicken breast or thigh", "meat"], ["turkey", "Ground turkey", "meat"], ["fish", "Fish fillets", "meat"], ["eggs", "Eggs", "meat"], ["beef", "Ground beef or bison", "meat"], ["pork", "Pork chops or tenderloin", "meat"], ["tofu", "Tofu or tempeh", "meat"], ["m_soup", "Chicken vegetable soup", "cooked"], ["m_chili", "Turkey and bean chili", "cooked"], ["m_shredded", "Shredded chicken", "cooked"], ["m_grain", "Cooked grain", "cooked"], ["m_roastveg", "Roasted vegetables", "cooked"], ["m_lentil", "Lentil soup", "cooked"], ["m_hbeggs", "Hard-boiled eggs", "cooked"], ["beans", "Canned beans", "pantry"], ["chickpeas", "Canned chickpeas", "pantry"], ["tomatocan", "Canned tomatoes", "pantry"], ["broth", "Chicken broth", "pantry"], ["grain", "Quinoa or brown rice (dry)", "pantry"], ["nutbutter", "Nut or seed butter", "pantry"], ["hummus", "Hummus", "pantry"], ["nuts", "Nuts", "pantry"], ["tea", "Herbal tea", "pantry"], ["lentils", "Lentils", "pantry"], ["oats", "Rolled oats", "pantry"], ["pasta", "Pasta or noodles", "pantry"], ["tuna", "Canned tuna or salmon", "pantry"], ["coconutmilk", "Canned coconut milk", "pantry"], ["salsa", "Salsa", "pantry"], ["seeds", "Seeds (chia, flax, pumpkin)", "pantry"], ["yogurt", "Plain yogurt", "dairy"], ["cheese", "Cheese", "dairy"], ["milk", "Milk or plant milk", "dairy"], ["butter", "Butter or ghee", "dairy"], ["tortillas", "Tortillas or wraps", "dairy"], ["salt", "Salt", "spice"], ["pepper", "Black pepper", "spice"], ["oliveoil", "Olive oil", "spice"], ["cumin", "Cumin", "spice"], ["oregano", "Oregano", "spice"], ["thyme", "Thyme", "spice"], ["bay", "Bay leaves", "spice"], ["paprika", "Paprika", "spice"], ["chilipowder", "Chili powder", "spice"], ["cinnamon", "Cinnamon", "spice"], ["soysauce", "Soy sauce or tamari", "spice"], ["vinegar", "Vinegar", "spice"], ["rice", "Rice", "others"], ["bread", "Bread", "others"]]).map(x=>[x[0], x[1]]));
+let LITE_SET_OPEN = false;
+let LITE = {eat:null, pick:{}, other:"", meal:"", edit:-1, time:"", day:""};
+const liteReset = ()=>{ LITE = {eat:null, pick:{}, other:"", meal:"", edit:-1, time:"", day:""}; };
+const liteName = a=>(LITE_ANCHORS.find(x=>x[0]===a)||[a,a])[1];
+function liteItemName(id, plist){
+  if(id.startsWith("n:")) return id.slice(2);
+  if(id.startsWith("meal:")){ const r = liteRecipe(id.slice(5)); return r ? r.n : id.slice(5); }
+  return ((plist||pantryList()).find(p=>p.id===id)||{n:id}).n;
+}
+function liteMealOpts(slot){
+  const opts = [...(S.myMeals||[]).filter(m=>m.t===slot).map(m=>[m.id, m.n+" (yours)"]), ...recipeOptions(slot)], seen = new Set(opts.map(o=>o[0]));
+  const mine = opts.filter(o=>(S.myMeals||[]).some(m=>m.id===o[0])), rest = opts.filter(o=>!mine.includes(o));
+  const other = (S.myMeals||[]).filter(m=>!seen.has(m.id) && (m.items||[]).length).map(m=>[m.id, m.n+" (yours, "+((LITE_MEALS.find(x=>x[0]===m.t)||[0,"other"])[1]).toLowerCase()+")"]);
+  return [...mine, ...rest, ...other];
+}
+function ateListHtml(key, panel){
+  const lg = S.log[key]||{}, ate = lg.ate||[];
+  if(!ate.length) return "";
+  const rows = ate.map((a,i)=>`<div class="lrow"><div><b>${esc((LITE_MEALS.find(m=>m[0]===a.m)||[0,"Meal"])[1])}</b> <small class="muted">${niceTime(a.t)}</small><br><small>${esc(a.items.map(x=>x.n+qLabel(x.q)).join(", ")||"(nothing listed)")}</small></div><span class="chips" style="gap:10px"><button class="linkbtn" data-liteedit="${i}" data-day="${key}">Edit</button><button class="linkbtn" data-liteatedel="${i}" data-day="${key}">Remove</button></span></div>`).join("");
+  const lbl = key===ymd(new Date()) ? "Eaten today" : "Eaten that day";
+  return panel ? `<section class="panel"><h2>${lbl}</h2>${rows}</section>` : `<div class="stack" style="gap:4px"><b>${lbl}</b>${rows}</div>`;
+}
+const liteSavedMeal = ()=> LITE.meal ? (S.myMeals||[]).find(m=>m.id===LITE.meal && (m.items||[]).length) : null;
+const liteItems = ()=>{ const plist = pantryList(); return Object.entries(LITE.pick).map(([id,q])=>({id: id.startsWith("n:")?"":id, n:liteItemName(id, plist), q})); };
+const LITE_STEPS = [0.25,0.5,0.75,1,1.5,2,2.5,3,4,5,6,8,10];
+function fmtQ(q){ q = Number(q)||0; const w = Math.floor(q), f = Math.round((q-w)*4); const fr = ["","¼","½","¾"][f]||""; return (w?String(w):"")+fr || "0"; }
+const qLabel = q=> Number(q)===1 ? "" : " × "+fmtQ(q);
+function liteStep(q, dir){ q = Number(q)||0; if(dir>0) return LITE_STEPS.find(v=>v>q+1e-9) || q+1; const lower = LITE_STEPS.filter(v=>v<q-1e-9); return lower.length ? lower[lower.length-1] : 0; }
+function liteNowM(){ const n = new Date(); return n.getHours()*60+n.getMinutes(); }
+function pantryList(){
+  let p = null; try{ p = JSON.parse(localStorage.getItem("pantryplanner.v1")||"null"); }catch(_){}
+  const have = (p&&p.pantry)||{}, out = [];
+  for(const [id,n] of Object.entries(PANTRY_NAMES)) out.push({id, n, have:!!have[id]});
+  for(const c of ((p&&p.custom)||[])) out.push({id:c.id, n:c.n, have:!!have[c.id]});
+  for(const f of (S.myFoods||[])) if(!out.some(o=>o.n.toLowerCase()===f.n.toLowerCase())) out.push({id:f.id, n:f.n, have:true, mine:true});
+  return out.sort((a,b)=>(b.have-a.have) || a.n.localeCompare(b.n));
+}
+/* Today's supplements by moment. due = minutes after midnight once its moment has happened. */
+function liteSupps(key){
+  const d = parseYmd(key), lg = S.log[key]||{}, ev = lg.ev||{}, done = lg.lite||{}, fdone = lg.done||{}, out = [];
+  const {timed, untimed} = itemsFor(d), full = [...timed, ...untimed];
+  for(const s of S.supplements){
+    if(!s.active || s.asNeeded || !dueOn(s,d)) continue;
+    const ws = s.whens||[], h = Number(s.afterH)||0, mine = [];
+    if(!ws.length) mine.push({s, a:"", k:s.id+"@any", due:null, h:0, done:!!done[s.id+"@any"]});
+    for(const a of ws){ const at = ev[a]; let due, hh = h;
+      if(h<0 && a!=="wake"){ const pl = litePlanned(a, d); due = pl!=null ? pl+Math.round(h*60) : null; if(at) due = due==null ? mins(at) : Math.min(due, mins(at)); }
+      else { if(h<0) hh = 0; due = at ? mins(at)+Math.round(hh*60) : null; }
+      mine.push({s, a, k:s.id+"@"+a, due, h:hh, done:!!done[s.id+"@"+a]}); }
+    /* Ticks on the full checklist count too: each one covers one more of today's doses, earliest first. */
+    const fi = full.filter(i=>i.id==="supp:"+s.id || i.id.startsWith("supp:"+s.id+":")), fd = fi.filter(i=>fdone[i.id]).length;
+    let extra = (fi.length && fd===fi.length) ? mine.length : fd - mine.filter(x=>x.done).length;
+    for(const x of mine) if(extra>0 && !x.done){ x.done = true; x.viaFull = true; extra--; }
+    out.push(...mine);
+  }
+  return out;
+}
+function liteWhy(x){ return x.a ? (x.h ? (LITE_AFTER.find(v=>v[0]===x.h)||[0,Math.abs(x.h)+(x.h<0?" h before":" h after")])[1]+" "+liteName(x.a).toLowerCase()+(x.h<0&&x.due!=null?" (around "+niceTime(fromMins(x.due))+")":"") : (x.a==="wake"||x.a==="bed" ? liteName(x.a).toLowerCase() : "with "+liteName(x.a).toLowerCase())) : "any time today"; }
+function liteIn(m){ const n = Math.max(0, m - liteNowM()), h = Math.floor(n/60); return "in "+(h?h+" h ":"")+(n%60)+" min"; }
+/* Also tick it off on the full checklist, so both views agree. */
+function liteMarkFull(key, sid){
+  const lg = dayLog(key), {timed, untimed} = itemsFor(parseYmd(key));
+  const it = [...timed, ...untimed].find(i=>(i.id==="supp:"+sid || i.id.startsWith("supp:"+sid+":")) && !lg.done[i.id]);
+  if(it) lg.done[it.id] = true;
+}
+function liteKitchen(key, on){
+  const lg = dayLog(key), {timed, untimed} = itemsFor(parseYmd(key));
+  for(const i of [...timed, ...untimed]) if(i.id==="fastclose" || i.id.startsWith("rt:fast")){ if(on) lg.done[i.id] = true; else delete lg.done[i.id]; }
+}
+function liteRow(x, key, btn){
+  return `<div class="lrow"><div><b>${esc(x.s.name)}</b>${suppDose(x.s,new Date())?` <small class="muted">${esc(suppDose(x.s,new Date()))}</small>`:""}<br><small class="muted">${esc(liteWhy(x))}${x.due!=null&&x.due>liteNowM()?" · "+liteIn(x.due):""}</small></div>${btn?`<button class="btn" data-litedone="${esc(x.k)}" data-sid="${esc(x.s.id)}" data-day="${key}">Done</button>`:""}</div>`;
+}
+function renderLite(){
+  const key = ymd(new Date()), lg = S.log[key]||{done:{}}, ev = lg.ev||{}, now = liteNowM();
+  const all = liteSupps(key), open = all.filter(x=>!x.done);
+  const dueNow = open.filter(x=>x.due!=null && x.due<=now), soon = open.filter(x=>x.due!=null && x.due>now).sort((a,b)=>a.due-b.due), unset = open.filter(x=>!x.a);
+  const oz = waterOz(lg), goal = Number(waterGoalNow())||64;
+  if(LITE.eat){
+    const plist = pantryList(), picked = LITE.pick;
+    view.innerHTML = `<div class="stack lite">
+      <section class="panel"><h2>${LITE.edit>=0?"Change what you ate":LITE.day?"What you ate":"Eating now"}</h2>${LITE.day?`<small class="muted">For ${esc(DAYS_LONG[parseYmd(LITE.day).getDay()])}, ${esc(parseYmd(LITE.day).toLocaleDateString(undefined,{month:"long",day:"numeric"}))}</small>`:""}
+        <div class="chips" style="gap:8px">${LITE_MEALS.map(([m,n])=>`<button class="btn ${LITE.eat===m?"":"ghost"}" data-liteslot="${m}">${n}</button>`).join("")}</div>
+        <label style="display:flex;gap:8px;align-items:center">What time<input type="time" id="lite-time" value="${esc(LITE.time||fromMins(liteNowM()))}" style="width:auto"></label>
+        ${Object.keys(picked).length?`<div class="stack" style="gap:6px">${Object.entries(picked).map(([id,q])=>`<div class="lrow"><b>${esc(liteItemName(id, plist))}</b><span class="chips" style="gap:6px;align-items:center;flex-wrap:nowrap;flex-shrink:0"><button class="btn ghost" data-liteminus="${esc(id)}" aria-label="Less">−</button><select data-liteq="${esc(id)}" aria-label="How much" style="width:auto;min-width:64px">${[...new Set([...LITE_STEPS, Number(q)])].sort((a,b)=>a-b).map(v=>`<option value="${v}" ${v===Number(q)?"selected":""}>${fmtQ(v)}</option>`).join("")}</select><button class="btn ghost" data-liteplus="${esc(id)}" aria-label="More">+</button></span></div>`).join("")}</div>`:`<small class="muted">Pick one of your meals, or tap foods from your pantry. Change the amount with − and +, or pick ¼, ½ and so on.</small>`}
+        <label for="lite-other">Something not on the list</label>
+        <div style="display:flex;gap:8px"><input type="text" id="lite-other" style="flex:1" value="${esc(LITE.other)}" placeholder="e.g. leftover stew" enterkeyhint="done"><button class="btn" data-liteadd="1">Add</button></div>
+        <small class="muted">Added foods stay on your list for next time.</small>
+        ${liteSavedMeal()?`<div class="stack" style="gap:6px;border-top:1px solid var(--line,#ddd);padding-top:8px"><small class="muted">This is your saved meal "${esc(liteSavedMeal().n)}". Change foods or amounts above, then:</small><label style="display:flex;gap:8px;align-items:center;font-weight:400"><input type="checkbox" id="lite-upd"> Also update my saved meal</label><div class="chips" style="gap:12px"><button class="linkbtn" data-litemealupd="1">Update the saved meal only (don't log)</button><button class="linkbtn" data-litemealdel="1">Remove it from my meals</button></div></div>`:""}
+        ${Object.keys(picked).length && !liteSavedMeal()?`<label style="display:flex;gap:8px;align-items:center;font-weight:400"><input type="checkbox" id="lite-keep"> Save this as a meal I can pick next time</label><input type="text" id="lite-keepname" placeholder="Name it (optional)" aria-label="Meal name">`:""}
+        <div class="chips" style="gap:8px"><button class="btn" data-litesave="1">Save</button><button class="btn ghost" data-litecancel="1">Cancel</button></div>
+      </section>
+      ${(()=>{ const mo = liteMealOpts(LITE.eat); return `<section class="panel"><h2>Your meals</h2>${mo.length?`<div class="stack" style="gap:4px">${mo.map(([id,n])=>`<button class="lpick ${LITE.meal===id?"on":""}" data-litemeal="${esc(id)}">${esc(n)}</button>`).join("")}</div>`:`<small class="muted">None yet for this meal. Pick foods below and tick "Save this as a meal".</small>`}</section>`; })()}
+      <section class="panel"><h2>From your pantry</h2>
+        <input type="search" id="lite-q" style="width:100%;padding:10px;font-size:16px;border-radius:10px;border:1px solid var(--line,#ccc)" placeholder="Find a food…" aria-label="Find a food">
+        <div class="stack" style="gap:4px" id="lite-plist">${plist.map(p=>`<button class="lpick ${picked[p.id]?"on":""}" data-litepick="${esc(p.id)}" data-n="${esc(p.n.toLowerCase())}">${esc(p.n)}${p.mine?` <small class="muted">yours</small>`:p.have?"":` <small class="muted">not in pantry</small>`}${picked[p.id]?` <b>× ${esc(fmtQ(picked[p.id]))}</b>`:""}</button>`).join("")}</div>
+      </section></div>`;
+    return;
+  }
+  const evLine = [...LITE_ANCHORS, ["closed","Kitchen closed"]].filter(([a])=>ev[a]).map(([a,n])=>`<span class="chip">${esc(n)} ${niceTime(ev[a])} <button class="linkbtn" data-liteunev="${a}" aria-label="Clear ${esc(n)}">×</button></span>`).join(" ");
+  view.innerHTML = `<div class="stack lite">
+    <section class="panel"><div class="lbig">
+      ${ev.wake?"":`<button class="btn" data-liteev="wake">I'm up</button>`}
+      <button class="btn" data-liteeat="1">Eating now</button>
+      ${ev.closed?"":`<button class="btn ghost" data-liteclosed="1">Done eating for today</button>`}
+      ${ev.bed?"":`<button class="btn ghost" data-liteev="bed">Going to bed</button>`}
+    </div>${evLine?`<div class="chips" style="gap:6px;margin-top:8px">${evLine}</div>`:""}</section>
+    <section class="panel"><h2>${dueNow.length?"Take now":"Nothing due right now"}</h2>
+      ${dueNow.map(x=>liteRow(x,key,true)).join("")}
+      ${soon.length?`<h3 style="margin:8px 0 0">Coming up</h3>${soon.map(x=>liteRow(x,key,false)).join("")}`:""}
+      ${!dueNow.length&&!soon.length?`<small class="muted">Tap I'm up or Eating now, and what goes with it shows here.</small>`:""}
+    </section>
+    <section class="panel"><div class="lrow"><div><b>Water</b><br><small class="muted">${esc(Math.round(oz))} of ${esc(goal)} oz</small></div><button class="btn" data-wadd="8">+8 oz</button></div></section>
+    ${prnHtml(key, lg)}
+    ${ateListHtml(key, true)}
+    ${unset.length?`<details class="panel"><summary><b>Any time today (${unset.length})</b></summary>${unset.map(x=>liteRow(x,key,true)).join("")}</details>`:""}
+    <details class="panel" ${LITE_SET_OPEN?"open":""}><summary><b>Set when you take each one</b></summary>
+      <small class="muted">Pick the moments for each supplement. "After" waits that long after you tap the moment, for things like psyllium. "Before" a meal or bedtime counts down from the time planned for it in the full app, and moves up if you eat early.</small>
+      ${S.supplements.filter(s=>s.active&&!s.asNeeded).map(s=>`<div class="stack" style="gap:4px;border-top:1px solid var(--line,#ddd);padding-top:8px"><b>${esc(s.name)}</b>
+        <div class="chips" style="gap:4px 12px">${LITE_ANCHORS.map(([a,n])=>`<label class="inline" style="font-weight:400"><input type="checkbox" data-litewhen="${esc(s.id)}:${a}" ${(s.whens||[]).includes(a)?"checked":""}> ${n}</label>`).join("")}</div>
+        <label class="inline" style="font-weight:400">Take it <select data-liteafter="${esc(s.id)}">${LITE_AFTER.map(([v,n])=>`<option value="${v}" ${(Number(s.afterH)||0)===v?"selected":""}>${n}</option>`).join("")}</select></label></div>`).join("")}
+      <div class="stack" style="gap:6px;border-top:1px solid var(--line,#ddd);padding-top:8px"><b>Add a supplement or powder</b>
+        <small class="muted">For something you take every day, like a fiber powder with lunch. Add it here, then tick when you take it.</small>
+        <label>Name<input type="text" id="lite-sname" placeholder="e.g. Fiber powder"></label>
+        <label>How much<input type="text" id="lite-sdose" placeholder="e.g. 1 scoop in water"></label>
+        <div><button class="btn" data-liteaddsupp="1">Add it</button></div></div>
+    </details>
+    <details class="panel"><summary><b>Alerts while the app is open</b></summary>
+      <label class="inline" style="font-weight:400"><input type="checkbox" data-alert="alertsOn" ${S.alertsOn===false?"":"checked"}> Show a banner when something comes due</label>
+      <label class="inline" style="font-weight:400"><input type="checkbox" data-alert="alertSound" ${S.alertSound===false?"":"checked"}> Play a chime</label>
+      <div class="chips" style="gap:8px"><button class="btn ghost" id="notifyBtn">Allow notifications</button><button class="btn ghost" data-alerttest="1">Test it</button></div>
+      <small class="muted">This only works while the app is open on screen. iPhone doesn't let web apps buzz, and the chime follows your ringer switch. If you allow notifications, iPhone also shows one at the top.</small>
+    </details>
+    ${typeof openOnHtml==="function"?`<div>${openOnHtml("lite")}</div>`:""}
+    <div class="chips" style="gap:8px;justify-content:center"><a class="btn ghost" href="pantry.html">Pantry</a></div>
+  </div>`;
+}
+function liteAddFood(){
+  const el = document.getElementById("lite-other"), n = ((el||{}).value||"").trim(); if(!n) return false;
+  const ex = pantryList().find(o=>o.n.toLowerCase()===n.toLowerCase());
+  let id = ex ? ex.id : "";
+  if(!id){ id = "f_"+Date.now().toString(36); (S.myFoods = S.myFoods||[]).push({id, n}); save(); }
+  LITE.pick[id] = (LITE.pick[id]||0)+1; LITE.other = ""; el.value = ""; return true;
+}
+function liteClick(t){
+  const key = LITE.day || (t.dataset && t.dataset.day) || ymd(new Date());
+  if(t.dataset.liteev){ const lg = dayLog(key); (lg.ev=lg.ev||{})[t.dataset.liteev] = fromMins(liteNowM()); save(); render(); toast(t.dataset.liteev==="wake"?"Good morning":"Good night"); return true; }
+  if(t.dataset.liteclosed){ const lg = dayLog(key); (lg.ev=lg.ev||{}).closed = fromMins(liteNowM()); liteKitchen(key, true); save(); render(); toast("Kitchen closed. Ticked in the full app too."); return true; }
+  if(t.dataset.liteunev){ const lg = dayLog(key); if(lg.ev) delete lg.ev[t.dataset.liteunev]; if(t.dataset.liteunev==="closed") liteKitchen(key, false); if(QM_DONE[t.dataset.liteunev] && !(lg.ate||[]).some(a=>a.m===t.dataset.liteunev)) delete lg.done[QM_DONE[t.dataset.liteunev]]; save(); render(); return true; }
+  if(t.dataset.liteeat){ const ev = (S.log[key]||{}).ev||{}; LITE = {eat:(LITE_MEALS.find(([m])=>!ev[m])||["s"])[0], pick:{}, other:"", meal:"", edit:-1, time:"", day:(key===ymd(new Date())?"":key)}; render(); window.scrollTo(0,0); return true; }
+  if(t.dataset.liteslot){ LITE.eat = t.dataset.liteslot; if(LITE.meal && LITE.edit<0){ LITE.meal = ""; LITE.pick = {}; } LITE.other = (document.getElementById("lite-other")||{}).value||""; render(); return true; }
+  const pk = t.closest && t.closest("[data-litepick]");
+  if(pk){ const id = pk.dataset.litepick; LITE.pick[id] = (LITE.pick[id]||0)+1; LITE.other = (document.getElementById("lite-other")||{}).value||""; const y = window.scrollY; render(); window.scrollTo(0,y); return true; }
+  const mp = t.closest && t.closest("[data-litemeal]");
+  if(mp){ const id = mp.dataset.litemeal, mm = (S.myMeals||[]).find(x=>x.id===id), r = liteRecipe(id);
+    LITE.other = (document.getElementById("lite-other")||{}).value||"";
+    if(LITE.meal===id){ LITE.meal = ""; LITE.pick = {}; }
+    else { LITE.meal = id; LITE.pick = {}; if(mm && (mm.items||[]).length) for(const x of mm.items) LITE.pick[x.id||("n:"+x.n)] = x.q||1; else LITE.pick["meal:"+id] = 1; }
+    render(); window.scrollTo(0,0); return true; }
+  if(t.dataset.liteplus||t.dataset.liteminus){ const id = t.dataset.liteplus||t.dataset.liteminus; LITE.pick[id] = liteStep(LITE.pick[id], t.dataset.liteplus?1:-1); if(LITE.pick[id]<=0) delete LITE.pick[id]; LITE.other = (document.getElementById("lite-other")||{}).value||""; render(); return true; }
+  if(t.dataset.liteedit!==undefined){ const a = ((S.log[key]||{}).ate||[])[+t.dataset.liteedit]; if(!a) return true;
+    LITE = {eat:a.m, pick:{}, other:"", meal:a.meal||"", edit:+t.dataset.liteedit, time:a.t, day:(key===ymd(new Date())?"":key)}; for(const x of a.items) LITE.pick[x.id||("n:"+x.n)] = (LITE.pick[x.id||("n:"+x.n)]||0)+(x.q||1);
+    render(); window.scrollTo(0,0); return true; }
+  if(t.dataset.litemealupd){ const sm = liteSavedMeal(); if(sm){ liteAddFood(); sm.items = liteItems(); save(); toast("Updated \u201c"+sm.n+"\u201d"); } liteReset(); render(); return true; }
+  if(t.dataset.litemealdel){ const sm = liteSavedMeal(); if(sm){ S.myMeals = S.myMeals.filter(m=>m!==sm); save(); toast("Removed \u201c"+sm.n+"\u201d from your meals"); } LITE.meal = ""; render(); return true; }
+  if(t.dataset.alerttest){ alertNow("Test alert", "This is how a due item looks"); return true; }
+  if(t.dataset.liteaddsupp){ const g = id=>((document.getElementById(id)||{}).value||"").trim(), name = g("lite-sname");
+    if(!name){ toast("Type a name first"); return true; }
+    S.supplements.push({id:"s"+Date.now(), name, dose:g("lite-sdose"), times:"", how:"", binder:false, active:true, pending:false, notes:"", where:"home", whens:[]});
+    LITE_SET_OPEN = true; save(); render(); LITE_SET_OPEN = false;
+    const row = [...document.querySelectorAll("[data-litewhen]")].pop(); if(row) row.scrollIntoView({block:"center"});
+    toast("Added. Now tick when you take it."); return true; }
+  if(t.dataset.liteadd){ if(liteAddFood()){ render(); toast("Added"); } else toast("Type a food first"); return true; }
+  if(t.dataset.litecancel){ liteReset(); render(); return true; }
+  if(t.dataset.litesave){
+    const other = ((document.getElementById("lite-other")||{}).value||"").trim(), plist = pantryList();
+    const items = liteItems();
+    if(other && liteAddFood()) return liteClick(t);
+    const lg = dayLog(key), m = LITE.eat, t0 = ((document.getElementById("lite-time")||{}).value||"").slice(0,5) || fromMins(liteNowM());
+    const old = LITE.edit>=0 && (lg.ate||[])[LITE.edit] ? lg.ate[LITE.edit] : null;
+    lg.ev = lg.ev||{};
+    if(old && old.m!==m && lg.ev[old.m]===old.t && !(lg.ate||[]).some((a,i)=>i!==LITE.edit && a.m===old.m)) delete lg.ev[old.m];
+    if(!lg.ev[m] || (old && lg.ev[m]===old.t) || !(lg.ate||[]).some((a,i)=>i!==LITE.edit && a.m===m)) lg.ev[m] = t0;
+    const entry = LITE.meal ? {m, t:t0, items, meal:LITE.meal} : {m, t:t0, items};
+    if(old) lg.ate[LITE.edit] = entry; else (lg.ate=lg.ate||[]).push(entry);
+    lg.ate.sort((a,b)=>(a.t||"").localeCompare(b.t||""));
+    const upd = document.getElementById("lite-upd"), sm = liteSavedMeal(); if(upd && upd.checked && sm) sm.items = items.map(x=>({id:x.id, n:x.n, q:x.q}));
+    if(QM_DONE[m]) lg.done[QM_DONE[m]] = true;
+    const keep = document.getElementById("lite-keep"), kname = ((document.getElementById("lite-keepname")||{}).value||"").trim();
+    let kept = "";
+    if(keep && keep.checked && items.length){ const nm = kname || items.map(x=>x.n).join(", "); const id = addMyMeal(m, nm); const mm = myMeals().find(x=>x.id===id); if(mm){ mm.items = items.map(x=>({id:x.id, n:x.n, q:x.q})); kept = nm; } }
+    liteReset(); save(); render(); window.scrollTo(0,0); toast(kept ? "Saved, and \u201c"+kept+"\u201d is now one of your meals." : (TAB==="lite" ? "Saved. What goes with it is at the top." : "Saved.")); return true; }
+  if(t.dataset.litedone){ const lg = dayLog(t.dataset.day); (lg.lite=lg.lite||{})[t.dataset.litedone] = true; liteMarkFull(t.dataset.day, t.dataset.sid); save(); render(); return true; }
+  if(t.dataset.liteatedel!==undefined){ const lg = dayLog(key), gone = (lg.ate||[]).splice(+t.dataset.liteatedel,1)[0];
+    if(gone && !(lg.ate||[]).some(a=>a.m===gone.m)){ if(QM_DONE[gone.m]) delete lg.done[QM_DONE[gone.m]]; if(lg.ev) delete lg.ev[gone.m]; }
+    save(); render(); return true; }
+  if(t.dataset.litefull){ TAB = "today"; render(); window.scrollTo(0,0); return true; }
+  return false;
+}
+function liteChange(t){
+  if(t.dataset.alert){ S[t.dataset.alert] = t.checked; save(); return true; }
+  if(t.dataset.liteq){ const v = Number(t.value); if(v>0) LITE.pick[t.dataset.liteq] = v; LITE.other = (document.getElementById("lite-other")||{}).value||""; render(); return true; }
+  if(t.dataset.litewhen){ const [sid,a] = t.dataset.litewhen.split(":"), s = S.supplements.find(x=>x.id===sid); if(!s) return true;
+    s.whens = (s.whens||[]).filter(x=>x!==a); if(t.checked) s.whens.push(a); s.whens.sort((x,y)=>LITE_ANCHORS.findIndex(v=>v[0]===x)-LITE_ANCHORS.findIndex(v=>v[0]===y)); save(); return true; }
+  if(t.dataset.liteafter){ const s = S.supplements.find(x=>x.id===t.dataset.liteafter); if(s){ s.afterH = Number(t.value)||0; save(); } return true; }
+  return false;
+}
+view.addEventListener("keydown", e=>{ if(e.target.id==="lite-other" && e.key==="Enter"){ e.preventDefault(); if(liteAddFood()){ render(); const o = document.getElementById("lite-other"); if(o) o.focus(); } } });
+view.addEventListener("input", e=>{ if(e.target.id==="lite-time"){ LITE.time = e.target.value; return; } if(e.target.id!=="lite-q") return; const q = e.target.value.trim().toLowerCase();
+  for(const b of document.querySelectorAll("#lite-plist [data-litepick]")) b.style.display = !q || b.dataset.n.includes(q) ? "" : "none"; });
+setInterval(()=>{ if(TAB==="lite" && !LITE.eat && !document.querySelector("#view input:focus, #view select:focus") && !document.querySelector("#view details[open]")) render(); }, 60000);
+
 function renderMore(){
   view.innerHTML = `<div class="stack"><section class="panel"><h2>More</h2><div class="tiles">
     ${MORE_TILES.map(([id,n,d])=>`<button class="tile" data-goto="${id}"><b>${esc(n)}</b><small>${esc(d)}</small></button>`).join("")}
@@ -2135,7 +2401,7 @@ function mountHousehold(){
 
 /* The bottom bar links here with #today or #more, so a home-screen app (no back button) can always get around. */
 /* Filled in at build time from changelog.json. APP_BUILD tells two builds of the same version apart. */
-const APP_VERSION = "0.25.0", APP_BUILD = "0.25.0-2026-11-25-a8a14290", CHANGES = [{"v": "0.25.0", "date": "2026-11-25", "items": ["Setup guide: the first page shows how long it takes (about 10 minutes). The Reminders step now also sets times for water, the evening treat, moving frozen meals to the fridge, and cook day, and explains the minutes-before alerts."]}, {"v": "0.24.0", "date": "2026-11-25", "items": ["Setup guide: new \"Your routine\" step. Tick common steps like walking, breath work, dry brushing, a sinus rinse or a sauna, or add your own. Each one gets how often (every day, some days or every other day), at home or in town, and times a day. A clock time is optional.", "Setup guide: medicines and supplements now ask how often, times a day, and \"only as needed\" with a most-per-day limit.", "Setup guide also covers: diagnoses like fatty liver plus your own, an evening check-in, walks after meals, a water goal, your frost months for \"local now\" in the pantry, and opening the app on Quick."]}, {"v": "0.23.0", "date": "2026-11-24", "items": ["My diagnoses lists every condition, including blood sugar, mold, celiac and HSV, as single lines you tap to open. Ticking one there turns its starter list on or off."]}, {"v": "0.22.0", "date": "2026-11-24", "items": ["My diagnoses: add your own diagnosis with its name, foods to avoid or limit, and questions for your doctor."]}, {"v": "0.21.0", "date": "2026-11-24", "items": ["New: My diagnoses, under More. Add or remove a diagnosis any time, not just in setup. Fatty liver (MASLD) is new: a draft food list (alcohol, sugary drinks, juice, added sugar, refined starches, fried and processed meat), each food can be turned off, plus questions for your doctor. Sources: NIDDK, AASLD 2023, EASL-EASD-EASO 2024."]}, {"v": "0.20.1", "date": "2026-11-24", "items": ["Pantry: move an item you added to a different section with the menu next to it."]}, {"v": "0.20.0", "date": "2026-11-24", "items": ["Pantry: \"local now\" follows the season where you live. Set your last spring and first fall frost months (or no frost), and change when each item counts as local. Sources: NOAA Climate.gov and Penn State Extension."]}, {"v": "0.19.0", "date": "2026-11-24", "items": ["Warning boxes are now one line you can tap to open: the home-screen data warning and the spacing check."]}, {"v": "0.18.1", "date": "2026-11-24", "items": ["Removed the Not confirmed yet box and its labels from supplements and the checklist. Taking it now is what turns a supplement on or off."]}, {"v": "0.18.0", "date": "2026-11-24", "items": ["As needed supplements: tick As needed on a supplement and it leaves your checklist and reminders. Tap Took it on Today or Quick to log the time. You can set a most per day and get a warning when you reach it."]}, {"v": "0.17.3", "date": "2026-11-24", "items": ["Supplements and routine: one Every day box instead of ticking each day. Untick it to pick days."]}, {"v": "0.17.2", "date": "2026-11-24", "items": ["Supplements no longer ask Where. They go with you, so their reminders use the at-home lead times."]}, {"v": "0.17.1", "date": "2026-11-24", "items": ["Phone: updates now show up the next time you open the app, instead of getting stuck on the old version."]}, {"v": "0.17.0", "date": "2026-11-24", "items": ["Phone: new setting to always open the app on Quick, with its one-tap buttons. It's on the Quick tab and under Phone shortcuts. If you leave the app for 5 minutes or more, it goes back to Quick."]}, {"v": "0.16.0", "date": "2026-11-24", "items": ["Every other day: pick the first day you take it, instead of it always starting the day you turned it on.", "How many times a day: take something 2, 3 or 4 times a day without picking clock times. Leave Times blank and it shows up that many times on your list to tick off."]}, {"v": "0.15.1", "date": "2026-10-23", "items": ["Setup guide: a tip on the food list and lab steps for getting the text out of a PDF or photo with an AI chat app, with a ready-made request to copy."]}, {"v": "0.15.0", "date": "2026-10-23", "items": ["Setup guide: already have a list of foods you avoid? Pick a text file or paste it, check what the app found, and add it all at once. Lines like Avoid:, Limit: and OK: sort the foods under them.", "Setup guide: the Lab results step can also read a text file of results."]}, {"v": "0.14.0", "date": "2026-10-23", "items": ["Setup guide: a new Lab results step. Paste the text of a lab report and the app picks out each test, result, unit and range for you to check before saving."]}, {"v": "0.13.0", "date": "2026-10-23", "items": ["New setup guide: a brand-new copy of the app opens with a few quick questions about what you're managing, foods you avoid, medicines, your day, who you cook for, your kitchen, your pantry and reminders. Every step can be skipped.", "Run the setup guide again any time from More, or from Times & reminders. It shows what's already set, so you only change what you want.", "Today shows a Finish setting up card if you leave the guide part way.", "Allergy picks like milk or eggs now catch dishes made from them (cheese, omelets) in the checker and pantry, and leave things like coconut milk alone.", "My rules has a What I'm managing line, which also goes on your visit summary."]}, {"v": "0.12.0", "date": "2026-10-23", "items": ["Meals: 34 more starter recipes, with stand-ins (any one of chicken, tofu, beef or pork, for example), so more meals fit what you have.", "Pantry: things you type in now count for the meals that use them. Salmon counts as fish, kale as cooking greens, brown rice as a grain.", "Meals I can make now counts meals you can make without buying anything, including ones that need a batch cook first.", "A spice or oil you haven't ticked no longer stops a meal from counting as ready. You can turn this off in the pantry.", "Meals that don't fit your food rules move to their own group and stay out of Fill. If one stand-in breaks a rule, another is used."]}, {"v": "0.11.0", "date": "2026-10-23", "items": ["Pantry: an edit button on items you added, to fix the name or fill in what a label photo missed."]}, {"v": "0.10.2", "date": "2026-10-23", "items": ["With the computer app and a second window or phone open, a change no longer gets lost after it says Saved. Changes from both are kept."]}, {"v": "0.10.1", "date": "2026-10-22", "items": ["With the computer app, a change typed just before closing the window or switching away is no longer lost."]}, {"v": "0.10.0", "date": "2026-10-22", "items": ["Backups: new Combine with a backup file, to bring a phone and a computer copy together without losing either.", "With the computer app, an old open window can no longer save over newer changes from another window or phone.", "Clearer warning: on an iPhone, removing the home-screen icon erases its data, so save a backup first."]}, {"v": "0.9.0", "date": "2026-10-22", "items": ["Labs: paste a whole lab report (or copy it from a photo or PDF with Live Text) and save many results at once.", "Pantry: items you add go into the right section (or pick one), and any item can be removed from your list.", "Grocery mode opens reliably from More and the bottom bar.", "Fiber: set the ramp start date on My rules; with no ramp, Today shows your fiber goal."]}, {"v": "0.8.0", "date": "2026-10-22", "items": ["Fix a meal: type a meal's ingredients and the meal checker suggests swaps, trims and adds that follow your lists and limits."]}, {"v": "0.7.0", "date": "2026-10-22", "items": ["A gentle check-in when a supplement or routine step hasn't been ticked off in a while: keep it, change how often, or pause it.", "Version number and this What's new list."]}, {"v": "0.6.0", "date": "2026-10-21", "items": ["Bottom bar on every page, so a home-screen app can always get around.", "Quick view and phone tap shortcuts.", "Installed copies now pick up new versions."]}, {"v": "0.5.0", "date": "2026-10-21", "items": ["Tap to add water (sizes you choose) and a simpler home page.", "Evening check-in: how did I feel today?", "Look back over 7 to 30 days, and a For my visit summary; both print and download.", "Grocery mode for the store.", "Automatic daily backups."]}, {"v": "0.4.0", "date": "2026-10-21", "items": ["Food breaks: take a break from a food until a date, with a low-arginine list for cold sores and HSV, common food groups, or any food you type. Planned meals can be swapped and come back after."]}, {"v": "0.3.0", "date": "2026-10-21", "items": ["Daily rhythm settings: wake and bed times, fasting window, walks after meals, food order, water goal by weight."]}, {"v": "0.2.0", "date": "2026-10-21", "items": ["Sources page; every food rule shows where it comes from."]}, {"v": "0.1.0", "date": "2026-10-21", "items": ["Daily checklist, pantry planner and meal checker that work offline. Starter food lists (drafts)."]}];
+const APP_VERSION = "0.26.0", APP_BUILD = "0.26.0-2026-11-28-438fa732", CHANGES = [{"v": "0.26.0", "date": "2026-11-28", "items": ["New Lite tab: big buttons for I'm up, Eating now, Done eating for today and Going to bed. Each supplement can be set for a moment (on waking, with a meal, at bedtime), a time after it (30 min to 3 h), or 30 min or 1 h before a meal or bedtime, counted from your planned meal times.", "Log what you ate from Lite, Today or Quick: pick a meal, or pantry foods with amounts (\u00bc, \u00bd and up), set the time, and save it as one of your meals to pick next time. Edit or remove what you logged.", "Ticks stay in step: supplements, meals and Kitchen closes ticked in one view show in the others.", "Alerts while the app is open: a banner and chime when something comes due, plus a notification if you allow them. Settings are on Lite.", "Start page: open the app on Quick or Lite (one or the other), set on those pages or in Phone settings.", "iPhone time pickers now save when you tap Done instead of closing after the first turn."]}, {"v": "0.25.0", "date": "2026-11-25", "items": ["Setup guide: the first page shows how long it takes (about 10 minutes). The Reminders step now also sets times for water, the evening treat, moving frozen meals to the fridge, and cook day, and explains the minutes-before alerts."]}, {"v": "0.24.0", "date": "2026-11-25", "items": ["Setup guide: new \"Your routine\" step. Tick common steps like walking, breath work, dry brushing, a sinus rinse or a sauna, or add your own. Each one gets how often (every day, some days or every other day), at home or in town, and times a day. A clock time is optional.", "Setup guide: medicines and supplements now ask how often, times a day, and \"only as needed\" with a most-per-day limit.", "Setup guide also covers: diagnoses like fatty liver plus your own, an evening check-in, walks after meals, a water goal, your frost months for \"local now\" in the pantry, and opening the app on Quick."]}, {"v": "0.23.0", "date": "2026-11-24", "items": ["My diagnoses lists every condition, including blood sugar, mold, celiac and HSV, as single lines you tap to open. Ticking one there turns its starter list on or off."]}, {"v": "0.22.0", "date": "2026-11-24", "items": ["My diagnoses: add your own diagnosis with its name, foods to avoid or limit, and questions for your doctor."]}, {"v": "0.21.0", "date": "2026-11-24", "items": ["New: My diagnoses, under More. Add or remove a diagnosis any time, not just in setup. Fatty liver (MASLD) is new: a draft food list (alcohol, sugary drinks, juice, added sugar, refined starches, fried and processed meat), each food can be turned off, plus questions for your doctor. Sources: NIDDK, AASLD 2023, EASL-EASD-EASO 2024."]}, {"v": "0.20.1", "date": "2026-11-24", "items": ["Pantry: move an item you added to a different section with the menu next to it."]}, {"v": "0.20.0", "date": "2026-11-24", "items": ["Pantry: \"local now\" follows the season where you live. Set your last spring and first fall frost months (or no frost), and change when each item counts as local. Sources: NOAA Climate.gov and Penn State Extension."]}, {"v": "0.19.0", "date": "2026-11-24", "items": ["Warning boxes are now one line you can tap to open: the home-screen data warning and the spacing check."]}, {"v": "0.18.1", "date": "2026-11-24", "items": ["Removed the Not confirmed yet box and its labels from supplements and the checklist. Taking it now is what turns a supplement on or off."]}, {"v": "0.18.0", "date": "2026-11-24", "items": ["As needed supplements: tick As needed on a supplement and it leaves your checklist and reminders. Tap Took it on Today or Quick to log the time. You can set a most per day and get a warning when you reach it."]}, {"v": "0.17.3", "date": "2026-11-24", "items": ["Supplements and routine: one Every day box instead of ticking each day. Untick it to pick days."]}, {"v": "0.17.2", "date": "2026-11-24", "items": ["Supplements no longer ask Where. They go with you, so their reminders use the at-home lead times."]}, {"v": "0.17.1", "date": "2026-11-24", "items": ["Phone: updates now show up the next time you open the app, instead of getting stuck on the old version."]}, {"v": "0.17.0", "date": "2026-11-24", "items": ["Phone: new setting to always open the app on Quick, with its one-tap buttons. It's on the Quick tab and under Phone shortcuts. If you leave the app for 5 minutes or more, it goes back to Quick."]}, {"v": "0.16.0", "date": "2026-11-24", "items": ["Every other day: pick the first day you take it, instead of it always starting the day you turned it on.", "How many times a day: take something 2, 3 or 4 times a day without picking clock times. Leave Times blank and it shows up that many times on your list to tick off."]}, {"v": "0.15.1", "date": "2026-10-23", "items": ["Setup guide: a tip on the food list and lab steps for getting the text out of a PDF or photo with an AI chat app, with a ready-made request to copy."]}, {"v": "0.15.0", "date": "2026-10-23", "items": ["Setup guide: already have a list of foods you avoid? Pick a text file or paste it, check what the app found, and add it all at once. Lines like Avoid:, Limit: and OK: sort the foods under them.", "Setup guide: the Lab results step can also read a text file of results."]}, {"v": "0.14.0", "date": "2026-10-23", "items": ["Setup guide: a new Lab results step. Paste the text of a lab report and the app picks out each test, result, unit and range for you to check before saving."]}, {"v": "0.13.0", "date": "2026-10-23", "items": ["New setup guide: a brand-new copy of the app opens with a few quick questions about what you're managing, foods you avoid, medicines, your day, who you cook for, your kitchen, your pantry and reminders. Every step can be skipped.", "Run the setup guide again any time from More, or from Times & reminders. It shows what's already set, so you only change what you want.", "Today shows a Finish setting up card if you leave the guide part way.", "Allergy picks like milk or eggs now catch dishes made from them (cheese, omelets) in the checker and pantry, and leave things like coconut milk alone.", "My rules has a What I'm managing line, which also goes on your visit summary."]}, {"v": "0.12.0", "date": "2026-10-23", "items": ["Meals: 34 more starter recipes, with stand-ins (any one of chicken, tofu, beef or pork, for example), so more meals fit what you have.", "Pantry: things you type in now count for the meals that use them. Salmon counts as fish, kale as cooking greens, brown rice as a grain.", "Meals I can make now counts meals you can make without buying anything, including ones that need a batch cook first.", "A spice or oil you haven't ticked no longer stops a meal from counting as ready. You can turn this off in the pantry.", "Meals that don't fit your food rules move to their own group and stay out of Fill. If one stand-in breaks a rule, another is used."]}, {"v": "0.11.0", "date": "2026-10-23", "items": ["Pantry: an edit button on items you added, to fix the name or fill in what a label photo missed."]}, {"v": "0.10.2", "date": "2026-10-23", "items": ["With the computer app and a second window or phone open, a change no longer gets lost after it says Saved. Changes from both are kept."]}, {"v": "0.10.1", "date": "2026-10-22", "items": ["With the computer app, a change typed just before closing the window or switching away is no longer lost."]}, {"v": "0.10.0", "date": "2026-10-22", "items": ["Backups: new Combine with a backup file, to bring a phone and a computer copy together without losing either.", "With the computer app, an old open window can no longer save over newer changes from another window or phone.", "Clearer warning: on an iPhone, removing the home-screen icon erases its data, so save a backup first."]}, {"v": "0.9.0", "date": "2026-10-22", "items": ["Labs: paste a whole lab report (or copy it from a photo or PDF with Live Text) and save many results at once.", "Pantry: items you add go into the right section (or pick one), and any item can be removed from your list.", "Grocery mode opens reliably from More and the bottom bar.", "Fiber: set the ramp start date on My rules; with no ramp, Today shows your fiber goal."]}, {"v": "0.8.0", "date": "2026-10-22", "items": ["Fix a meal: type a meal's ingredients and the meal checker suggests swaps, trims and adds that follow your lists and limits."]}, {"v": "0.7.0", "date": "2026-10-22", "items": ["A gentle check-in when a supplement or routine step hasn't been ticked off in a while: keep it, change how often, or pause it.", "Version number and this What's new list."]}, {"v": "0.6.0", "date": "2026-10-21", "items": ["Bottom bar on every page, so a home-screen app can always get around.", "Quick view and phone tap shortcuts.", "Installed copies now pick up new versions."]}, {"v": "0.5.0", "date": "2026-10-21", "items": ["Tap to add water (sizes you choose) and a simpler home page.", "Evening check-in: how did I feel today?", "Look back over 7 to 30 days, and a For my visit summary; both print and download.", "Grocery mode for the store.", "Automatic daily backups."]}, {"v": "0.4.0", "date": "2026-10-21", "items": ["Food breaks: take a break from a food until a date, with a low-arginine list for cold sores and HSV, common food groups, or any food you type. Planned meals can be swapped and come back after."]}, {"v": "0.3.0", "date": "2026-10-21", "items": ["Daily rhythm settings: wake and bed times, fasting window, walks after meals, food order, water goal by weight."]}, {"v": "0.2.0", "date": "2026-10-21", "items": ["Sources page; every food rule shows where it comes from."]}, {"v": "0.1.0", "date": "2026-10-21", "items": ["Daily checklist, pantry planner and meal checker that work offline. Starter food lists (drafts)."]}];
 const TAB_IDS = ["today","quick","phone","tomorrow","more","supps","week","notes","labs","lookback","visit","rules","settings","household","setup"];
 /* A food card link opened while the app is already open. */
 window.addEventListener("hashchange", ()=>{ if(HHUI.takeHash()){ TAB = "household"; render(); window.scrollTo(0,0); } });
@@ -2143,8 +2409,9 @@ window.addEventListener("hashchange", ()=>{ const h = location.hash.slice(1); if
 function render(){
   expireBreaks();
   if(location.hash.slice(1)!==TAB) try{ history.replaceState(null, "", "#"+TAB); window.dispatchEvent(new Event("dh-nav")); }catch(_){}
-  const navTab = TAB==="today"||TAB==="quick"||TAB==="tomorrow" ? TAB : "more";
+  const navTab = TAB==="today"||TAB==="quick"||TAB==="lite"||TAB==="tomorrow" ? TAB : "more";
   document.querySelectorAll("nav.tabs button").forEach(b=>b.setAttribute("aria-selected", b.dataset.tab===navTab));
+  if(TAB==="lite" || LITE.eat){ renderLite(); return; }
   if(TAB==="quick") renderQuick();
   else if(TAB==="phone") renderPhone();
   else if(TAB==="today") renderDay(0);
@@ -2517,7 +2784,7 @@ function setupBody(id){
     ${SERVER?`<p class="muted">The computer app shows desktop reminders even when this window is closed.</p>`
       :`<p class="muted">On a phone or in a browser, reminders only pop up while the app is open. For alerts when it's closed, save the calendar file under More, then Times &amp; reminders.</p>
         <div><button class="btn ghost" id="notifyBtn">Allow reminders in this browser</button></div>`}
-    ${typeof openOnHtml==="function"?`<h3>Start page</h3><div>${openOnHtml()}</div><small class="muted">Quick is one page of big buttons for water, supplements and meals. Handy on a phone.</small>`:""}`;
+    ${typeof openOnHtml==="function"?`<h3>Start page</h3><div>${openOnHtml("quick", true)}${openOnHtml("lite", true)}</div><small class="muted">Quick is one page of big buttons for water, supplements and meals. Lite shows only what's next: tap I'm up or Eating now, and it lists what to take with that moment. Pick one, or neither to open on Today. Handy on a phone.</small>`:""}`;
   }
   // done
   const cond = [...SETUP_CONDITIONS.filter(c=>packs.has(c[2])).map(c=>c[1].split(":")[0]), ...Object.entries(allDiag()).filter(([k])=>diagOn(k)).map(([,D])=>D.short||D.name)];
@@ -2748,11 +3015,22 @@ view.addEventListener("change", e=>{
 /* ---------- events ---------- */
 document.querySelector("nav.tabs").addEventListener("click",e=>{
   const b = e.target.closest("button[data-tab]"); if(!b) return;
-  TAB = b.dataset.tab; try{ sessionStorage.setItem("dh-tab",TAB); }catch(_){} render(); window.scrollTo(0,0);
+  TAB = b.dataset.tab; liteReset(); try{ sessionStorage.setItem("dh-tab",TAB); }catch(_){} render(); window.scrollTo(0,0);
 });
 view.addEventListener("input",e=>{ if(e.target.id && e.target.id.startsWith("fb-")) fbPreview(); });
+/* iPhone time wheels fire "change" while you're still turning them, and the redraw closed the picker.
+   Hold a time change until you leave the field (tap Done or elsewhere), then apply it once. */
+document.addEventListener("change", e=>{
+  const t = e.target;
+  if(t && t.type==="time" && document.activeElement===t && !t._timeHold){ e.stopImmediatePropagation(); t._timePending = true; }
+}, true);
+document.addEventListener("focusout", e=>{
+  const t = e.target;
+  if(t && t.type==="time" && t._timePending){ t._timePending = false; t._timeHold = true; t.dispatchEvent(new Event("change", {bubbles:true})); t._timeHold = false; }
+}, true);
 view.addEventListener("change",e=>{
   const t = e.target;
+  if((TAB==="lite" || LITE.eat) && liteChange(t)) return;
   if(t.dataset.diag){ setDiag(t.dataset.diag, t.checked); render(); toast(t.checked?"Added. Its questions are in your doctor list.":"Removed"); return; }
   if(t.dataset.diagrule){ const [id,k] = t.dataset.diagrule.split(":"); setDiagRule(id, k, t.checked); render(); return; }
   if(t.dataset.done==="cook"){ const lg = dayLog(t.dataset.day);
@@ -2760,7 +3038,7 @@ view.addEventListener("change",e=>{
       for(const x of lg.cooked) S.stock[x.id]=(Number(S.stock[x.id])||0)+x.n; }
     if(!t.checked && lg.cooked){ for(const x of lg.cooked) S.stock[x.id]=Math.max(0,(Number(S.stock[x.id])||0)-x.n); delete lg.cooked; } }
   if(t.dataset.stock){ S.stock[t.dataset.stock]=Math.max(0,Number(t.value)||0); save(); renderWeek(); return; }
-  if(t.dataset.done){ const lg = dayLog(t.dataset.day); if(t.checked){ lg.done[t.dataset.done]=true; undoMissed(t.dataset.day, t.dataset.done); } else delete lg.done[t.dataset.done]; save(); render(); return; }
+  if(t.dataset.done){ const lg = dayLog(t.dataset.day); if(t.checked){ lg.done[t.dataset.done]=true; undoMissed(t.dataset.day, t.dataset.done); } else delete lg.done[t.dataset.done]; syncFromTick(t.dataset.day, t.dataset.done, t.checked); save(); render(); return; }
   if(t.dataset.nudgesel){ const x = (t.dataset.s!==undefined ? S.supplements[+t.dataset.s] : S.routine[+t.dataset.r]); if(x){ x.nudgeDays = t.value; save(); render(); } return; }
   if(t.dataset.r!==undefined){ const r=S.routine[+t.dataset.r]; r[t.dataset.f] = t.type==="checkbox"? t.checked : t.value; save(); if(t.type==="checkbox"||t.dataset.f==="times") renderSupps(); return; }
   for(const [attr,list] of [["r","routine"],["s","supplements"]]){
@@ -2802,6 +3080,7 @@ view.addEventListener("change",e=>{
 });
 view.addEventListener("click",async e=>{
   const t = e.target;
+  if((TAB==="lite" || LITE.eat || (t.dataset && (t.dataset.liteeat || t.dataset.liteedit!==undefined || t.dataset.liteatedel!==undefined))) && liteClick(t)) return;
   if(t.dataset.diagadd){ const g = id=>((document.getElementById(id)||{}).value||"").trim(), name = g("dg-name");
     if(!name){ toast("Type the diagnosis name"); return; }
     const foods = (lvl, txt)=>txt.split(/[,\n;]+/).map(x=>x.trim()).filter(Boolean).map((f,i)=>[lvl[0]+i+"_"+Date.now().toString(36), lvl, f, f, "From your "+name+" diagnosis."]);
@@ -2935,9 +3214,11 @@ view.addEventListener("click",async e=>{
 const firedHere = new Set();
 setInterval(()=>{
   if(SERVER) return;
-  if(!("Notification" in window) || Notification.permission!=="granted") return;
   const now = new Date(), key = ymd(now), hm = pad(now.getHours())+":"+pad(now.getMinutes());
-  for(const r of buildReminders(1)) if(r.at===key+"T"+hm && !firedHere.has(r.key)){ firedHere.add(r.key); try{ new Notification(r.title,{body:r.body}); }catch(_){} }
+  for(const r of buildReminders(1)) if(r.at===key+"T"+hm && !firedHere.has(r.key)){ firedHere.add(r.key); alertNow(r.title, r.body); }
+  /* Lite countdowns (like 2 h after lunch) that come due while the app is open. */
+  const nm = now.getHours()*60+now.getMinutes();
+  for(const x of liteSupps(key)) if(!x.done && x.due!=null && x.due<=nm && x.due>nm-2 && !firedHere.has("lite:"+key+":"+x.k)){ firedHere.add("lite:"+key+":"+x.k); alertNow("Time for "+x.s.name, liteWhy(x)); if(TAB==="lite" && !LITE.eat && !document.querySelector("#view input:focus, #view select:focus")) render(); }
 }, 20000);
 /* Keep the checklist current as the day moves on. */
 /* Phones and computer share one copy: pick up changes made on another device when this one comes back into view. */
@@ -3023,7 +3304,11 @@ function phoneAfterLoad(){
   const p = new URLSearchParams(location.search);
   if(p.get("do")){ QUICK_FLASH = runAction(p); TAB = "quick"; save(); }
   if(p.get("view")==="quick") TAB = "quick";
-  if(needsSetup() || pGet("dh.openOn")==="quick") TAB = "quick";
+  /* "#quick" is the home-screen icon's own start address, so it isn't a choice: only links like #more count. */
+  const asked = window.HASH_TAB || (["today","tomorrow","more","lite"].includes(location.hash.slice(1)) ? location.hash.slice(1) : "");
+  const openOn = pGet("dh.openOn");
+  if(p.get("view") || p.get("do")) window.FROM_SHORTCUT = true;
+  if(needsSetup()) TAB = "quick"; else if(!asked && !p.get("view") && !p.get("do") && (openOn==="quick" || (openOn==="lite" && typeof renderLite==="function"))) TAB = openOn;
   if(location.search) history.replaceState(null, "", location.pathname + (TAB==="quick" ? "#quick" : ""));
   if(navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(()=>{});
   if("serviceWorker" in navigator){
@@ -3038,11 +3323,14 @@ function phoneAfterLoad(){
   let hiddenAt = 0;
   document.addEventListener("visibilitychange", ()=>{
     if(document.hidden){ hiddenAt = Date.now(); return; }
-    if(pGet("dh.openOn")==="quick" && hiddenAt && Date.now()-hiddenAt > 5*60000 && TAB!=="quick" && !document.querySelector("input:focus,textarea:focus")){ TAB = "quick"; render(); window.scrollTo(0,0); }
+    const on = pGet("dh.openOn");
+    if((on==="quick" || (on==="lite" && typeof renderLite==="function")) && hiddenAt && Date.now()-hiddenAt > 5*60000 && TAB!==on && !document.querySelector("input:focus,textarea:focus")){ TAB = on; render(); window.scrollTo(0,0); }
   });
 }
-function openOnHtml(){
-  return `<label class="inline"><input type="checkbox" data-openon="1" ${pGet("dh.openOn")==="quick"?"checked":""}> Always open the app on Quick</label>`;
+function openOnHtml(which, bare){
+  which = which || "quick";
+  const name = which==="lite" ? "Lite" : "Quick", other = which==="lite" ? "Quick" : "Lite", cur = pGet("dh.openOn");
+  return `<label style="display:flex;gap:8px;align-items:center;font-weight:400;margin:4px 0"><input type="checkbox" data-openon="${which}" ${cur===which?"checked":""}> Always open the app on ${name}</label>${!bare && cur && cur!==which && typeof renderLite==="function" ? `<small class="muted">Right now it opens on ${other}. Ticking this switches it.</small>` : ""}`;
 }
 
 function welcomeHtml(){
@@ -3096,7 +3384,8 @@ function renderPhone(){
   const n = daysSinceBackup();
   view.innerHTML = `<div class="stack">
   <section class="panel"><h2>Where your data lives</h2>${whereHtml()}</section>
-  <section class="panel"><h2>Start page</h2>${openOnHtml()}<small class="muted">Quick has one-tap buttons for water, meals and supplements. It's the closest thing to shortcuts in the home-screen app.</small></section>
+  <section class="panel"><h2>Start page</h2>${openOnHtml("quick", true)}${typeof renderLite==="function"?openOnHtml("lite", true):""}<small class="muted">${typeof renderLite==="function"?"Pick one, or neither to open on Today. These are the same boxes as on the Quick and Lite pages. ":""}Quick has one-tap buttons for water, meals and supplements. It's the closest thing to shortcuts in the home-screen app.</small></section>
+  ${STANDALONE?`<details class="panel" style="opacity:.6"><summary><b>One-tap buttons and Shortcuts</b> <span class="chip">Safari only</span></summary><p style="margin:0">These don't work with the app on your home screen: Shortcuts opens Safari, which keeps separate data. Use Quick or Lite instead.</p></details>`:`
   <section class="panel"><h2>One-tap buttons</h2>
     <p style="margin:0">Each link below does one thing, like adding 4 oz of water. Put them in the iPhone Shortcuts app and you get buttons on your home screen or lock screen. They work anywhere, with no computer.</p>
     <ol class="day">${SHORTCUTS.map(([n,q],i)=>`<li style="grid-template-columns:1fr auto"><span><b>${esc(n)}</b><br><code style="font-size:.8rem;word-break:break-all;color:var(--muted)">${esc(appUrl(q))}</code></span><button class="btn ghost" data-copylink="${i}">Copy</button></li>`).join("")}</ol>
@@ -3111,7 +3400,7 @@ function renderPhone(){
       <li>For a box of several buttons: press and hold the home screen, tap <b>Edit</b>, then <b>Add Widget</b>, pick <b>Shortcuts</b>, and choose a folder with your all systems you shortcuts.</li>
     </ol>
     <small class="muted">Shortcuts opens the app in Safari, so keep using all systems you in Safari too. When you add it to the home screen, turn off <b>Open as Web App</b> so the icon and the shortcuts share the same data.</small>
-  </section>
+  </section>`}
   <section class="panel"><h2>Reminders without the laptop</h2>
     <p style="margin:0">A web app can't pop up reminders on its own while it's closed. Add your schedule to the iPhone Calendar instead: More, then Times &amp; reminders, then the calendar file. Calendar alerts work offline.</p>
   </section>
@@ -3137,7 +3426,8 @@ PHX.wrapSave();
 view.addEventListener("click", e=>{
   const t = e.target.closest("button"); if(!t) return;
   if(t.dataset.qdone){ const lg = dayLog(t.dataset.day), id = t.dataset.qdone;
-    if(lg.done[id]) delete lg.done[id]; else markDone(t.dataset.day, id); save(); render(); return; }
+    const on = !lg.done[id]; if(on) markDone(t.dataset.day, id); else delete lg.done[id];
+    if(typeof syncFromTick==="function") syncFromTick(t.dataset.day, id, on); save(); render(); return; }
   if(t.dataset.qsupps){ const key = ymd(new Date()), lg = dayLog(key);
     const due = quickItems(new Date()).supps.filter(i=>i.time && !lg.done[i.id] && mins(i.time) <= minutesNow()+60); due.forEach(i=>markDone(key, i.id));
     save(); render(); toast("Checked off "+due.length); return; }
@@ -3146,7 +3436,8 @@ view.addEventListener("click", e=>{
     (navigator.clipboard ? navigator.clipboard.writeText(u) : Promise.reject()).then(()=>toast("Link copied"), ()=>{ prompt("Copy this link", u); }); return; }
 });
 view.addEventListener("change", e=>{ if(PHX.isRestore(e.target)) pSet("dh.welcomed","1");
-  if(e.target.dataset.openon){ pSet("dh.openOn", e.target.checked?"quick":""); toast(e.target.checked?"The app will open on Quick":"The app will open where you left it"); } });
+  if(e.target.dataset.openon){ const w = e.target.dataset.openon==="lite" ? "lite" : "quick"; pSet("dh.openOn", e.target.checked ? w : ""); try{ localStorage.removeItem("dh.view"); }catch(_){}
+    toast(e.target.checked ? "The app will open on "+(w==="lite"?"Lite":"Quick") : "The app will open on Today"); render(); } });
 
 
 (async ()=>{

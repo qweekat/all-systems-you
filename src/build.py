@@ -101,6 +101,10 @@ def pantry_items(js):
         f = [x[0] if x[0] or not x[1] else x[1] for x in re.findall(r"'((?:[^'\\]|\\.)*)'|(\d)", m.group(1))]
         out.append([f[0], f[1].replace("\\'", "'"), f[2]])
     return out
+assert '/*LITE*/' in helper
+LITE = open(os.path.join(here, 'lite.js')).read()
+assert '/*LITEPANTRY*/[]' in LITE
+helper = helper.replace('/*LITE*/', LITE.replace('/*LITEPANTRY*/[]', json.dumps(pantry_items(tpl))))
 assert '/*ONBOARDING*/' in helper
 ONBOARD = open(os.path.join(here, 'onboarding.js')).read()
 assert '/*PANTRYITEMS*/[]' in ONBOARD

@@ -60,7 +60,11 @@ function phoneAfterLoad(){
   const p = new URLSearchParams(location.search);
   if(p.get("do")){ QUICK_FLASH = runAction(p); TAB = "quick"; save(); }
   if(p.get("view")==="quick") TAB = "quick";
-  if(needsSetup() || pGet("dh.openOn")==="quick") TAB = "quick";
+  /* "#quick" is the home-screen icon's own start address, so it isn't a choice: only links like #more count. */
+  const asked = window.HASH_TAB || (["today","tomorrow","more","lite"].includes(location.hash.slice(1)) ? location.hash.slice(1) : "");
+  const openOn = pGet("dh.openOn");
+  if(p.get("view") || p.get("do")) window.FROM_SHORTCUT = true;
+  if(needsSetup()) TAB = "quick"; else if(!asked && !p.get("view") && !p.get("do") && (openOn==="quick" || (openOn==="lite" && typeof renderLite==="function"))) TAB = openOn;
   if(location.search) history.replaceState(null, "", location.pathname + (TAB==="quick" ? "#quick" : ""));
   if(navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(()=>{});
   if("serviceWorker" in navigator){
@@ -75,11 +79,14 @@ function phoneAfterLoad(){
   let hiddenAt = 0;
   document.addEventListener("visibilitychange", ()=>{
     if(document.hidden){ hiddenAt = Date.now(); return; }
-    if(pGet("dh.openOn")==="quick" && hiddenAt && Date.now()-hiddenAt > 5*60000 && TAB!=="quick" && !document.querySelector("input:focus,textarea:focus")){ TAB = "quick"; render(); window.scrollTo(0,0); }
+    const on = pGet("dh.openOn");
+    if((on==="quick" || (on==="lite" && typeof renderLite==="function")) && hiddenAt && Date.now()-hiddenAt > 5*60000 && TAB!==on && !document.querySelector("input:focus,textarea:focus")){ TAB = on; render(); window.scrollTo(0,0); }
   });
 }
-function openOnHtml(){
-  return `<label class="inline"><input type="checkbox" data-openon="1" ${pGet("dh.openOn")==="quick"?"checked":""}> Always open the app on Quick</label>`;
+function openOnHtml(which, bare){
+  which = which || "quick";
+  const name = which==="lite" ? "Lite" : "Quick", other = which==="lite" ? "Quick" : "Lite", cur = pGet("dh.openOn");
+  return `<label style="display:flex;gap:8px;align-items:center;font-weight:400;margin:4px 0"><input type="checkbox" data-openon="${which}" ${cur===which?"checked":""}> Always open the app on ${name}</label>${!bare && cur && cur!==which && typeof renderLite==="function" ? `<small class="muted">Right now it opens on ${other}. Ticking this switches it.</small>` : ""}`;
 }
 
 function welcomeHtml(){
@@ -133,7 +140,8 @@ function renderPhone(){
   const n = daysSinceBackup();
   view.innerHTML = `<div class="stack">
   <section class="panel"><h2>Where your data lives</h2>${whereHtml()}</section>
-  <section class="panel"><h2>Start page</h2>${openOnHtml()}<small class="muted">Quick has one-tap buttons for water, meals and supplements. It's the closest thing to shortcuts in the home-screen app.</small></section>
+  <section class="panel"><h2>Start page</h2>${openOnHtml("quick", true)}${typeof renderLite==="function"?openOnHtml("lite", true):""}<small class="muted">${typeof renderLite==="function"?"Pick one, or neither to open on Today. These are the same boxes as on the Quick and Lite pages. ":""}Quick has one-tap buttons for water, meals and supplements. It's the closest thing to shortcuts in the home-screen app.</small></section>
+  ${STANDALONE?`<details class="panel" style="opacity:.6"><summary><b>One-tap buttons and Shortcuts</b> <span class="chip">Safari only</span></summary><p style="margin:0">These don't work with the app on your home screen: Shortcuts opens Safari, which keeps separate data. Use Quick or Lite instead.</p></details>`:`
   <section class="panel"><h2>One-tap buttons</h2>
     <p style="margin:0">Each link below does one thing, like adding 4 oz of water. Put them in the iPhone Shortcuts app and you get buttons on your home screen or lock screen. They work anywhere, with no computer.</p>
     <ol class="day">${SHORTCUTS.map(([n,q],i)=>`<li style="grid-template-columns:1fr auto"><span><b>${esc(n)}</b><br><code style="font-size:.8rem;word-break:break-all;color:var(--muted)">${esc(appUrl(q))}</code></span><button class="btn ghost" data-copylink="${i}">Copy</button></li>`).join("")}</ol>
@@ -148,7 +156,7 @@ function renderPhone(){
       <li>For a box of several buttons: press and hold the home screen, tap <b>Edit</b>, then <b>Add Widget</b>, pick <b>Shortcuts</b>, and choose a folder with your all systems you shortcuts.</li>
     </ol>
     <small class="muted">Shortcuts opens the app in Safari, so keep using all systems you in Safari too. When you add it to the home screen, turn off <b>Open as Web App</b> so the icon and the shortcuts share the same data.</small>
-  </section>
+  </section>`}
   <section class="panel"><h2>Reminders without the laptop</h2>
     <p style="margin:0">A web app can't pop up reminders on its own while it's closed. Add your schedule to the iPhone Calendar instead: More, then Times &amp; reminders, then the calendar file. Calendar alerts work offline.</p>
   </section>
@@ -174,7 +182,8 @@ PHX.wrapSave();
 view.addEventListener("click", e=>{
   const t = e.target.closest("button"); if(!t) return;
   if(t.dataset.qdone){ const lg = dayLog(t.dataset.day), id = t.dataset.qdone;
-    if(lg.done[id]) delete lg.done[id]; else markDone(t.dataset.day, id); save(); render(); return; }
+    const on = !lg.done[id]; if(on) markDone(t.dataset.day, id); else delete lg.done[id];
+    if(typeof syncFromTick==="function") syncFromTick(t.dataset.day, id, on); save(); render(); return; }
   if(t.dataset.qsupps){ const key = ymd(new Date()), lg = dayLog(key);
     const due = quickItems(new Date()).supps.filter(i=>i.time && !lg.done[i.id] && mins(i.time) <= minutesNow()+60); due.forEach(i=>markDone(key, i.id));
     save(); render(); toast("Checked off "+due.length); return; }
@@ -183,5 +192,6 @@ view.addEventListener("click", e=>{
     (navigator.clipboard ? navigator.clipboard.writeText(u) : Promise.reject()).then(()=>toast("Link copied"), ()=>{ prompt("Copy this link", u); }); return; }
 });
 view.addEventListener("change", e=>{ if(PHX.isRestore(e.target)) pSet("dh.welcomed","1");
-  if(e.target.dataset.openon){ pSet("dh.openOn", e.target.checked?"quick":""); toast(e.target.checked?"The app will open on Quick":"The app will open where you left it"); } });
+  if(e.target.dataset.openon){ const w = e.target.dataset.openon==="lite" ? "lite" : "quick"; pSet("dh.openOn", e.target.checked ? w : ""); try{ localStorage.removeItem("dh.view"); }catch(_){}
+    toast(e.target.checked ? "The app will open on "+(w==="lite"?"Lite":"Quick") : "The app will open on Today"); render(); } });
 

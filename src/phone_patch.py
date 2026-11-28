@@ -25,7 +25,7 @@ def patch(src):
     src = sub1(src, '<button role="tab" data-tab="today" aria-selected="true">Today</button>',
                '<button role="tab" data-tab="today" aria-selected="true">Today</button>\n    <button role="tab" data-tab="quick" aria-selected="false">Quick</button>')
     src = sub1(src, 'const TAB_IDS = ["today",', 'const TAB_IDS = ["today","quick","phone",')
-    src = sub1(src, 'const navTab = TAB==="today"||TAB==="tomorrow" ? TAB : "more";', 'const navTab = TAB==="today"||TAB==="quick"||TAB==="tomorrow" ? TAB : "more";')
+    src = sub1(src, 'const navTab = TAB==="today"||TAB==="lite"||TAB==="tomorrow" ? TAB : "more";', 'const navTab = TAB==="today"||TAB==="quick"||TAB==="lite"||TAB==="tomorrow" ? TAB : "more";')
     src = sub1(src, '  if(TAB==="today") renderDay(0);', '  if(TAB==="quick") renderQuick();\n  else if(TAB==="phone") renderPhone();\n  else if(TAB==="today") renderDay(0);')
     src = sub1(src, '["settings","Times & reminders","Times, water, rhythm, backups"]];',
                '["settings","Times & reminders","Times, water, rhythm, backups"],["phone","Phone shortcuts","One-tap buttons, reminders, backups"]];')

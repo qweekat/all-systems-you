@@ -124,6 +124,7 @@ table.rep{width:100%;border-collapse:collapse;font-size:.92rem}table.rep th,tabl
 .su-more summary{cursor:pointer;font-weight:700;color:var(--juniper)}.su-more[open]{display:grid;gap:10px}
 .su-nav{display:flex;flex-wrap:wrap;gap:10px;align-items:center}.su-nav .btn{min-height:48px;padding:10px 20px}
 @media (prefers-reduced-motion:no-preference){.glass{transition:background .15s}}
+.lrow{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:6px 0}.lbig{display:grid;gap:10px}.lbig .btn{font-size:1.15rem;padding:14px}.lpick{text-align:left;padding:10px 12px;border:1px solid var(--line,#ddd);border-radius:10px;background:none;font:inherit;color:inherit}.lpick.on{border-color:var(--juniper,#2f6b57);background:var(--juniper-soft,#e6f0ec)}
 </style>
 
 <div class="wrap">
@@ -134,6 +135,7 @@ table.rep{width:100%;border-collapse:collapse;font-size:.92rem}table.rep th,tabl
   </header>
   <nav class="tabs" role="tablist">
     <button role="tab" data-tab="today" aria-selected="true">Today</button>
+    <button role="tab" data-tab="lite" aria-selected="false">Lite</button>
     <button role="tab" data-tab="tomorrow" aria-selected="false">Tomorrow</button>
     <button role="tab" data-tab="more" aria-selected="false">More</button>
   </nav>
@@ -937,6 +939,7 @@ function renderDay(offset){
       ${offset===0&&!done&&!ms&&missable(it)?`<button class="linkbtn" data-miss="${esc(it.id)}" data-day="${key}" style="margin-right:14px">Missed it</button>`:""}${it.kind==="supp"||it.kind==="routine"||it.kind==="meal"?`<button class="linkbtn" data-noteabout="${esc(it.kind==="meal"?it.title.replace(/^[^:]+: /,""):it.title)}">Add a note</button>`:""}</div></li>`;
   }
   h += `</ol></section>`;
+  if(offset===0) h += `<section class="panel stack" style="gap:8px">${ateListHtml(key)||"<b>Meals eaten</b><small class=\"muted\">Nothing logged yet today.</small>"}<div><button class="btn" data-liteeat="1">Log what I ate</button></div></section>`;
   if(offset===0) h += prnHtml(key, lg);
   if(untimed.length){
     h += `<section class="panel"><h2>No time set yet</h2><small class="muted">These won't remind you until they have a time. Add times on the Supplements &amp; routine tab.</small><ol class="day">`;
@@ -1039,6 +1042,7 @@ function renderDiagnoses(){
   </div>`;
 }
 view.addEventListener("toggle", e=>{ const d = e.target; if(!d.dataset || !d.dataset.dgkey) return; if(d.open) DIAG_OPEN.add(d.dataset.dgkey); else DIAG_OPEN.delete(d.dataset.dgkey); const m = d.querySelector(":scope > summary .dgmore"); if(m) m.textContent = d.open ? "less" : "more"; }, true);
+/*LITE*/
 function renderMore(){
   view.innerHTML = `<div class="stack"><section class="panel"><h2>More</h2><div class="tiles">
     ${MORE_TILES.map(([id,n,d])=>`<button class="tile" data-goto="${id}"><b>${esc(n)}</b><small>${esc(d)}</small></button>`).join("")}
@@ -1652,8 +1656,9 @@ window.addEventListener("hashchange", ()=>{ const h = location.hash.slice(1); if
 function render(){
   expireBreaks();
   if(location.hash.slice(1)!==TAB) try{ history.replaceState(null, "", "#"+TAB); window.dispatchEvent(new Event("dh-nav")); }catch(_){}
-  const navTab = TAB==="today"||TAB==="tomorrow" ? TAB : "more";
+  const navTab = TAB==="today"||TAB==="lite"||TAB==="tomorrow" ? TAB : "more";
   document.querySelectorAll("nav.tabs button").forEach(b=>b.setAttribute("aria-selected", b.dataset.tab===navTab));
+  if(TAB==="lite" || LITE.eat){ renderLite(); return; }
   if(TAB==="today") renderDay(0);
   else if(TAB==="tomorrow") renderDay(1);
   else if(TAB==="supps") renderSupps();
@@ -1709,11 +1714,22 @@ function icsText(){
 /* ---------- events ---------- */
 document.querySelector("nav.tabs").addEventListener("click",e=>{
   const b = e.target.closest("button[data-tab]"); if(!b) return;
-  TAB = b.dataset.tab; try{ sessionStorage.setItem("dh-tab",TAB); }catch(_){} render(); window.scrollTo(0,0);
+  TAB = b.dataset.tab; liteReset(); try{ sessionStorage.setItem("dh-tab",TAB); }catch(_){} render(); window.scrollTo(0,0);
 });
 view.addEventListener("input",e=>{ if(e.target.id && e.target.id.startsWith("fb-")) fbPreview(); });
+/* iPhone time wheels fire "change" while you're still turning them, and the redraw closed the picker.
+   Hold a time change until you leave the field (tap Done or elsewhere), then apply it once. */
+document.addEventListener("change", e=>{
+  const t = e.target;
+  if(t && t.type==="time" && document.activeElement===t && !t._timeHold){ e.stopImmediatePropagation(); t._timePending = true; }
+}, true);
+document.addEventListener("focusout", e=>{
+  const t = e.target;
+  if(t && t.type==="time" && t._timePending){ t._timePending = false; t._timeHold = true; t.dispatchEvent(new Event("change", {bubbles:true})); t._timeHold = false; }
+}, true);
 view.addEventListener("change",e=>{
   const t = e.target;
+  if((TAB==="lite" || LITE.eat) && liteChange(t)) return;
   if(t.dataset.diag){ setDiag(t.dataset.diag, t.checked); render(); toast(t.checked?"Added. Its questions are in your doctor list.":"Removed"); return; }
   if(t.dataset.diagrule){ const [id,k] = t.dataset.diagrule.split(":"); setDiagRule(id, k, t.checked); render(); return; }
   if(t.dataset.done==="cook"){ const lg = dayLog(t.dataset.day);
@@ -1721,7 +1737,7 @@ view.addEventListener("change",e=>{
       for(const x of lg.cooked) S.stock[x.id]=(Number(S.stock[x.id])||0)+x.n; }
     if(!t.checked && lg.cooked){ for(const x of lg.cooked) S.stock[x.id]=Math.max(0,(Number(S.stock[x.id])||0)-x.n); delete lg.cooked; } }
   if(t.dataset.stock){ S.stock[t.dataset.stock]=Math.max(0,Number(t.value)||0); save(); renderWeek(); return; }
-  if(t.dataset.done){ const lg = dayLog(t.dataset.day); if(t.checked){ lg.done[t.dataset.done]=true; undoMissed(t.dataset.day, t.dataset.done); } else delete lg.done[t.dataset.done]; save(); render(); return; }
+  if(t.dataset.done){ const lg = dayLog(t.dataset.day); if(t.checked){ lg.done[t.dataset.done]=true; undoMissed(t.dataset.day, t.dataset.done); } else delete lg.done[t.dataset.done]; syncFromTick(t.dataset.day, t.dataset.done, t.checked); save(); render(); return; }
   if(t.dataset.nudgesel){ const x = (t.dataset.s!==undefined ? S.supplements[+t.dataset.s] : S.routine[+t.dataset.r]); if(x){ x.nudgeDays = t.value; save(); render(); } return; }
   if(t.dataset.r!==undefined){ const r=S.routine[+t.dataset.r]; r[t.dataset.f] = t.type==="checkbox"? t.checked : t.value; save(); if(t.type==="checkbox"||t.dataset.f==="times") renderSupps(); return; }
   for(const [attr,list] of [["r","routine"],["s","supplements"]]){
@@ -1763,6 +1779,7 @@ view.addEventListener("change",e=>{
 });
 view.addEventListener("click",async e=>{
   const t = e.target;
+  if((TAB==="lite" || LITE.eat || (t.dataset && (t.dataset.liteeat || t.dataset.liteedit!==undefined || t.dataset.liteatedel!==undefined))) && liteClick(t)) return;
   if(t.dataset.diagadd){ const g = id=>((document.getElementById(id)||{}).value||"").trim(), name = g("dg-name");
     if(!name){ toast("Type the diagnosis name"); return; }
     const foods = (lvl, txt)=>txt.split(/[,\n;]+/).map(x=>x.trim()).filter(Boolean).map((f,i)=>[lvl[0]+i+"_"+Date.now().toString(36), lvl, f, f, "From your "+name+" diagnosis."]);
@@ -1896,9 +1913,11 @@ view.addEventListener("click",async e=>{
 const firedHere = new Set();
 setInterval(()=>{
   if(SERVER) return;
-  if(!("Notification" in window) || Notification.permission!=="granted") return;
   const now = new Date(), key = ymd(now), hm = pad(now.getHours())+":"+pad(now.getMinutes());
-  for(const r of buildReminders(1)) if(r.at===key+"T"+hm && !firedHere.has(r.key)){ firedHere.add(r.key); try{ new Notification(r.title,{body:r.body}); }catch(_){} }
+  for(const r of buildReminders(1)) if(r.at===key+"T"+hm && !firedHere.has(r.key)){ firedHere.add(r.key); alertNow(r.title, r.body); }
+  /* Lite countdowns (like 2 h after lunch) that come due while the app is open. */
+  const nm = now.getHours()*60+now.getMinutes();
+  for(const x of liteSupps(key)) if(!x.done && x.due!=null && x.due<=nm && x.due>nm-2 && !firedHere.has("lite:"+key+":"+x.k)){ firedHere.add("lite:"+key+":"+x.k); alertNow("Time for "+x.s.name, liteWhy(x)); if(TAB==="lite" && !LITE.eat && !document.querySelector("#view input:focus, #view select:focus")) render(); }
 }, 20000);
 /* Keep the checklist current as the day moves on. */
 /* Phones and computer share one copy: pick up changes made on another device when this one comes back into view. */

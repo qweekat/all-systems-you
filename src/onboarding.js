@@ -317,7 +317,7 @@ function setupBody(id){
     ${SERVER?`<p class="muted">The computer app shows desktop reminders even when this window is closed.</p>`
       :`<p class="muted">On a phone or in a browser, reminders only pop up while the app is open. For alerts when it's closed, save the calendar file under More, then Times &amp; reminders.</p>
         <div><button class="btn ghost" id="notifyBtn">Allow reminders in this browser</button></div>`}
-    ${typeof openOnHtml==="function"?`<h3>Start page</h3><div>${openOnHtml()}</div><small class="muted">Quick is one page of big buttons for water, supplements and meals. Handy on a phone.</small>`:""}`;
+    ${typeof openOnHtml==="function"?`<h3>Start page</h3><div>${openOnHtml("quick", true)}${openOnHtml("lite", true)}</div><small class="muted">Quick is one page of big buttons for water, supplements and meals. Lite shows only what's next: tap I'm up or Eating now, and it lists what to take with that moment. Pick one, or neither to open on Today. Handy on a phone.</small>`:""}`;
   }
   // done
   const cond = [...SETUP_CONDITIONS.filter(c=>packs.has(c[2])).map(c=>c[1].split(":")[0]), ...Object.entries(allDiag()).filter(([k])=>diagOn(k)).map(([,D])=>D.short||D.name)];
