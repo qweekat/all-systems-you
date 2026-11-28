@@ -174,6 +174,8 @@ function renderLite(){
         <small class="muted">For something you take every day, like a fiber powder with lunch. Add it here, then tick when you take it.</small>
         <label>Name<input type="text" id="lite-sname" placeholder="e.g. Fiber powder"></label>
         <label>How much<input type="text" id="lite-sdose" placeholder="e.g. 1 scoop in water"></label>
+        <label style="display:flex;gap:8px;align-items:center;font-weight:400"><input type="checkbox" id="lite-sprn"> Only as needed (no reminders, log it with Took it)</label>
+        <label class="inline" style="font-weight:400">Most a day, if there's a limit <input type="number" id="lite-smax" min="0" max="12" style="width:5em" placeholder="none"></label>
         <div><button class="btn" data-liteaddsupp="1">Add it</button></div></div>
     </details>
     <details class="panel"><summary><b>Alerts while the app is open</b></summary>
@@ -217,7 +219,9 @@ function liteClick(t){
   if(t.dataset.alerttest){ alertNow("Test alert", "This is how a due item looks"); return true; }
   if(t.dataset.liteaddsupp){ const g = id=>((document.getElementById(id)||{}).value||"").trim(), name = g("lite-sname");
     if(!name){ toast("Type a name first"); return true; }
-    S.supplements.push({id:"s"+Date.now(), name, dose:g("lite-sdose"), times:"", how:"", binder:false, active:true, pending:false, notes:"", where:"home", whens:[]});
+    const prn = !!(document.getElementById("lite-sprn")||{}).checked, mx = Number(g("lite-smax"))||0;
+    S.supplements.push(Object.assign({id:"s"+Date.now(), name, dose:g("lite-sdose"), times:"", how:"", binder:false, active:true, pending:false, notes:"", where:"home", whens:[]}, prn?{asNeeded:true, maxPerDay:mx||""}:{}));
+    if(prn){ save(); render(); toast("Added. Tap Took it under As needed when you take it."); return true; }
     LITE_SET_OPEN = true; save(); render(); LITE_SET_OPEN = false;
     const row = [...document.querySelectorAll("[data-litewhen]")].pop(); if(row) row.scrollIntoView({block:"center"});
     toast("Added. Now tick when you take it."); return true; }

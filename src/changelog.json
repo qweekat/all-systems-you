@@ -2,6 +2,13 @@
  "note": "Newest first. MAJOR.MINOR.PATCH: MINOR for new features, PATCH for fixes. The top entry is the app's version.",
  "changes": [
   {
+   "v": "0.26.1",
+   "date": "2026-11-28",
+   "items": [
+    "Lite: \"Add a supplement or powder\" can mark it Only as needed, with a most-per-day limit."
+   ]
+  },
+  {
    "v": "0.26.0",
    "date": "2026-11-28",
    "items": [
