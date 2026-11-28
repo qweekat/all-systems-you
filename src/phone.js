@@ -123,6 +123,7 @@ function renderQuick(){
     <section class="panel"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap"><h2>Supplements</h2>${dueNow?`<button class="btn" data-qsupps="1">Took all due now (${dueNow})</button>`:""}</div>
       ${supps.length?`<div class="qlist">${supps.map(i=>qRow(i,key,lg)).join("")}</div>`:`<p class="muted" style="margin:0">No supplements on today's list.</p>`}</section>
     ${typeof prnHtml==="function"?prnHtml(key,lg):""}
+    ${typeof liteSetWhenHtml==="function"?liteSetWhenHtml():""}
     ${backupNudge()}
     <div><button class="linkbtn" data-goto="today">See the full day</button></div>
     <div>${openOnHtml()}</div>

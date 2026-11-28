@@ -940,7 +940,7 @@ function renderDay(offset){
   }
   h += `</ol></section>`;
   if(offset===0) h += `<section class="panel stack" style="gap:8px">${ateListHtml(key)||"<b>Meals eaten</b><small class=\"muted\">Nothing logged yet today.</small>"}<div><button class="btn" data-liteeat="1">Log what I ate</button></div></section>`;
-  if(offset===0) h += prnHtml(key, lg);
+  if(offset===0) h += prnHtml(key, lg) + liteSetWhenHtml();
   if(untimed.length){
     h += `<section class="panel"><h2>No time set yet</h2><small class="muted">These won't remind you until they have a time. Add times on the Supplements &amp; routine tab.</small><ol class="day">`;
     for(const it of untimed){
@@ -1729,7 +1729,7 @@ document.addEventListener("focusout", e=>{
 }, true);
 view.addEventListener("change",e=>{
   const t = e.target;
-  if((TAB==="lite" || LITE.eat) && liteChange(t)) return;
+  if((TAB==="lite" || LITE.eat || t.dataset.litewhen || t.dataset.liteafter) && liteChange(t)) return;
   if(t.dataset.diag){ setDiag(t.dataset.diag, t.checked); render(); toast(t.checked?"Added. Its questions are in your doctor list.":"Removed"); return; }
   if(t.dataset.diagrule){ const [id,k] = t.dataset.diagrule.split(":"); setDiagRule(id, k, t.checked); render(); return; }
   if(t.dataset.done==="cook"){ const lg = dayLog(t.dataset.day);
@@ -1779,7 +1779,7 @@ view.addEventListener("change",e=>{
 });
 view.addEventListener("click",async e=>{
   const t = e.target;
-  if((TAB==="lite" || LITE.eat || (t.dataset && (t.dataset.liteeat || t.dataset.liteedit!==undefined || t.dataset.liteatedel!==undefined))) && liteClick(t)) return;
+  if((TAB==="lite" || LITE.eat || (t.dataset && (t.dataset.liteeat || t.dataset.liteaddsupp || t.dataset.liteedit!==undefined || t.dataset.liteatedel!==undefined))) && liteClick(t)) return;
   if(t.dataset.diagadd){ const g = id=>((document.getElementById(id)||{}).value||"").trim(), name = g("dg-name");
     if(!name){ toast("Type the diagnosis name"); return; }
     const foods = (lvl, txt)=>txt.split(/[,\n;]+/).map(x=>x.trim()).filter(Boolean).map((f,i)=>[lvl[0]+i+"_"+Date.now().toString(36), lvl, f, f, "From your "+name+" diagnosis."]);

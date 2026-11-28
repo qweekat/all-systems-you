@@ -122,6 +122,23 @@ function liteKitchen(key, on){
 function liteRow(x, key, btn){
   return `<div class="lrow"><div><b>${esc(x.s.name)}</b>${suppDose(x.s,new Date())?` <small class="muted">${esc(suppDose(x.s,new Date()))}</small>`:""}<br><small class="muted">${esc(liteWhy(x))}${x.due!=null&&x.due>liteNowM()?" · "+liteIn(x.due):""}</small></div>${btn?`<button class="btn" data-litedone="${esc(x.k)}" data-sid="${esc(x.s.id)}" data-day="${key}">Done</button>`:""}</div>`;
 }
+/* The same "when" settings on Lite, Today and Quick. Full edits and removing live on Supplements & routine. */
+function liteSetWhenHtml(){
+  return `<details class="panel" ${LITE_SET_OPEN?"open":""}><summary><b>Set when you take each one</b></summary>
+      <small class="muted">Pick the moments for each supplement. "After" waits that long after you tap the moment, for things like psyllium. "Before" a meal or bedtime counts down from the time planned for it in the full app, and moves up if you eat early.</small>
+      ${S.supplements.filter(s=>s.active&&!s.asNeeded).map(s=>`<div class="stack" style="gap:4px;border-top:1px solid var(--line,#ddd);padding-top:8px"><b>${esc(s.name)}</b>
+        <div class="chips" style="gap:4px 12px">${LITE_ANCHORS.map(([a,n])=>`<label class="inline" style="font-weight:400"><input type="checkbox" data-litewhen="${esc(s.id)}:${a}" ${(s.whens||[]).includes(a)?"checked":""}> ${n}</label>`).join("")}</div>
+        <label class="inline" style="font-weight:400">Take it <select data-liteafter="${esc(s.id)}">${LITE_AFTER.map(([v,n])=>`<option value="${v}" ${(Number(s.afterH)||0)===v?"selected":""}>${n}</option>`).join("")}</select></label></div>`).join("")}
+      <div class="stack" style="gap:6px;border-top:1px solid var(--line,#ddd);padding-top:8px"><b>Add a supplement or powder</b>
+        <small class="muted">For something you take every day, like a fiber powder with lunch. Add it here, then tick when you take it.</small>
+        <label>Name<input type="text" id="lite-sname" placeholder="e.g. Fiber powder"></label>
+        <label>How much<input type="text" id="lite-sdose" placeholder="e.g. 1 scoop in water"></label>
+        <label style="display:flex;gap:8px;align-items:center;font-weight:400"><input type="checkbox" id="lite-sprn"> Only as needed (no reminders, log it with Took it)</label>
+        <label class="inline" style="font-weight:400">Most a day, if there's a limit <input type="number" id="lite-smax" min="0" max="12" style="width:5em" placeholder="none"></label>
+        <div><button class="btn" data-liteaddsupp="1">Add it</button></div></div>
+      <small class="muted">To remove one or change everything about it, go to <button class="linkbtn" data-goto="supps">More, then Supplements &amp; routine</button>.</small>
+    </details>`;
+}
 function renderLite(){
   const key = ymd(new Date()), lg = S.log[key]||{done:{}}, ev = lg.ev||{}, now = liteNowM();
   const all = liteSupps(key), open = all.filter(x=>!x.done);
@@ -165,19 +182,7 @@ function renderLite(){
     ${prnHtml(key, lg)}
     ${ateListHtml(key, true)}
     ${unset.length?`<details class="panel"><summary><b>Any time today (${unset.length})</b></summary>${unset.map(x=>liteRow(x,key,true)).join("")}</details>`:""}
-    <details class="panel" ${LITE_SET_OPEN?"open":""}><summary><b>Set when you take each one</b></summary>
-      <small class="muted">Pick the moments for each supplement. "After" waits that long after you tap the moment, for things like psyllium. "Before" a meal or bedtime counts down from the time planned for it in the full app, and moves up if you eat early.</small>
-      ${S.supplements.filter(s=>s.active&&!s.asNeeded).map(s=>`<div class="stack" style="gap:4px;border-top:1px solid var(--line,#ddd);padding-top:8px"><b>${esc(s.name)}</b>
-        <div class="chips" style="gap:4px 12px">${LITE_ANCHORS.map(([a,n])=>`<label class="inline" style="font-weight:400"><input type="checkbox" data-litewhen="${esc(s.id)}:${a}" ${(s.whens||[]).includes(a)?"checked":""}> ${n}</label>`).join("")}</div>
-        <label class="inline" style="font-weight:400">Take it <select data-liteafter="${esc(s.id)}">${LITE_AFTER.map(([v,n])=>`<option value="${v}" ${(Number(s.afterH)||0)===v?"selected":""}>${n}</option>`).join("")}</select></label></div>`).join("")}
-      <div class="stack" style="gap:6px;border-top:1px solid var(--line,#ddd);padding-top:8px"><b>Add a supplement or powder</b>
-        <small class="muted">For something you take every day, like a fiber powder with lunch. Add it here, then tick when you take it.</small>
-        <label>Name<input type="text" id="lite-sname" placeholder="e.g. Fiber powder"></label>
-        <label>How much<input type="text" id="lite-sdose" placeholder="e.g. 1 scoop in water"></label>
-        <label style="display:flex;gap:8px;align-items:center;font-weight:400"><input type="checkbox" id="lite-sprn"> Only as needed (no reminders, log it with Took it)</label>
-        <label class="inline" style="font-weight:400">Most a day, if there's a limit <input type="number" id="lite-smax" min="0" max="12" style="width:5em" placeholder="none"></label>
-        <div><button class="btn" data-liteaddsupp="1">Add it</button></div></div>
-    </details>
+    ${liteSetWhenHtml()}
     <details class="panel"><summary><b>Alerts while the app is open</b></summary>
       <label class="inline" style="font-weight:400"><input type="checkbox" data-alert="alertsOn" ${S.alertsOn===false?"":"checked"}> Show a banner when something comes due</label>
       <label class="inline" style="font-weight:400"><input type="checkbox" data-alert="alertSound" ${S.alertSound===false?"":"checked"}> Play a chime</label>

@@ -2,6 +2,13 @@
  "note": "Newest first. MAJOR.MINOR.PATCH: MINOR for new features, PATCH for fixes. The top entry is the app's version.",
  "changes": [
   {
+   "v": "0.27.0",
+   "date": "2026-11-28",
+   "items": [
+    "\"Set when you take each one\" is now the same folded panel on Today, Quick and Lite. To remove a supplement or change everything about it, the panel links to More, then Supplements & routine."
+   ]
+  },
+  {
    "v": "0.26.1",
    "date": "2026-11-28",
    "items": [
